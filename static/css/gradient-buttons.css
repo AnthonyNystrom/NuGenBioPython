@@ -1,0 +1,254 @@
+/* Modern Gradient Button Styles */
+.gradient-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+}
+
+.gradient-btn-secondary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+}
+
+.gradient-btn-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+}
+
+.gradient-btn-warning {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+}
+
+.gradient-btn-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+}
+
+.gradient-btn-outline {
+    background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+    color: #495057;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-outline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: #495057;
+}
+
+.gradient-btn-small {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.gradient-btn-small:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    color: white;
+}
+
+/* Disabled state for all gradient buttons */
+.gradient-btn-primary:disabled,
+.gradient-btn-secondary:disabled,
+.gradient-btn-info:disabled,
+.gradient-btn-warning:disabled,
+.gradient-btn-success:disabled,
+.gradient-btn-outline:disabled,
+.gradient-btn-small:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Size variants */
+.gradient-btn-lg {
+    padding: 18px 32px;
+    font-size: 16px;
+}
+
+.gradient-btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* Ensure consistent sizing for all gradient button types */
+.gradient-btn-primary,
+.gradient-btn-secondary,
+.gradient-btn-info,
+.gradient-btn-warning,
+.gradient-btn-success,
+.gradient-btn-outline {
+    padding: 14px 24px !important;
+    font-size: 15px !important;
+    font-weight: 600;
+    line-height: 1.5 !important;
+    text-align: center;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+}
+
+/* Full width buttons */
+.gradient-btn-primary.w-100,
+.gradient-btn-secondary.w-100,
+.gradient-btn-info.w-100,
+.gradient-btn-warning.w-100,
+.gradient-btn-success.w-100,
+.gradient-btn-outline.w-100,
+.gradient-btn-small.w-100 {
+    width: 100%;
+    display: inline-flex !important;
+}
+
+/* Flex layout buttons - ensure same height */
+.d-flex > .gradient-btn-primary,
+.d-flex > .gradient-btn-secondary,
+.d-flex > .gradient-btn-info,
+.d-flex > .gradient-btn-warning,
+.d-flex > .gradient-btn-success,
+.d-flex > .gradient-btn-outline,
+.d-flex > .gradient-btn-small {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+}
+
+/* Icon spacing */
+.gradient-btn-primary i,
+.gradient-btn-secondary i,
+.gradient-btn-info i,
+.gradient-btn-warning i,
+.gradient-btn-success i,
+.gradient-btn-outline i,
+.gradient-btn-small i {
+    vertical-align: middle;
+}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}UniGene Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #unigeneTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #unigeneTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-info mb-1"><i class="fas fa-sitemap"></i> UniGene Analysis</h2>
+        <p class="lead mb-2">Parse and analyze UniGene cluster data using Bio.UniGene</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;">
+        <div class="d-flex" id="unigeneTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+                <i class="fas fa-list d-block mb-1"></i><small>Parse Multiple</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
+                <i class="fas fa-book-open d-block mb-1"></i><small>Read Single</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="tab-content">
+            
+            <!-- Parse Multiple Tab -->
+            <div class="tab-pane fade show active" id="parse">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="parseForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-8">
+                                            <label class="form-label small mb-0">UniGene File (.data)</label>
+                                            <input type="file" class="form-control form-control-sm" id="parseFile" accept=".data,.txt,.unigene">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Max Records</label>
+                                            <select class="form-select form-select-sm" id="parseMaxRecords">
+                                                <option value="5">5</option>
+                                                <option value="10" selected>10</option>
+                                                <option value="20">20</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="parseBtn">
+                                        <i class="fas fa-list me-2"></i>Parse Records
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadParseExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Parsed Clusters</strong>
+                                    <span class="badge bg-info" id="parseCount" style="display:none;">0</span>
+                                </div>
+                                <div id="parseResults">
+                                    <p class="text-muted text-center small mb-0">Upload UniGene file with multiple clusters</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About UniGene.parse</strong></p>
+                                <p class="small mb-1">Parse multiple gene clusters from UniGene .data files.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Batch cluster analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Read Single Tab -->
+            <div class="tab-pane fade" id="read">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="readForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">UniGene File (Single Record)</label>
+                                        <input type="file" class="form-control form-control-sm" id="readFile" accept=".data,.txt">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="readBtn">
+                                        <i class="fas fa-book-open me-2"></i>Read Record
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadReadExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <strong class="small">Cluster Details</strong>
+                                <div id="readResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Upload UniGene file with single cluster</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About UniGene.read</strong></p>
+                                <p class="small mb-1">Read a single gene cluster with full details including sequences, protein similarities, and expression data.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Detailed cluster analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/unigene.js') }}"></script>
+{% endblock %}

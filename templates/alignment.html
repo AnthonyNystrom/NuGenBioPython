@@ -1,0 +1,1386 @@
+{% extends "base.html" %}
+
+{% block title %}Pairwise Alignment - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #alignmentTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #alignmentTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-align-center"></i> Pairwise Alignment
+        </h2>
+        <p class="lead mb-3">Perform pairwise and multiple sequence alignments using Bio.Align</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="alignmentTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="pairwise-tab" data-bs-toggle="tab" data-bs-target="#pairwise" type="button" role="tab">
+                <i class="fas fa-align-center d-block mb-1"></i>
+                <small>Pairwise</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="msa-tab" data-bs-toggle="tab" data-bs-target="#msa" type="button" role="tab">
+                <i class="fas fa-align-justify d-block mb-1"></i>
+                <small>MSA</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="conservation-tab" data-bs-toggle="tab" data-bs-target="#conservation" type="button" role="tab">
+                <i class="fas fa-chart-line d-block mb-1"></i>
+                <small>Conservation</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fileio-tab" data-bs-toggle="tab" data-bs-target="#fileio" type="button" role="tab">
+                <i class="fas fa-file-import d-block mb-1"></i>
+                <small>File I/O</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                <i class="fas fa-code-branch d-block mb-1"></i>
+                <small>Advanced</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="alignmentTabContent">
+            <div class="tab-pane fade show active" id="pairwise" role="tabpanel">
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-edit"></i> Input Sequences</h6>
+            </div>
+            <div class="card-body py-2">
+                <form id="alignmentForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="sequence1" class="form-label small">Sequence 1</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="sequence1" rows="4"
+                                        placeholder="Enter first sequence..."></textarea>
+                                <input type="file" class="form-control form-control-sm mt-1" id="file1" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(1)">
+                                <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="sequence2" class="form-label small">Sequence 2</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="sequence2" rows="4"
+                                        placeholder="Enter second sequence..."></textarea>
+                                <input type="file" class="form-control form-control-sm mt-1" id="file2" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(2)">
+                                <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="alignBtn">
+                        <i class="fas fa-align-center me-2"></i>Align Sequences
+                    </button>
+                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleAlignment()">
+                        <i class="fas fa-flask me-2"></i>Example
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-cog"></i> Alignment Parameters</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="mb-3">
+                    <label for="alignmentMode" class="form-label small">Alignment Mode</label>
+                    <select class="form-select form-select-sm" id="alignmentMode" onchange="toggleSemiGlobalOptions()">
+                        <option value="global" selected>Global (Needleman-Wunsch)</option>
+                        <option value="local">Local (Smith-Waterman)</option>
+                        <option value="semi-global">Semi-Global</option>
+                    </select>
+                </div>
+                <div id="semiGlobalDiv" style="display:none;">
+                    <div class="mb-2">
+                        <label class="form-label small">Query End Gap Score</label>
+                        <input type="number" class="form-control form-control-sm" id="endGapQuery" value="0" step="0.1">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Target End Gap Score</label>
+                        <input type="number" class="form-control form-control-sm" id="endGapTarget" value="0" step="0.1">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="substitutionMatrix" class="form-label small">Substitution Matrix</label>
+                    <select class="form-select form-select-sm" id="substitutionMatrix" onchange="toggleManualScoring()">
+                        <option value="none" selected>None (Manual Scoring)</option>
+                        <optgroup label="Protein Matrices">
+                            <option value="BLOSUM62">BLOSUM62</option>
+                            <option value="BLOSUM45">BLOSUM45</option>
+                            <option value="BLOSUM50">BLOSUM50</option>
+                            <option value="BLOSUM80">BLOSUM80</option>
+                            <option value="BLOSUM90">BLOSUM90</option>
+                            <option value="PAM30">PAM30</option>
+                            <option value="PAM70">PAM70</option>
+                            <option value="PAM250">PAM250</option>
+                            <option value="GONNET1992">GONNET1992</option>
+                        </optgroup>
+                        <optgroup label="DNA Matrices">
+                            <option value="NUC.4.4">NUC.4.4</option>
+                            <option value="MATCH">MATCH</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div id="manualScoringDiv">
+                    <div class="mb-3">
+                        <label for="matchScore" class="form-label small">Match Score</label>
+                        <input type="number" class="form-control form-control-sm" id="matchScore" value="2" min="-10" max="10">
+                    </div>
+                    <div class="mb-3">
+                        <label for="mismatchScore" class="form-label small">Mismatch Score</label>
+                        <input type="number" class="form-control form-control-sm" id="mismatchScore" value="-1" min="-10" max="10">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="gapOpen" class="form-label small">Gap Open Penalty</label>
+                    <input type="number" class="form-control form-control-sm" id="gapOpen" value="-2" min="-10" max="0">
+                </div>
+                <div class="mb-3">
+                    <label for="gapExtend" class="form-label small">Gap Extend Penalty</label>
+                    <input type="number" step="0.1" class="form-control form-control-sm" id="gapExtend" value="-0.5" min="-10" max="0">
+                </div>
+                <button type="button" class="gradient-btn-small w-100" onclick="resetDefaults()">
+                    <i class="fas fa-undo me-2"></i> Reset Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Alignment Results</h6>
+                <div>
+                    <span class="badge bg-info me-2" id="alignmentScore" style="display:none;"></span>
+                    <button type="button" class="gradient-btn-small" id="exportBtn" onclick="exportAlignment()" style="display:none;">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body py-2" id="alignmentResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Enter two sequences and click "Align" to see results
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Alignment Information</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Scoring System</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Match: Positive score for identical residues</li>
+                            <li><i class="fas fa-times text-danger"></i> Mismatch: Negative score for different residues</li>
+                            <li><i class="fas fa-minus text-warning"></i> Gap Open: Penalty for starting a gap</li>
+                            <li><i class="fas fa-minus text-warning"></i> Gap Extend: Penalty for extending a gap</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Algorithm</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Uses dynamic programming</li>
+                            <li><i class="fas fa-check text-success"></i> Needleman-Wunsch global alignment</li>
+                            <li><i class="fas fa-check text-success"></i> Optimal alignment guaranteed</li>
+                            <li><i class="fas fa-check text-success"></i> Handles insertions and deletions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Output</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Visual alignment display</li>
+                            <li><i class="fas fa-check text-success"></i> Alignment score</li>
+                            <li><i class="fas fa-check text-success"></i> Match/mismatch indicators</li>
+                            <li><i class="fas fa-check text-success"></i> Gap positions marked</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </div><!-- End Pairwise Tab -->
+
+            <!-- MSA Tab -->
+            <div class="tab-pane fade" id="msa" role="tabpanel">
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-edit"></i> Input Multiple Sequences</h6>
+            </div>
+            <div class="card-body py-2">
+                <form id="msaForm">
+                    <div class="mb-2">
+                        <label class="form-label small">Enter Sequences (one per line)</label>
+                        <textarea class="form-control form-control-sm sequence-display" id="msaSequences" rows="8"
+                                placeholder="Enter sequences, one per line...&#10;ACGTACGTACGT&#10;ACGTACCGTACGT&#10;ACGTACGACGT"></textarea>
+                        <div class="form-text"><i class="fas fa-info-circle"></i> Enter at least 2 sequences</div>
+                    </div>
+                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="msaAlignBtn">
+                        <i class="fas fa-align-justify me-2"></i>Align Multiple Sequences
+                    </button>
+                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleMSA()">
+                        <i class="fas fa-flask me-2"></i>Example
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> MSA Results</h6>
+                <div>
+                    <span class="badge bg-info me-2" id="msaScore" style="display:none;"></span>
+                    <button type="button" class="gradient-btn-small" id="msaExportBtn" onclick="exportMSA()" style="display:none;">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body py-2" id="msaResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Enter multiple sequences and click "Align" to see results
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Multiple Sequence Alignment Info</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Progressive Alignment</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Aligns sequences progressively</li>
+                            <li><i class="fas fa-check text-success"></i> Works with any number of sequences</li>
+                            <li><i class="fas fa-check text-success"></i> Identifies conserved regions</li>
+                            <li><i class="fas fa-check text-success"></i> Useful for phylogenetic analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Applications</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Compare related sequences</li>
+                            <li><i class="fas fa-check text-success"></i> Find conserved motifs</li>
+                            <li><i class="fas fa-check text-success"></i> Evolutionary studies</li>
+                            <li><i class="fas fa-check text-success"></i> Protein family analysis</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </div><!-- End MSA Tab -->
+
+            <!-- Conservation Tab -->
+            <div class="tab-pane fade" id="conservation" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Input Aligned Sequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="conservationForm">
+                                    <textarea class="form-control form-control-sm sequence-display" id="conservationSeqs" rows="8"
+                                            placeholder="Enter aligned sequences, one per line...&#10;ACGTACGTACGT&#10;ACGTACCGTACGT&#10;ACGTACGACGT"
+                                            oninput="document.getElementById('consensusBtn').disabled = true; document.getElementById('trimBtn').disabled = true;"></textarea>
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Enter pre-aligned sequences</div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-chart-line me-2"></i>Analyze Conservation
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConservationExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-wrench"></i> Consensus Options</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <button type="button" class="gradient-btn-info w-100 mb-2" onclick="generateConsensus()" id="consensusBtn" disabled>
+                                    <i class="fas fa-dna me-2"></i>Generate Consensus
+                                </button>
+                                <button type="button" class="gradient-btn-warning w-100" onclick="trimAlignment()" id="trimBtn" disabled>
+                                    <i class="fas fa-cut me-2"></i>Trim Alignment
+                                </button>
+                                <div class="mt-3" id="trimOptions" style="display:none;">
+                                    <label class="form-label small">Min Conservation %</label>
+                                    <input type="number" class="form-control form-control-sm" id="minConservation" value="50" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Conservation Analysis Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="conservationResults">
+                                <p class="text-muted text-center">Analyze alignment to see conservation data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End Conservation Tab -->
+
+            <!-- File I/O Tab -->
+            <div class="tab-pane fade" id="fileio" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Load Alignment File</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="loadAlignmentForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Choose Alignment File</label>
+                                        <input type="file" class="form-control form-control-sm" id="alignmentFile" name="file">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Format</label>
+                                        <select class="form-select form-select-sm" id="alignmentFileFormat">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="stockholm">Stockholm</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="nexus">NEXUS</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-file-import me-2"></i>Load Alignment
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadFileIOExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-download"></i> Export Alignment</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="exportAlignmentForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Export Format</label>
+                                        <select class="form-select form-select-sm" id="exportFormat">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="stockholm">Stockholm</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="nexus">NEXUS</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-secondary w-100" id="exportAlignBtn" disabled>
+                                        <i class="fas fa-download me-2"></i>Export Alignment
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> Load an alignment first
+                                    </small>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Loaded Alignment</h6>
+                                <span class="badge bg-primary" id="loadedCount">0 sequences</span>
+                            </div>
+                            <div class="card-body py-2" id="loadedAlignmentResults">
+                                <p class="text-muted text-center">Load an alignment file to view sequences</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End File I/O Tab -->
+
+            <!-- Advanced Tab -->
+            <div class="tab-pane fade" id="advanced" role="tabpanel">
+                <!-- Pairwise Analysis Section -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-2"><i class="fas fa-microscope"></i> Pairwise Analysis</h6>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> All Alignments</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="allAlignmentsForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="allAlignSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="allAlignSeq2" placeholder="ACGTACCGT">
+                                    <label class="form-label small">Max Results</label>
+                                    <input type="number" class="form-control form-control-sm mb-2" id="maxAlignments" value="5" min="1" max="100">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2">
+                                        <i class="fas fa-list me-1"></i>Generate
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadAllAlignmentsExample()">
+                                        <i class="fas fa-flask me-1"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-map-marker-alt"></i> Coordinates</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="coordinatesForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="coordSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="coordSeq2" placeholder="ACGTACCGT">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Extract
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadCoordinatesExample()">
+                                        <i class="fas fa-flask me-1"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-pie"></i> Detailed Stats</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="detailedStatsForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="statsSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="statsSeq2" placeholder="ACGTACCGT">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
+                                        <i class="fas fa-chart-pie me-1"></i>Calculate
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadDetailedStatsExample()">
+                                        <i class="fas fa-flask me-1"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results for Pairwise Analysis -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div id="allAlignmentsResults"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="coordinatesResults"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="detailedStatsResults"></div>
+                    </div>
+                </div>
+
+                <!-- Multi-Sequence & Specialized Section -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-2"><i class="fas fa-layer-group"></i> Multi-Sequence & Specialized</h6>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Identity Matrix</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="identityMatrixForm">
+                                    <label class="form-label small">Sequences (one per line, max 6 recommended)</label>
+                                    <textarea class="form-control form-control-sm sequence-display" id="matrixSeqs" rows="4" placeholder="ACGTACGT&#10;ACGTACCGT&#10;ACGTACGAT"></textarea>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-table me-2"></i>Calculate Matrix
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadIdentityMatrixExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <div id="identityMatrixResults" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Codon-Aware Alignment</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="codonAwareForm">
+                                    <label class="form-label small">Coding Sequence 1 (multiple of 3)</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="codonSeq1" placeholder="ATGCGATCG">
+                                    <label class="form-label small">Coding Sequence 2 (multiple of 3)</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="codonSeq2" placeholder="ATGCCATCG">
+                                    <div class="form-text mb-2"><i class="fas fa-info-circle"></i> For coding sequences - preserves codon structure</div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2">
+                                        <i class="fas fa-dna me-2"></i>Align Codons
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonAwareExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <div id="codonAwareResults" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End Advanced Tab -->
+
+        </div><!-- End Tab Content -->
+    </div><!-- End Card Body -->
+</div><!-- End Card -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('alignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const seq1 = document.getElementById('sequence1').value.trim();
+    const seq2 = document.getElementById('sequence2').value.trim();
+    
+    if (!seq1 || !seq2) {
+        return;
+    }
+    
+    const parameters = {
+        sequence1: seq1,
+        sequence2: seq2,
+        mode: document.getElementById('alignmentMode').value,
+        substitution_matrix: document.getElementById('substitutionMatrix').value,
+        match_score: document.getElementById('matchScore').value,
+        mismatch_score: document.getElementById('mismatchScore').value,
+        gap_open: document.getElementById('gapOpen').value,
+        gap_extend: document.getElementById('gapExtend').value
+    };
+    
+    showLoading('alignBtn');
+    
+    fetch('/api/alignment/pairwise', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parameters)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('alignBtn', '<i class="fas fa-align-center me-2"></i>Align Sequences');
+
+        if (data.success) {
+            displayAlignment(data.alignment, data.score, data.statistics);
+            window.alignmentResults = { alignment: data.alignment, score: data.score, statistics: data.statistics };
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('alignBtn', '<i class="fas fa-align-center"></i> Align Sequences');
+    });
+});
+
+function displayAlignment(alignment, score, statistics) {
+    const resultsDiv = document.getElementById('alignmentResults');
+    const scoreBadge = document.getElementById('alignmentScore');
+    const exportBtn = document.getElementById('exportBtn');
+
+    scoreBadge.textContent = `Score: ${score.toFixed(2)}`;
+    scoreBadge.style.display = 'inline-block';
+    exportBtn.style.display = 'inline-block';
+
+    // Format the alignment for better display
+    const alignmentLines = alignment.split('\n');
+
+    let html = '<div class="alignment-display">';
+    html += '<h6 class="mb-3"><i class="fas fa-eye"></i> Pairwise Alignment</h6>';
+
+    // Create a formatted alignment display
+    html += '<div class="border rounded p-3 bg-light">';
+    html += '<pre class="mb-0" style="font-family: monospace; font-size: 14px; line-height: 1.4;">';
+
+    alignmentLines.forEach(line => {
+        if (line.trim()) {
+            html += line + '\n';
+        }
+    });
+
+    html += '</pre></div>';
+
+    // Add alignment statistics
+    html += '<div class="row mt-3 g-3">';
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-primary mb-1 small">Alignment Score</h6>`;
+    html += `<h4 class="mb-0">${score.toFixed(2)}</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-success mb-1 small">Identity</h6>`;
+    html += `<h4 class="mb-0">${statistics.identity_percent.toFixed(1)}%</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-warning mb-1 small">Gaps</h6>`;
+    html += `<h4 class="mb-0">${statistics.gap_percent.toFixed(1)}%</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-info mb-1 small">Alignment Length</h6>`;
+    html += `<h4 class="mb-0">${statistics.alignment_length}</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    html += '</div>';
+
+    resultsDiv.innerHTML = html;
+}
+
+function loadSequenceFile(seqNum) {
+    const fileInput = document.getElementById('file' + seqNum);
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let content = e.target.result;
+
+        // Parse FASTA format if needed
+        if (file.name.endsWith('.fasta') || file.name.endsWith('.fa')) {
+            // Remove header lines starting with >
+            const lines = content.split('\n');
+            content = lines.filter(line => !line.startsWith('>')).join('').trim();
+        } else {
+            // For plain text, just clean up
+            content = content.replace(/\s+/g, '').toUpperCase();
+        }
+
+        document.getElementById('sequence' + seqNum).value = content;
+    };
+    reader.readAsText(file);
+}
+
+function loadExampleAlignment() {
+    document.getElementById('sequence1').value = 'ACGTACGTACGT';
+    document.getElementById('sequence2').value = 'ACGTACCGTACGT';
+}
+
+function exportAlignment() {
+    if (!window.alignmentResults) {
+        alert('No alignment results to export');
+        return;
+    }
+
+    const results = window.alignmentResults;
+    let content = '# Sequence Alignment Results\n\n';
+    content += '## Alignment\n';
+    content += results.alignment + '\n\n';
+    content += '## Statistics\n';
+    content += `Score: ${results.score.toFixed(2)}\n`;
+    content += `Identity: ${results.statistics.identity_percent.toFixed(1)}%\n`;
+    content += `Gaps: ${results.statistics.gap_percent.toFixed(1)}%\n`;
+    content += `Alignment Length: ${results.statistics.alignment_length}\n`;
+    content += `Matches: ${results.statistics.matches}\n`;
+    content += `Gap Count: ${results.statistics.gaps}\n`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'alignment_results.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function toggleManualScoring() {
+    const matrixSelect = document.getElementById('substitutionMatrix');
+    const manualDiv = document.getElementById('manualScoringDiv');
+
+    if (matrixSelect.value === 'none') {
+        manualDiv.style.display = 'block';
+    } else {
+        manualDiv.style.display = 'none';
+    }
+}
+
+function resetDefaults() {
+    document.getElementById('alignmentMode').value = 'global';
+    document.getElementById('substitutionMatrix').value = 'none';
+    document.getElementById('matchScore').value = '2';
+    document.getElementById('mismatchScore').value = '-1';
+    document.getElementById('gapOpen').value = '-2';
+    document.getElementById('gapExtend').value = '-0.5';
+    toggleManualScoring();
+}
+
+// MSA Functions
+document.getElementById('msaForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequencesText = document.getElementById('msaSequences').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        alert('Please enter at least 2 sequences');
+        return;
+    }
+
+    const parameters = {
+        sequences: sequences,
+        mode: 'global',
+        match_score: 2,
+        mismatch_score: -1,
+        gap_open: -2,
+        gap_extend: -0.5
+    };
+
+    showLoading('msaAlignBtn');
+
+    fetch('/api/alignment/multiple', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parameters)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('msaAlignBtn', '<i class="fas fa-align-justify me-2"></i>Align Multiple Sequences');
+
+        if (data.success) {
+            displayMSA(data);
+            window.msaResults = data;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('msaAlignBtn', '<i class="fas fa-align-justify me-2"></i>Align Multiple Sequences');
+        showAlert('Error performing MSA', 'danger');
+    });
+});
+
+function displayMSA(data) {
+    const resultsDiv = document.getElementById('msaResults');
+    const scoreBadge = document.getElementById('msaScore');
+    const exportBtn = document.getElementById('msaExportBtn');
+
+    scoreBadge.textContent = `Avg Score: ${data.average_score.toFixed(2)}`;
+    scoreBadge.style.display = 'inline-block';
+    exportBtn.style.display = 'inline-block';
+
+    let html = '<div class="msa-display">';
+    html += '<h6 class="mb-3"><i class="fas fa-align-justify"></i> Multiple Sequence Alignment Results</h6>';
+
+    // Display each pairwise alignment
+    html += '<div class="accordion" id="msaAccordion">';
+
+    data.alignments.forEach((alignment, idx) => {
+        html += `<div class="accordion-item">`;
+        html += `<h2 class="accordion-header" id="heading${idx}">`;
+        html += `<button class="accordion-button ${idx === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">`;
+        html += `Sequence ${alignment.index + 1} vs Reference (Score: ${alignment.score.toFixed(2)})`;
+        html += `</button></h2>`;
+        html += `<div id="collapse${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" data-bs-parent="#msaAccordion">`;
+        html += `<div class="accordion-body">`;
+        html += `<pre class="mb-0" style="font-family: monospace; font-size: 14px; line-height: 1.4;">${alignment.alignment}</pre>`;
+        html += `</div></div></div>`;
+    });
+
+    html += '</div>';
+
+    // Add summary statistics
+    html += '<div class="row mt-3 g-3">';
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-primary mb-1 small">Number of Sequences</h6>`;
+    html += `<h4 class="mb-0">${data.num_sequences}</h4>`;
+    html += '</div></div>';
+
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-success mb-1 small">Average Score</h6>`;
+    html += `<h4 class="mb-0">${data.average_score.toFixed(2)}</h4>`;
+    html += '</div></div>';
+
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-info mb-1 small">Total Score</h6>`;
+    html += `<h4 class="mb-0">${data.total_score.toFixed(2)}</h4>`;
+    html += '</div></div>';
+
+    html += '</div></div>';
+
+    resultsDiv.innerHTML = html;
+}
+
+function loadExampleMSA() {
+    const example = `ACGTACGTACGT
+ACGTACCGTACGT
+ACGTACGACGT
+ACGTACGTAC`;
+    document.getElementById('msaSequences').value = example;
+}
+
+function exportMSA() {
+    if (!window.msaResults) {
+        alert('No MSA results to export');
+        return;
+    }
+
+    const results = window.msaResults;
+    let content = '# Multiple Sequence Alignment Results\n\n';
+    content += `Number of Sequences: ${results.num_sequences}\n`;
+    content += `Average Score: ${results.average_score.toFixed(2)}\n`;
+    content += `Total Score: ${results.total_score.toFixed(2)}\n\n`;
+
+    results.alignments.forEach((alignment, idx) => {
+        content += `\n## Alignment ${idx + 1} (Sequence ${alignment.index + 1} vs Reference)\n`;
+        content += `Score: ${alignment.score.toFixed(2)}\n\n`;
+        content += alignment.alignment + '\n';
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'msa_results.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Semi-global alignment toggle
+function toggleSemiGlobalOptions() {
+    const mode = document.getElementById('alignmentMode').value;
+    const semiDiv = document.getElementById('semiGlobalDiv');
+    semiDiv.style.display = mode === 'semi-global' ? 'block' : 'none';
+}
+
+// Conservation Analysis
+let conservationData = null;
+
+document.getElementById('conservationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        showAlert('Please enter at least 2 sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/conservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            conservationData = data;
+            displayConservationResults(data);
+            document.getElementById('consensusBtn').disabled = false;
+            document.getElementById('trimBtn').disabled = false;
+            showAlert('Conservation analyzed', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+});
+
+function displayConservationResults(data) {
+    const resultsDiv = document.getElementById('conservationResults');
+    let html = '<div class="conservation-display">';
+    html += '<h6 class="mb-3">Average Conservation: ' + data.average_conservation + '%</h6>';
+    html += '<div class="border rounded p-3 bg-light"><div style="font-family: monospace; font-size: 11px;">';
+    html += '<strong>Position | Conservation % | Entropy</strong><br>';
+    data.conservation_data.forEach(pos => {
+        const bar = '█'.repeat(Math.round(pos.conservation / 5));
+        const color = pos.conservation >= 70 ? 'text-success' : 'text-warning';
+        html += '<span class="' + color + '">' + pos.position + ' | ' + pos.conservation + '% | ' + pos.entropy.toFixed(2) + ' ' + bar + '</span><br>';
+    });
+    html += '</div></div></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function generateConsensus() {
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+    fetch('/api/alignment/consensus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Consensus: ' + data.consensus + '\nAvg Conservation: ' + data.average_conservation + '%');
+        }
+    });
+}
+
+function trimAlignment() {
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+    const minCons = document.getElementById('minConservation').value;
+    fetch('/api/alignment/trim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences, min_conservation: parseInt(minCons) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('conservationSeqs').value = data.trimmed_sequences.join('\n');
+            showAlert('Trimmed ' + data.positions_removed + ' positions', 'success');
+        }
+    });
+}
+
+function loadConservationExample() {
+    document.getElementById('conservationSeqs').value = 'ACGTACGTACGT\nACGTACCGTACGT\nACGTACGACGT';
+}
+
+// File I/O Functions
+let loadedAlignment = null;
+
+document.getElementById('loadAlignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const fileInput = document.getElementById('alignmentFile');
+    formData.append('file', fileInput.files[0]);
+    formData.append('format', document.getElementById('alignmentFileFormat').value);
+    fetch('/api/alignment/parse_file', { method: 'POST', body: formData })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadedAlignment = data.sequences;
+            displayLoadedAlignment(data);
+            document.getElementById('exportAlignBtn').disabled = false;
+            showAlert('Loaded ' + data.num_sequences + ' sequences', 'success');
+        }
+    });
+});
+
+function displayLoadedAlignment(data) {
+    const resultsDiv = document.getElementById('loadedAlignmentResults');
+    document.getElementById('loadedCount').textContent = data.num_sequences + ' sequences';
+    let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID</th><th>Length</th><th>Preview</th></tr></thead><tbody>';
+    data.sequences.forEach(seq => {
+        const preview = seq.sequence.substring(0, 60) + '...';
+        html += '<tr><td><code>' + seq.id + '</code></td><td>' + seq.length + '</td><td><small>' + preview + '</small></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+document.getElementById('exportAlignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!loadedAlignment) { showAlert('Load alignment first', 'warning'); return; }
+    const format = document.getElementById('exportFormat').value;
+    fetch('/api/alignment/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: loadedAlignment, format: format })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const blob = new Blob([data.exported], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'alignment.' + format;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    });
+});
+
+// Advanced Tab Functions
+
+// 1. All Alignments
+document.getElementById('allAlignmentsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('allAlignSeq1').value.trim();
+    const seq2 = document.getElementById('allAlignSeq2').value.trim();
+    const maxAlignments = document.getElementById('maxAlignments').value;
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/all_alignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequence1: seq1,
+            sequence2: seq2,
+            max_alignments: parseInt(maxAlignments)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Found ' + data.total_found + ' Alignment(s)</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+            data.alignments.forEach((aln, idx) => {
+                if (idx > 0) html += '<hr class="my-2">';
+                html += '<div><strong style="font-size: 11px;">Alignment ' + (idx+1) + ' (Score: ' + aln.score.toFixed(2) + ')</strong>';
+                html += '<pre class="mb-0 mt-1" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + aln.alignment + '</pre></div>';
+            });
+            html += '</div></div>';
+            document.getElementById('allAlignmentsResults').innerHTML = html;
+            showAlert('Generated ' + data.total_found + ' alignments', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 2. Identity Matrix
+document.getElementById('identityMatrixForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seqsText = document.getElementById('matrixSeqs').value.trim();
+    const sequences = seqsText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        showAlert('Please enter at least 2 sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/identity_matrix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Identity Matrix Results</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+
+            // Use a compact, responsive layout
+            const numSeqs = data.labels.length;
+            if (numSeqs <= 4) {
+                // Show full table for 4 or fewer sequences - fits without scrolling
+                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 10px; table-layout: fixed; width: 100%;">';
+                html += '<thead class="table-light"><tr><th style="width: 20%;"></th>';
+                data.labels.forEach(label => {
+                    html += '<th class="text-center p-1" style="width: ' + (80/numSeqs) + '%;">' + label + '</th>';
+                });
+                html += '</tr></thead><tbody>';
+                data.matrix.forEach((row, i) => {
+                    html += '<tr><th class="table-light p-1">' + data.labels[i] + '</th>';
+                    row.forEach(val => {
+                        const color = val >= 80 ? 'table-success' : val >= 60 ? 'table-warning' : val >= 40 ? 'table-info' : '';
+                        html += '<td class="text-center p-1 ' + color + '">' + val.toFixed(0) + '%</td>';
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            } else {
+                // For more than 4, show a compact badge list view
+                html += '<div style="font-size: 11px;">';
+                html += '<p class="mb-2 text-muted small"><i class="fas fa-info-circle"></i> Pairwise identities (' + numSeqs + ' sequences):</p>';
+                for (let i = 0; i < data.matrix.length; i++) {
+                    for (let j = i + 1; j < data.matrix[i].length; j++) {
+                        const val = data.matrix[i][j];
+                        const color = val >= 80 ? 'success' : val >= 60 ? 'warning' : 'secondary';
+                        html += '<span class="badge bg-' + color + ' me-1 mb-1" style="font-size: 10px;">' + data.labels[i] + '-' + data.labels[j] + ': ' + val.toFixed(0) + '%</span>';
+                    }
+                }
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+            document.getElementById('identityMatrixResults').innerHTML = html;
+            showAlert('Identity matrix calculated', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 3. Alignment Coordinates
+document.getElementById('coordinatesForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('coordSeq1').value.trim();
+    const seq2 = document.getElementById('coordSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/coordinates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Coordinates</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="row g-1">';
+            html += '<div class="col-6"><strong>Target Start:</strong> ' + data.coordinates.target_start + '</div>';
+            html += '<div class="col-6"><strong>Target End:</strong> ' + data.coordinates.target_end + '</div>';
+            html += '<div class="col-6"><strong>Query Start:</strong> ' + data.coordinates.query_start + '</div>';
+            html += '<div class="col-6"><strong>Query End:</strong> ' + data.coordinates.query_end + '</div>';
+            html += '<div class="col-6"><strong>Score:</strong> ' + data.coordinates.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Mode:</strong> ' + data.coordinates.mode + '</div>';
+            html += '</div></div></div>';
+            document.getElementById('coordinatesResults').innerHTML = html;
+            showAlert('Coordinates extracted', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 4. Codon-Aware Alignment
+document.getElementById('codonAwareForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('codonSeq1').value.trim();
+    const seq2 = document.getElementById('codonSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    if (seq1.length % 3 !== 0 || seq2.length % 3 !== 0) {
+        showAlert('Sequences must be multiples of 3 for codon-aware alignment', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/codon_aware', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Codon-Aware Results</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+            html += '<pre class="mb-2" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + data.alignment + '</pre>';
+            html += '<div class="row g-1" style="font-size: 11px;">';
+            html += '<div class="col-6"><strong>Score:</strong> ' + data.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Codon Matches:</strong> ' + data.codon_statistics.codon_matches + '</div>';
+            html += '<div class="col-6"><strong>Codon Mismatches:</strong> ' + data.codon_statistics.codon_mismatches + '</div>';
+            html += '<div class="col-6"><strong>Codon Identity:</strong> ' + data.codon_statistics.codon_identity_percent.toFixed(1) + '%</div>';
+            html += '</div></div></div>';
+            document.getElementById('codonAwareResults').innerHTML = html;
+            showAlert('Codon-aware alignment completed', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 5. Detailed Statistics
+document.getElementById('detailedStatsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('statsSeq1').value.trim();
+    const seq2 = document.getElementById('statsSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/detailed_stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const stats = data.statistics;
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Statistics</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="row g-1">';
+            html += '<div class="col-6"><strong>Score:</strong> ' + stats.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Length:</strong> ' + stats.alignment_length + '</div>';
+            html += '<div class="col-6"><strong>Matches:</strong> ' + stats.matches + '</div>';
+            html += '<div class="col-6"><strong>Mismatches:</strong> ' + stats.mismatches + '</div>';
+            html += '<div class="col-6"><strong>Gap Opens:</strong> ' + stats.gap_opens + '</div>';
+            html += '<div class="col-6"><strong>Gap Extends:</strong> ' + stats.gap_extends + '</div>';
+            html += '<div class="col-6"><strong>Gaps Seq1:</strong> ' + stats.gaps_seq1 + '</div>';
+            html += '<div class="col-6"><strong>Gaps Seq2:</strong> ' + stats.gaps_seq2 + '</div>';
+            html += '<div class="col-6"><strong>Total Gaps:</strong> ' + stats.total_gaps + '</div>';
+            html += '<div class="col-6"><strong>Identity:</strong> ' + stats.identity_percent.toFixed(1) + '%</div>';
+            html += '<div class="col-6"><strong>Similarity:</strong> ' + stats.similarity_percent.toFixed(1) + '%</div>';
+            html += '<div class="col-6"><strong>Gap %:</strong> ' + stats.gap_percent.toFixed(1) + '%</div>';
+            html += '</div></div></div>';
+            document.getElementById('detailedStatsResults').innerHTML = html;
+            showAlert('Detailed statistics calculated', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Detailed stats error:', error);
+        showAlert('Request failed: ' + error.message, 'danger');
+    });
+});
+
+// Example data loading functions for Advanced tab
+function loadAllAlignmentsExample() {
+    document.getElementById('allAlignSeq1').value = 'ACGTACGT';
+    document.getElementById('allAlignSeq2').value = 'ACGTACCGT';
+    document.getElementById('maxAlignments').value = '5';
+}
+
+function loadIdentityMatrixExample() {
+    document.getElementById('matrixSeqs').value = 'ACGTACGTACGT\nACGTACCGTACGT\nACGTACGACGT\nACGTACGTAC';
+}
+
+function loadCoordinatesExample() {
+    document.getElementById('coordSeq1').value = 'ACGTACGTACGT';
+    document.getElementById('coordSeq2').value = 'ACGTACCGTACGT';
+}
+
+function loadCodonAwareExample() {
+    document.getElementById('codonSeq1').value = 'ATGCGATCG';
+    document.getElementById('codonSeq2').value = 'ATGCCATCG';
+}
+
+function loadDetailedStatsExample() {
+    document.getElementById('statsSeq1').value = 'ACGTACGTACGT';
+    document.getElementById('statsSeq2').value = 'ACGTACCGTACGT';
+}
+
+// File I/O Example - Load example alignment programmatically
+function loadFileIOExample() {
+    // Create example sequences
+    const exampleSequences = [
+        {id: 'Seq1', sequence: 'ACGTACGTACGT', length: 12},
+        {id: 'Seq2', sequence: 'ACGTACCGTACGT', length: 13},
+        {id: 'Seq3', sequence: 'ACGTACGACGT', length: 11},
+        {id: 'Seq4', sequence: 'ACGTACGTAC', length: 10}
+    ];
+
+    // Store as loaded alignment
+    loadedAlignment = exampleSequences;
+
+    // Display the example alignment
+    displayLoadedAlignment({
+        sequences: exampleSequences,
+        num_sequences: exampleSequences.length
+    });
+
+    // Enable export button
+    document.getElementById('exportAlignBtn').disabled = false;
+
+    showAlert('Loaded ' + exampleSequences.length + ' example sequences', 'success');
+}
+</script>
+{% endblock %}

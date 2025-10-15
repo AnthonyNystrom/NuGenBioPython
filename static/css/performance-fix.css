@@ -1,0 +1,210 @@
+/**
+ * Performance Optimization CSS
+ * Fixes UI flashing and improves scroll performance
+ */
+
+/* Force GPU acceleration for smoother rendering */
+.card,
+.nav-link,
+.btn,
+button,
+.tab-pane {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+}
+
+/* Optimize tab transitions */
+.tab-pane {
+    will-change: auto;
+}
+
+.tab-pane.active {
+    animation: none !important;
+}
+
+/* Remove transforms on scroll to prevent flashing */
+body.scrolling .card,
+body.scrolling .nav-link,
+body.scrolling .btn,
+body.scrolling button {
+    transition: none !important;
+    transform: none !important;
+}
+
+.card:hover,
+.btn:hover,
+button:hover {
+    transform: translateZ(0) !important;
+}
+
+/* Optimize collapsible content */
+.collapse,
+.collapsing {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Reduce transition on frequently changing elements */
+.badge,
+.alert,
+.toast {
+    transition: opacity 0.15s ease !important;
+}
+
+/* Optimize Bootstrap tab fade */
+.fade {
+    transition: opacity 0.1s linear !important;
+}
+
+/* Prevent layout shifts */
+img,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Optimize table rendering */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+    will-change: auto;
+}
+
+/* Fix Bootstrap modal backdrop flashing */
+.modal-backdrop {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Optimize navbar */
+.navbar,
+.sidebar-container {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: auto;
+}
+
+/* Reduce repaints on form controls */
+.form-control:focus,
+.form-select:focus {
+    transition: border-color 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+}
+
+/* Optimize gradient buttons */
+.gradient-btn-primary,
+.gradient-btn-secondary,
+.gradient-btn-success,
+.gradient-btn-info,
+.gradient-btn-warning,
+.gradient-btn-danger,
+.gradient-btn-small {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: auto;
+}
+
+.gradient-btn-primary:hover,
+.gradient-btn-secondary:hover,
+.gradient-btn-success:hover,
+.gradient-btn-info:hover,
+.gradient-btn-warning:hover,
+.gradient-btn-danger:hover,
+.gradient-btn-small:hover {
+    transform: translateZ(0) translateY(-1px) !important;
+}
+
+/* Prevent flashing during tab switches */
+.nav-tabs .nav-link {
+    transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+/* Optimize content area scrolling */
+.main-content {
+    -webkit-overflow-scrolling: touch;
+    will-change: auto;
+}
+
+/* Fix card hover effects */
+.card {
+    transition: box-shadow 0.15s ease;
+}
+
+/* Optimize spinner animations */
+.spinner-border,
+.spinner-grow {
+    will-change: transform;
+}
+
+/* Prevent text selection flashing */
+::selection {
+    background-color: rgba(14, 165, 233, 0.2);
+}
+
+::-moz-selection {
+    background-color: rgba(14, 165, 233, 0.2);
+}
+
+/* Smooth scrollbar on webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Optimize loading states */
+[data-loading="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+    transition: opacity 0.1s ease;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Fix Bootstrap offcanvas flashing */
+.offcanvas {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Optimize dropdown menus */
+.dropdown-menu {
+    transition: opacity 0.1s ease;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Fix accordion flashing */
+.accordion-button {
+    transition: background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.accordion-collapse {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}

@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}BLAST Search - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #blastTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #blastTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-warning mb-1">
+            <i class="fas fa-rocket"></i> BLAST Search
+        </h2>
+        <p class="lead mb-3">Perform sequence similarity searches using NCBI BLAST</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="blastTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>BLAST Search</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab">
+                <i class="fas fa-list d-block mb-1"></i>
+                <small>Results</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="alignment-tab" data-bs-toggle="tab" data-bs-target="#alignment" type="button" role="tab">
+                <i class="fas fa-align-left d-block mb-1"></i>
+                <small>Alignments</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                <i class="fas fa-download d-block mb-1"></i>
+                <small>Export</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="blastTabContent">
+            <!-- BLAST Search Tab -->
+            <div class="tab-pane fade show active" id="search" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Query Sequence</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="blastForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="querySequence" class="form-label small">Query Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="querySequence" rows="5"
+                                                placeholder="Enter your query sequence (DNA, RNA, or protein)..."></textarea>
+                                        <div class="mt-2">
+                                            <input type="file" class="form-control form-control-sm" id="sequenceFile" accept=".fasta,.fa,.fna,.faa,.gb,.gbk,.txt" style="max-width: 350px;">
+                                            <small class="text-muted d-block mt-1">Upload FASTA (.fasta, .fa), GenBank (.gb, .gbk), or plain text (.txt) files</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="blastProgram" class="form-label small">BLAST Program</label>
+                                                <select class="form-select form-select-sm" id="blastProgram">
+                                                    <option value="blastn">blastn (DNA vs DNA)</option>
+                                                    <option value="blastp">blastp (Protein vs Protein)</option>
+                                                    <option value="blastx">blastx (DNA vs Protein)</option>
+                                                    <option value="tblastn">tblastn (Protein vs DNA)</option>
+                                                    <option value="tblastx">tblastx (DNA vs DNA, translated)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="database" class="form-label small">Database</label>
+                                                <select class="form-select form-select-sm" id="database">
+                                                    <option value="nt">Nucleotide collection (nt)</option>
+                                                    <option value="nr">Non-redundant protein (nr)</option>
+                                                    <option value="refseq_rna">RefSeq RNA</option>
+                                                    <option value="refseq_protein">RefSeq Protein</option>
+                                                    <option value="swissprot">SwissProt</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="maxHits" class="form-label small">Max Hits</label>
+                                                <select class="form-select form-select-sm" id="maxHits">
+                                                    <option value="10">10</option>
+                                                    <option value="50" selected>50</option>
+                                                    <option value="100">100</option>
+                                                    <option value="250">250</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="eValue" class="form-label small">E-value Threshold</label>
+                                                <select class="form-select form-select-sm" id="eValue">
+                                                    <option value="10">10</option>
+                                                    <option value="1">1</option>
+                                                    <option value="0.1">0.1</option>
+                                                    <option value="0.01">0.01</option>
+                                                    <option value="0.001" selected>0.001</option>
+                                                    <option value="0.0001">0.0001</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="wordSize" class="form-label small">Word Size</label>
+                                                <input type="number" class="form-control form-control-sm" id="wordSize" placeholder="Auto">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <label for="matrixName" class="form-label small">Matrix</label>
+                                                <select class="form-select form-select-sm" id="matrixName">
+                                                    <option value="">Default</option>
+                                                    <option value="BLOSUM62">BLOSUM62</option>
+                                                    <option value="BLOSUM45">BLOSUM45</option>
+                                                    <option value="BLOSUM80">BLOSUM80</option>
+                                                    <option value="PAM30">PAM30</option>
+                                                    <option value="PAM70">PAM70</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="filterLowComplexity" checked>
+                                        <label class="form-check-label small" for="filterLowComplexity">
+                                            Filter low complexity regions
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="blastBtn">
+                                        <i class="fas fa-rocket me-2"></i> Run BLAST Search
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadBlastExample()">
+                                        <i class="fas fa-flask me-2"></i> Load Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Search Info</h6>
+                            </div>
+                            <div class="card-body py-2" id="searchInfo">
+                                <p class="text-muted text-center small">
+                                    <i class="fas fa-cog fa-2x mb-3"></i><br>
+                                    Configure and run BLAST to see parameters
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div class="tab-pane fade" id="results" role="tabpanel">
+                <div class="card mb-3">
+                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 small"><i class="fas fa-list"></i> BLAST Hits</h6>
+                        <span class="badge bg-warning" id="resultCount" style="display:none;"></span>
+                    </div>
+                    <div class="card-body py-2" id="blastResults">
+                        <p class="text-muted text-center">
+                            <i class="fas fa-arrow-left fa-2x mb-3"></i><br>
+                            Run BLAST search to see results
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alignment Tab -->
+            <div class="tab-pane fade" id="alignment" role="tabpanel">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-align-left"></i> Detailed Alignment</h6>
+                    </div>
+                    <div class="card-body py-2" id="alignmentView">
+                        <p class="text-muted text-center">
+                            <i class="fas fa-align-left fa-2x mb-3"></i><br>
+                            Select a hit from results to view detailed alignment
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Tab -->
+            <div class="tab-pane fade" id="export" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-download"></i> Export Results</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="exportFormat" class="form-label small">Export Format</label>
+                                    <select class="form-select form-select-sm" id="exportFormat">
+                                        <option value="json">JSON</option>
+                                        <option value="xml">XML</option>
+                                        <option value="text">Text</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-warning w-100 mb-2" onclick="exportResults()">
+                                    <i class="fas fa-file-export me-2"></i> Export Results
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Statistics</h6>
+                            </div>
+                            <div class="card-body py-2" id="statistics">
+                                <p class="text-muted text-center small">
+                                    <i class="fas fa-chart-bar fa-2x mb-3"></i><br>
+                                    Statistics will appear after running BLAST
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info small" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <strong>Note:</strong> BLAST searches connect to NCBI servers and may take 30 seconds to several minutes depending on sequence length and database size.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentResults = [];
+
+document.getElementById('blastForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequence = document.getElementById('querySequence').value.trim();
+    const fileInput = document.getElementById('sequenceFile');
+
+    if (!sequence && (!fileInput.files || fileInput.files.length === 0)) {
+        showAlert('Please enter a query sequence or upload a file', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+
+    // Add file if uploaded
+    if (fileInput.files && fileInput.files.length > 0) {
+        formData.append('sequenceFile', fileInput.files[0]);
+    } else {
+        formData.append('sequence', sequence);
+    }
+
+    formData.append('program', document.getElementById('blastProgram').value);
+    formData.append('database', document.getElementById('database').value);
+    formData.append('expect', document.getElementById('eValue').value);
+    formData.append('hitlist_size', document.getElementById('maxHits').value);
+
+    const wordSize = document.getElementById('wordSize').value;
+    if (wordSize) formData.append('word_size', wordSize);
+
+    const matrix = document.getElementById('matrixName').value;
+    if (matrix) formData.append('matrix_name', matrix);
+
+    formData.append('filter', document.getElementById('filterLowComplexity').checked ? 'T' : 'F');
+
+    showLoading('blastBtn');
+
+    fetch('/api/blast/search', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('blastBtn', '<i class="fas fa-rocket me-2"></i> Run BLAST Search');
+        if (data.success) {
+            currentResults = data.results;
+            displayResults(data);
+            displayStatistics(data.statistics);
+            // Switch to results tab
+            document.getElementById('results-tab').click();
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('blastBtn', '<i class="fas fa-rocket me-2"></i> Run BLAST Search');
+        showAlert('Error running BLAST: ' + error, 'danger');
+    });
+});
+
+function displayResults(data) {
+    const resultsDiv = document.getElementById('blastResults');
+    const countBadge = document.getElementById('resultCount');
+
+    countBadge.textContent = `${data.num_hits} hits`;
+    countBadge.style.display = 'inline-block';
+
+    if (data.results.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-center text-muted">No significant hits found</p>';
+        return;
+    }
+
+    // Store current results globally for viewAlignment
+    window.blastCurrentResults = data.results;
+
+    let html = '<div class="table-responsive"><table class="table table-sm table-hover">';
+    html += '<thead class="table-light"><tr><th>Accession</th><th>Title</th><th>Score (bits)</th><th>E-value</th><th>Identity</th><th>Action</th></tr></thead><tbody>';
+
+    data.results.forEach((hit, index) => {
+        const eValue = hit.e_value === 0 ? '0.0' : hit.e_value.toExponential(1);
+        const displayScore = hit.bits ? Math.round(hit.bits) : (hit.score ? Math.round(hit.score) : 0);
+
+        html += `<tr>
+            <td class="small">${hit.accession || 'N/A'}</td>
+            <td class="small">${hit.title ? hit.title.substring(0, 60) + '...' : 'N/A'}</td>
+            <td class="text-center"><span class="badge bg-success">${displayScore}</span></td>
+            <td class="small">${eValue}</td>
+            <td class="text-center">${hit.identity_percent || 0}%</td>
+            <td class="text-center"><button class="btn btn-sm btn-outline-warning" onclick="window.viewBlastAlignment(${index}); return false;">
+                <i class="fas fa-align-left"></i> View
+            </button></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+// Make viewAlignment globally accessible
+window.viewBlastAlignment = function(index) {
+    const results = window.blastCurrentResults || currentResults;
+
+    if (!results || results.length === 0) {
+        showAlert('No results available. Please run a BLAST search first.', 'warning');
+        return;
+    }
+
+    if (index >= results.length) {
+        showAlert('Invalid hit index', 'danger');
+        return;
+    }
+
+    fetch(`/api/blast/alignment/${index}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const alignDiv = document.getElementById('alignmentView');
+            let html = `<div class="mb-3">
+                <h6 class="text-warning"><i class="fas fa-dna"></i> ${data.hit.accession}</h6>
+                <p class="small mb-2">${data.hit.title}</p>
+                <div class="row small">
+                    <div class="col-md-3"><strong>Score:</strong> ${data.hit.score} (${data.hit.bits} bits)</div>
+                    <div class="col-md-3"><strong>E-value:</strong> ${data.hit.e_value.toExponential(2)}</div>
+                    <div class="col-md-3"><strong>Identity:</strong> ${data.hit.identities}/${data.hit.align_length} (${data.hit.identity_percent}%)</div>
+                    <div class="col-md-3"><strong>Gaps:</strong> ${data.hit.gaps}/${data.hit.align_length}</div>
+                </div>
+            </div>
+            <pre class="bg-light p-3 small" style="font-family: monospace;">${data.alignment}</pre>`;
+
+            alignDiv.innerHTML = html;
+            document.getElementById('alignment-tab').click();
+        } else {
+            showAlert('Error: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error loading alignment: ' + error.message, 'danger');
+    });
+};
+
+// Alias for backward compatibility
+function viewAlignment(index) {
+    window.viewBlastAlignment(index);
+}
+
+function displayStatistics(stats) {
+    if (!stats || Object.keys(stats).length === 0) return;
+
+    const statsDiv = document.getElementById('statistics');
+    let html = '<div class="small">';
+    html += `<p><strong>Total Hits:</strong> ${stats.total_hits}</p>`;
+    html += `<p><strong>Avg Identity:</strong> ${stats.avg_identity}%</p>`;
+    html += `<p><strong>Max Identity:</strong> ${stats.max_identity}%</p>`;
+    html += `<p><strong>Avg Score:</strong> ${stats.avg_score}</p>`;
+    html += `<p><strong>Max Score:</strong> ${stats.max_score}</p>`;
+    html += '</div>';
+
+    statsDiv.innerHTML = html;
+}
+
+function exportResults() {
+    const format = document.getElementById('exportFormat').value;
+    window.open(`/api/blast/export?format=${format}`, '_blank');
+}
+
+function loadBlastExample() {
+    const exampleSeq = 'ATGGATGATGATATCGCCGCGCTCGTCGTCGACAACGGCTCCGGCATGTGCAAGGCCGGCTTCGCGGGCGACGATGCCCCCCGGGCCGTCTTCCCCTCCATCGTGGGGCGCCCCAGGCACCAGGGCGTGATGGTGGGCATGGGTCAGAAGGACTCCTATGTGGGTGACGAGGCCCAGAGCAAGAGAGGCATCCTCACCCTGAAGTACCCCATCGAGCACGGCATCGTCACCAACTGGGACGACATGGAGAAAATCTGGCACCACACCTTCTACAATGAGCTGCGTGTGGCTCCCGAGGAGCACCCCGTGCTGCTGACCGAGGCCCCCCTGAACCCCAAGGCCAACCGCGAGAAGATGACCCAGATCATGTTTGAGACCTTCAACACCCCAGCCATGTACGTTGCTATCCAGGCTGTGCTATCCCTGTACGCCTCTGGCCGTACCACTGGCATCGTGATGGACTCCGGTGACGGGGTCACCCACACTGTGCCCATCTACGAGGGGTATGCCCTCCCCCATGCCATCCTGCGTCTGGACCTGGCTGGCCGGGACCTGACTGACTACCTCATGAAGATCCTCACCGAGCGCGGCTACAGCTTCACCACCACGGCCGAGCGGGAAATCGTGCGTGACATTAAGGAGAAGCTGTGCTACGTCGCCCTGGACTTCGAGCAAGAGATGGCCACGGCTGCTTCCAGCTCCTCCCTGGAGAAGAGCTACGAGCTGCCTGACGGCCAGGTCATCACCATTGGCAATGAGCGGTTCCGCTGCCCTGAGGCACTCTTCCAGCCTTCCTTCCTGGGCATGGAGTCCTGTGGCATCCACGAAACTACCTTCAACTCCATCATGAAGTGTGACGTGGACATCCGCAAAGACCTGTACGCCAACACAGTGCTGTCTGGCGGCACCACCATGTACCCTGGCATTGCCGACAGGATGCAGAAGGAGATCACTGCCCTGGCACCCAGCACAATGAAGATCAAGATCATTGCTCCTCCTGAGCGCAAGTACTCCGTGTGGATCGGCGGCTCCATCCTGGCCTCGCTGTCCACCTTCCAGCAGATGTGGATCAGCAAGCAGGAGTATGACGAGTCCGGCCCCTCCATCGTCCACCGCAAATGCTTCTAGGTTTTAATGGTTTGATGATTAATTAATAAATTATCTGCATAAAAAAAAAAAAAAAAAAAAAAA';
+    document.getElementById('querySequence').value = exampleSeq;
+    document.getElementById('blastProgram').value = 'blastn';
+    document.getElementById('database').value = 'nt';
+    document.getElementById('maxHits').value = '10';
+    document.getElementById('sequenceFile').value = ''; // Clear file input
+    showAlert('Example sequence loaded. This is a human beta-actin gene sequence.', 'success');
+}
+</script>
+{% endblock %}

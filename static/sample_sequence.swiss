@@ -1,0 +1,29 @@
+ID   SAMPLE1              Reviewed;         121 AA.
+AC   SAMPLE1;
+DT   01-JAN-2024, integrated into UniProtKB/Swiss-Prot.
+DT   01-JAN-2024, sequence version 1.
+DT   01-JAN-2024, entry version 1.
+DE   Sample protein sequence for testing.
+GN   Name=sample_gene;
+OS   synthetic construct.
+OC   other sequences; artificial sequences.
+OX   NCBI_TaxID=0;
+RN   [1]
+RP   SEQUENCE.
+RX   MEDLINE; 000000000.
+RA   NuGenBioPython;
+RT   "Sample sequence for testing";
+RL   Unpublished.
+CC   -!- FUNCTION: Sample protein for testing purposes.
+CC   -!- SUBCELLULAR LOCATION: Not applicable.
+CC   -!- SIMILARITY: Contains no known domains.
+CC   -!- CAUTION: This is a synthetic sequence for testing.
+DR   EMBL; SAMPLE1; SAMPLE1.1; -.
+KW   Sample; Test.
+FT   DOMAIN       1    121
+FT                   /note="Sample protein domain"
+FT   CHAIN         1    121
+FT                   /note="Sample protein"
+SQ   SEQUENCE   121 AA;  121 MW;  000000000000000000000000 checksum.
+     MKLIVWGSIKKEGVYHRLGEYFTNGKEVTVDGKKVKAHGKKVLGAFSDGLAHLDNLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH
+//

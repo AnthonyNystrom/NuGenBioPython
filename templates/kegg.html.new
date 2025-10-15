@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}KEGG Database - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #keggTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #keggTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-project-diagram"></i> KEGG Database
+        </h2>
+        <p class="lead mb-3">Access KEGG pathways, genes, compounds, and more using Bio.KEGG</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="keggTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>Search</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">
+                <i class="fas fa-list d-block mb-1"></i>
+                <small>List Database</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
+                <i class="fas fa-link d-block mb-1"></i>
+                <small>Link Entries</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
+                <i class="fas fa-exchange-alt d-block mb-1"></i>
+                <small>Convert IDs</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+                <i class="fas fa-info-circle d-block mb-1"></i>
+                <small>Database Info</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content">

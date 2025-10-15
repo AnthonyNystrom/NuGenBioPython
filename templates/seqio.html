@@ -1,0 +1,1359 @@
+{% extends "base.html" %}
+
+{% block title %}File I/O (SeqIO) - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #seqioTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #seqioTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-success mb-1">
+            <i class="fas fa-file-import"></i> File I/O (SeqIO)
+        </h2>
+        <p class="lead mb-3">Complete sequence file handling using Bio.SeqIO</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="seqioTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+                <i class="fas fa-upload d-block mb-1"></i>
+                <small>Parse & Convert</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
+                <i class="fas fa-filter d-block mb-1"></i>
+                <small>Filter & Sort</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">
+                <i class="fas fa-chart-bar d-block mb-1"></i>
+                <small>Statistics</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fastq-tab" data-bs-toggle="tab" data-bs-target="#fastq" type="button">
+                <i class="fas fa-dna d-block mb-1"></i>
+                <small>FASTQ/Quality</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="slice-tab" data-bs-toggle="tab" data-bs-target="#slice" type="button">
+                <i class="fas fa-cut d-block mb-1"></i>
+                <small>Slice/Extract</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
+                <i class="fas fa-tools d-block mb-1"></i>
+                <small>Advanced</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- Parse & Convert Tab -->
+            <div class="tab-pane fade show active" id="parse">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Parse Sequence File</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="parseForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="fileInput" class="form-label small">Choose File</label>
+                                        <input type="file" class="form-control" id="fileInput" name="file">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="fileFormat" class="form-label small">File Format</label>
+                                        <select class="form-select" id="fileFormat" name="format">
+                                            <optgroup label="Common Formats">
+                                                <option value="fasta">FASTA</option>
+                                                <option value="fasta-2line">FASTA (2-line)</option>
+                                                <option value="fastq">FASTQ</option>
+                                                <option value="fastq-sanger">FASTQ-Sanger</option>
+                                                <option value="fastq-illumina">FASTQ-Illumina</option>
+                                                <option value="fastq-solexa">FASTQ-Solexa</option>
+                                                <option value="genbank">GenBank</option>
+                                                <option value="gb">GenBank (gb)</option>
+                                                <option value="embl">EMBL</option>
+                                                <option value="swiss">Swiss-Prot</option>
+                                            </optgroup>
+                                            <optgroup label="Alignment Formats">
+                                                <option value="clustal">Clustal</option>
+                                                <option value="phylip">PHYLIP</option>
+                                                <option value="nexus">NEXUS</option>
+                                                <option value="stockholm">Stockholm</option>
+                                            </optgroup>
+                                            <optgroup label="Protein & Structure">
+                                                <option value="pir">PIR/NBRF</option>
+                                                <option value="pdb-atom">PDB (ATOM)</option>
+                                                <option value="pdb-seqres">PDB (SEQRES)</option>
+                                                <option value="cif-atom">CIF (ATOM)</option>
+                                                <option value="cif-seqres">CIF (SEQRES)</option>
+                                            </optgroup>
+                                            <optgroup label="Sequencing Platforms">
+                                                <option value="abi">ABI</option>
+                                                <option value="abi-trim">ABI (trimmed)</option>
+                                                <option value="ace">ACE</option>
+                                                <option value="phd">PHD</option>
+                                                <option value="qual">Quality</option>
+                                                <option value="sff">SFF (454)</option>
+                                                <option value="sff-trim">SFF (trimmed)</option>
+                                            </optgroup>
+                                            <optgroup label="Assembly & Graph">
+                                                <option value="gfa1">GFA1</option>
+                                                <option value="gfa2">GFA2</option>
+                                            </optgroup>
+                                            <optgroup label="Specialized">
+                                                <option value="seqxml">SeqXML</option>
+                                                <option value="ig">IntelliGenetics</option>
+                                                <option value="tab">Tab-separated</option>
+                                                <option value="snapgene">SnapGene</option>
+                                                <option value="gck">Gene Construction Kit</option>
+                                                <option value="xdna">DNA Strider</option>
+                                                <option value="imgt">IMGT</option>
+                                                <option value="nib">NIB (UCSC)</option>
+                                                <option value="twobit">TwoBit</option>
+                                                <option value="uniprot-xml">UniProt XML</option>
+                                            </optgroup>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i> Supports .gz compressed files
+                                        </small>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="parseBtn">
+                                        <i class="fas fa-file-import me-2"></i> Parse File
+                                    </button>
+                                    <div class="mt-3">
+                                        <h6 class="text-muted mb-2 small text-uppercase" style="font-size: 11px; letter-spacing: 1px;">Load Sample Files</h6>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('fasta')">
+                                                    <i class="fas fa-flask me-1"></i> FASTA
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('genbank')">
+                                                    <i class="fas fa-flask me-1"></i> GenBank
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('fastq')">
+                                                    <i class="fas fa-flask me-1"></i> FASTQ
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('embl')">
+                                                    <i class="fas fa-flask me-1"></i> EMBL
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted d-block mt-2">
+                                            <i class="fas fa-info-circle"></i> Click to load example files for testing
+                                        </small>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-exchange-alt"></i> Format Converter</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="convertForm">
+                                    <div class="mb-2">
+                                        <label for="outputFormat" class="form-label small">Convert To</label>
+                                        <select class="form-select" id="outputFormat" name="output_format">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="fastq">FASTQ</option>
+                                            <option value="genbank">GenBank</option>
+                                            <option value="embl">EMBL</option>
+                                            <option value="swiss">Swiss-Prot</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="nexus">NEXUS</option>
+                                            <option value="stockholm">Stockholm</option>
+                                            <option value="tab">Tab-separated</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-secondary w-100" id="convertBtn" disabled>
+                                        <i class="fas fa-exchange-alt me-2"></i> Convert Format
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Parsed Sequences</h6>
+                                <span class="badge bg-primary" id="sequenceCount">0 sequences</span>
+                            </div>
+                            <div class="card-body py-2" id="sequenceResults">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                                    Upload and parse a sequence file to see results
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Sort Tab -->
+            <div class="tab-pane fade" id="filter">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-filter"></i> Filter Sequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="filterForm">
+                                    <div class="mb-2">
+                                        <label for="filterType" class="form-label small">Filter By</label>
+                                        <select class="form-select" id="filterType">
+                                            <option value="length">Length</option>
+                                            <option value="id_pattern">ID Pattern</option>
+                                            <option value="gc_content">GC Content</option>
+                                        </select>
+                                    </div>
+                                    <div id="lengthFilter">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label small">Min Length</label>
+                                                <input type="number" class="form-control" id="minLength" value="0">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Max Length</label>
+                                                <input type="number" class="form-control" id="maxLength" value="10000">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="patternFilter" style="display:none;">
+                                        <label class="form-label small">ID Pattern (regex)</label>
+                                        <input type="text" class="form-control" id="idPattern" placeholder="e.g., ^SP_">
+                                    </div>
+                                    <div id="gcFilter" style="display:none;">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label small">Min GC%</label>
+                                                <input type="number" class="form-control" id="minGC" value="0" step="0.1">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Max GC%</label>
+                                                <input type="number" class="form-control" id="maxGC" value="100" step="0.1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mt-3" id="filterBtn" disabled>
+                                        <i class="fas fa-filter me-2"></i> Apply Filter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-sort"></i> Sort Sequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="sortForm">
+                                    <div class="mb-2">
+                                        <label for="sortBy" class="form-label small">Sort By</label>
+                                        <select class="form-select" id="sortBy">
+                                            <option value="length">Length</option>
+                                            <option value="id">ID (alphabetical)</option>
+                                            <option value="gc_content">GC Content</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="sortOrder" class="form-label small">Order</label>
+                                        <select class="form-select" id="sortOrder">
+                                            <option value="false">Ascending</option>
+                                            <option value="true">Descending</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-secondary w-100" id="sortBtn" disabled>
+                                        <i class="fas fa-sort me-2"></i> Sort Sequences
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Filtered/Sorted Results</h6>
+                                <span class="badge bg-info" id="filteredCount"></span>
+                            </div>
+                            <div class="card-body py-2" id="filterResults">
+                                <p class="text-muted text-center">Parse sequences first, then apply filters or sorting</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div class="tab-pane fade" id="stats">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-calculator"></i> Calculate Statistics</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <button class="gradient-btn-primary w-100" id="calculateStatsBtn" disabled>
+                                    <i class="fas fa-chart-bar me-2"></i> Calculate Statistics
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle"></i> Parse sequences first
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Sequence Statistics</h6>
+                            </div>
+                            <div class="card-body py-2" id="statsResults">
+                                <p class="text-muted text-center">Calculate statistics to see results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FASTQ/Quality Tab -->
+            <div class="tab-pane fade" id="fastq">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Parse FASTQ File</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="fastqForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="fastqFile" class="form-label small">Choose FASTQ File</label>
+                                        <input type="file" class="form-control" id="fastqFile" name="file" accept=".fastq,.fq">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="fastqFormat" class="form-label small">FASTQ Variant</label>
+                                        <select class="form-select" id="fastqFormat" name="format">
+                                            <option value="fastq">FASTQ (Sanger)</option>
+                                            <option value="fastq-sanger">FASTQ-Sanger</option>
+                                            <option value="fastq-illumina">FASTQ-Illumina</option>
+                                            <option value="fastq-solexa">FASTQ-Solexa</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="fastqBtn">
+                                        <i class="fas fa-upload me-2"></i> Parse FASTQ
+                                    </button>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">OR</small>
+                                    </div>
+                                    <button type="button" class="gradient-btn-secondary w-100 mt-2" id="useParsedBtn" disabled onclick="useAlreadyParsedSequences()">
+                                        <i class="fas fa-arrow-left me-2"></i> Use Parsed Sequences
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> Use sequences already loaded in Parse tab
+                                    </small>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About FASTQ</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">FASTQ format stores nucleotide sequences with quality scores (Phred scores).</p>
+                                <ul class="small">
+                                    <li><strong>Phred Score:</strong> Quality indicator (higher = better)</li>
+                                    <li><strong>Q20:</strong> 1% error rate</li>
+                                    <li><strong>Q30:</strong> 0.1% error rate</li>
+                                    <li><strong>Q40:</strong> 0.01% error rate</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-area"></i> Quality Scores</h6>
+                            </div>
+                            <div class="card-body py-2" id="fastqResults">
+                                <p class="text-muted text-center">Parse a FASTQ file to view quality scores</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slice/Extract Tab -->
+            <div class="tab-pane fade" id="slice">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-cut"></i> Extract Subsequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="sliceForm">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Start Position</label>
+                                            <input type="number" class="form-control" id="sliceStart" value="0" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">End Position</label>
+                                            <input type="number" class="form-control" id="sliceEnd" placeholder="End (optional)">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> Leave end empty to extract to sequence end
+                                    </small>
+                                    <button type="submit" class="gradient-btn-primary w-100 mt-3" id="sliceBtn" disabled>
+                                        <i class="fas fa-cut me-2"></i> Extract Subsequences
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-scissors"></i> Sliced Sequences</h6>
+                            </div>
+                            <div class="card-body py-2" id="sliceResults">
+                                <p class="text-muted text-center">Parse sequences first, then slice/extract</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Tab -->
+            <div class="tab-pane fade" id="advanced">
+                <div class="row">
+                    <!-- Feature Extraction -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Extract Features from GenBank/EMBL</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="extractFeaturesForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="featureFile" class="form-label small">GenBank/EMBL File</label>
+                                        <input type="file" class="form-control" id="featureFile" name="file" accept=".gb,.gbk,.genbank,.embl">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="featureFormat" class="form-label small">File Format</label>
+                                        <select class="form-select" id="featureFormat" name="format">
+                                            <option value="genbank">GenBank</option>
+                                            <option value="embl">EMBL</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="featureType" class="form-label small">Feature Type</label>
+                                        <select class="form-select" id="featureType" name="feature_type">
+                                            <option value="all">All Features</option>
+                                            <option value="CDS">CDS (Coding Sequences)</option>
+                                            <option value="gene">Genes</option>
+                                            <option value="tRNA">tRNA</option>
+                                            <option value="rRNA">rRNA</option>
+                                            <option value="exon">Exons</option>
+                                            <option value="intron">Introns</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="extractBtn">
+                                        <i class="fas fa-th-list me-2"></i> Extract Features
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Batch Convert -->
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-layer-group"></i> Batch Convert Files</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="batchConvertForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="batchFiles" class="form-label small">Select Multiple Files</label>
+                                        <input type="file" class="form-control" id="batchFiles" name="files" multiple>
+                                        <small class="text-muted">Select multiple files to convert</small>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Input Format</label>
+                                            <select class="form-select" id="batchInputFormat" name="input_format">
+                                                <option value="fasta">FASTA</option>
+                                                <option value="fastq">FASTQ</option>
+                                                <option value="genbank">GenBank</option>
+                                                <option value="embl">EMBL</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Output Format</label>
+                                            <select class="form-select" id="batchOutputFormat" name="output_format">
+                                                <option value="fasta">FASTA</option>
+                                                <option value="genbank">GenBank</option>
+                                                <option value="embl">EMBL</option>
+                                                <option value="phylip">PHYLIP</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="batchBtn">
+                                        <i class="fas fa-sync-alt me-2"></i> Batch Convert
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Column -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Extracted Features</h6>
+                            </div>
+                            <div class="card-body py-2" id="featureResults" style="max-height: 400px; overflow-y: auto;">
+                                <p class="text-muted text-center">Upload a GenBank/EMBL file to extract features</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-tasks"></i> Batch Conversion Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="batchResults" style="max-height: 400px; overflow-y: auto;">
+                                <p class="text-muted text-center">Select multiple files to batch convert</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- End Tab Content -->
+    </div><!-- End Card Body -->
+</div><!-- End Card -->
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Supported File Formats</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6 class="text-success small">Common Formats</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-file-alt"></i> FASTA</li>
+                            <li><i class="fas fa-file-alt"></i> FASTQ</li>
+                            <li><i class="fas fa-file-alt"></i> GenBank</li>
+                            <li><i class="fas fa-file-alt"></i> EMBL</li>
+                            <li><i class="fas fa-file-alt"></i> Swiss-Prot</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-success small">Alignment Formats</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-file-alt"></i> Clustal</li>
+                            <li><i class="fas fa-file-alt"></i> PHYLIP</li>
+                            <li><i class="fas fa-file-alt"></i> NEXUS</li>
+                            <li><i class="fas fa-file-alt"></i> Stockholm</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-success small">Specialized Formats</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-file-alt"></i> PIR/NBRF</li>
+                            <li><i class="fas fa-file-alt"></i> SeqXML</li>
+                            <li><i class="fas fa-file-alt"></i> IntelliGenetics</li>
+                            <li><i class="fas fa-file-alt"></i> ACE</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-success small">Quality Formats</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-file-alt"></i> FASTQ (Sanger)</li>
+                            <li><i class="fas fa-file-alt"></i> FASTQ-Illumina</li>
+                            <li><i class="fas fa-file-alt"></i> FASTQ-Solexa</li>
+                            <li><i class="fas fa-file-alt"></i> Tab-separated</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let parsedSequences = [];
+let currentSequences = [];
+
+// Parse Form
+document.getElementById('parseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const fileInput = document.getElementById('fileInput');
+    const formatInput = document.getElementById('fileFormat');
+
+    if (!fileInput.files[0]) {
+        showAlert('Please select a file', 'warning');
+        return;
+    }
+
+    formData.append('file', fileInput.files[0]);
+    formData.append('format', formatInput.value);
+
+    showLoading('parseBtn');
+
+    // Use parse_fastq endpoint for FASTQ formats to get quality scores
+    const isFastq = formatInput.value.startsWith('fastq');
+    const endpoint = isFastq ? '/api/seqio/parse_fastq' : '/api/seqio/parse';
+
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parseBtn', '<i class="fas fa-file-import me-2"></i> Parse File');
+
+        if (data.success) {
+            parsedSequences = data.sequences;
+            currentSequences = data.sequences;
+            displaySequences(data.sequences);
+            enableButtons();
+            const qualityInfo = isFastq ? ' (with quality scores)' : '';
+            showAlert(`Successfully parsed ${data.sequences.length} sequences${qualityInfo}`, 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parseBtn', '<i class="fas fa-file-import me-2"></i> Parse File');
+        showAlert('Error parsing file', 'danger');
+    });
+});
+
+// Convert Form
+document.getElementById('convertForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (currentSequences.length === 0) {
+        showAlert('Please parse sequences first', 'warning');
+        return;
+    }
+
+    const outputFormat = document.getElementById('outputFormat').value;
+
+    showLoading('convertBtn');
+
+    fetch('/api/seqio/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequences: currentSequences,
+            output_format: outputFormat
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('convertBtn', '<i class="fas fa-exchange-alt me-2"></i> Convert Format');
+
+        if (data.success) {
+            displayConvertedResult(data.converted, outputFormat);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('convertBtn', '<i class="fas fa-exchange-alt me-2"></i> Convert Format');
+        showAlert('Error converting format', 'danger');
+    });
+});
+
+// Filter Form
+document.getElementById('filterType').addEventListener('change', function() {
+    document.getElementById('lengthFilter').style.display = this.value === 'length' ? 'block' : 'none';
+    document.getElementById('patternFilter').style.display = this.value === 'id_pattern' ? 'block' : 'none';
+    document.getElementById('gcFilter').style.display = this.value === 'gc_content' ? 'block' : 'none';
+});
+
+document.getElementById('filterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const filterType = document.getElementById('filterType').value;
+    let filterParams = {};
+
+    if (filterType === 'length') {
+        filterParams = {
+            min_length: parseInt(document.getElementById('minLength').value),
+            max_length: parseInt(document.getElementById('maxLength').value)
+        };
+    } else if (filterType === 'id_pattern') {
+        filterParams = {
+            pattern: document.getElementById('idPattern').value
+        };
+    } else if (filterType === 'gc_content') {
+        filterParams = {
+            min_gc: parseFloat(document.getElementById('minGC').value),
+            max_gc: parseFloat(document.getElementById('maxGC').value)
+        };
+    }
+
+    showLoading('filterBtn');
+
+    fetch('/api/seqio/filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequences: parsedSequences,
+            filter_type: filterType,
+            filter_params: filterParams
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('filterBtn', '<i class="fas fa-filter me-2"></i> Apply Filter');
+
+        if (data.success) {
+            currentSequences = data.filtered;
+            displayFilteredSequences(data.filtered);
+            document.getElementById('filteredCount').textContent = `${data.filtered_count} of ${data.original_count} sequences`;
+            showAlert(`Filtered: ${data.filtered_count} of ${data.original_count} sequences`, 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('filterBtn', '<i class="fas fa-filter me-2"></i> Apply Filter');
+        showAlert('Error filtering sequences', 'danger');
+    });
+});
+
+// Sort Form
+document.getElementById('sortForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sortBy = document.getElementById('sortBy').value;
+    const reverse = document.getElementById('sortOrder').value === 'true';
+
+    showLoading('sortBtn');
+
+    fetch('/api/seqio/sort', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequences: currentSequences,
+            sort_by: sortBy,
+            reverse: reverse
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('sortBtn', '<i class="fas fa-sort me-2"></i> Sort Sequences');
+
+        if (data.success) {
+            currentSequences = data.sorted;
+            displayFilteredSequences(data.sorted);
+            showAlert(`Sorted by ${sortBy}`, 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('sortBtn', '<i class="fas fa-sort me-2"></i> Sort Sequences');
+        showAlert('Error sorting sequences', 'danger');
+    });
+});
+
+// Statistics
+document.getElementById('calculateStatsBtn').addEventListener('click', function() {
+    showLoading('calculateStatsBtn');
+
+    fetch('/api/seqio/statistics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: currentSequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('calculateStatsBtn', '<i class="fas fa-chart-bar me-2"></i> Calculate Statistics');
+
+        if (data.success) {
+            displayStatistics(data.statistics);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('calculateStatsBtn', '<i class="fas fa-chart-bar me-2"></i> Calculate Statistics');
+        showAlert('Error calculating statistics', 'danger');
+    });
+});
+
+// FASTQ Form
+document.getElementById('fastqForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const fileInput = document.getElementById('fastqFile');
+    const formatInput = document.getElementById('fastqFormat');
+
+    if (!fileInput.files[0]) {
+        showAlert('Please select a FASTQ file', 'warning');
+        return;
+    }
+
+    formData.append('file', fileInput.files[0]);
+    formData.append('format', formatInput.value);
+
+    showLoading('fastqBtn');
+
+    fetch('/api/seqio/parse_fastq', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('fastqBtn', '<i class="fas fa-upload me-2"></i> Parse FASTQ');
+
+        if (data.success) {
+            displayFASTQSequences(data.sequences);
+            showAlert(`Parsed ${data.sequences.length} FASTQ sequences`, 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('fastqBtn', '<i class="fas fa-upload me-2"></i> Parse FASTQ');
+        showAlert('Error parsing FASTQ file', 'danger');
+    });
+});
+
+// Slice Form
+document.getElementById('sliceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const start = parseInt(document.getElementById('sliceStart').value);
+    const endVal = document.getElementById('sliceEnd').value;
+    const end = endVal ? parseInt(endVal) : null;
+
+    showLoading('sliceBtn');
+
+    fetch('/api/seqio/slice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequences: currentSequences,
+            start: start,
+            end: end
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('sliceBtn', '<i class="fas fa-cut me-2"></i> Extract Subsequences');
+
+        if (data.success) {
+            displaySlicedSequences(data.sliced);
+            showAlert('Sequences sliced successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('sliceBtn', '<i class="fas fa-cut me-2"></i> Extract Subsequences');
+        showAlert('Error slicing sequences', 'danger');
+    });
+});
+
+// Display Functions
+function displaySequences(sequences) {
+    const resultsDiv = document.getElementById('sequenceResults');
+    const countBadge = document.getElementById('sequenceCount');
+
+    countBadge.textContent = `${sequences.length} sequences`;
+
+    if (sequences.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted">No sequences found in the file.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
+    html += '<thead><tr><th>ID</th><th>Description</th><th>Length</th><th>Preview</th></tr></thead><tbody>';
+
+    sequences.forEach((seq, index) => {
+        const preview = seq.sequence.length > 50 ? seq.sequence.substring(0, 50) + '...' : seq.sequence;
+        html += `
+            <tr>
+                <td><code class="small">${seq.id}</code></td>
+                <td class="small">${seq.description}</td>
+                <td><span class="badge bg-secondary">${seq.length}</span></td>
+                <td><small class="font-monospace">${preview}</small></td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function displayFilteredSequences(sequences) {
+    const resultsDiv = document.getElementById('filterResults');
+
+    if (sequences.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted">No sequences match the filter criteria.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
+    html += '<thead><tr><th>ID</th><th>Length</th><th>Preview</th></tr></thead><tbody>';
+
+    sequences.forEach((seq, index) => {
+        const preview = seq.sequence.length > 50 ? seq.sequence.substring(0, 50) + '...' : seq.sequence;
+        html += `
+            <tr>
+                <td><code class="small">${seq.id}</code></td>
+                <td><span class="badge bg-secondary">${seq.length}</span></td>
+                <td><small class="font-monospace">${preview}</small></td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function displayStatistics(stats) {
+    const resultsDiv = document.getElementById('statsResults');
+
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary small">General Statistics</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Total Sequences:</strong> ${stats.total_sequences}</li>
+                    <li><strong>Total Length:</strong> ${stats.total_length.toLocaleString()} bp</li>
+                    <li><strong>Average Length:</strong> ${stats.avg_length} bp</li>
+                    <li><strong>Min Length:</strong> ${stats.min_length} bp</li>
+                    <li><strong>Max Length:</strong> ${stats.max_length} bp</li>
+                    <li><strong>Average GC Content:</strong> ${stats.gc_content_avg}%</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary small">Nucleotide Composition</h6>
+                <ul class="list-unstyled">
+                    <li><strong>A:</strong> ${stats.composition.A.toLocaleString()}</li>
+                    <li><strong>T:</strong> ${stats.composition.T.toLocaleString()}</li>
+                    <li><strong>G:</strong> ${stats.composition.G.toLocaleString()}</li>
+                    <li><strong>C:</strong> ${stats.composition.C.toLocaleString()}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    resultsDiv.innerHTML = html;
+}
+
+function displayFASTQSequences(sequences) {
+    const resultsDiv = document.getElementById('fastqResults');
+
+    if (sequences.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted">No sequences found.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
+    html += '<thead><tr><th>ID</th><th>Length</th><th>Avg Quality</th><th>Preview</th></tr></thead><tbody>';
+
+    sequences.forEach((seq, index) => {
+        const preview = seq.sequence.length > 40 ? seq.sequence.substring(0, 40) + '...' : seq.sequence;
+        const avgQuality = seq.avg_quality ? seq.avg_quality.toFixed(2) : 'N/A';
+        const qualityClass = seq.avg_quality >= 30 ? 'bg-success' : (seq.avg_quality >= 20 ? 'bg-warning' : 'bg-danger');
+
+        html += `
+            <tr>
+                <td><code class="small">${seq.id}</code></td>
+                <td><span class="badge bg-secondary">${seq.length}</span></td>
+                <td><span class="badge ${qualityClass}">${avgQuality}</span></td>
+                <td><small class="font-monospace">${preview}</small></td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function displaySlicedSequences(sequences) {
+    const resultsDiv = document.getElementById('sliceResults');
+
+    if (sequences.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted">No sequences to slice.</p>';
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
+    html += '<thead><tr><th>ID</th><th>New Length</th><th>Original Length</th><th>Subsequence</th></tr></thead><tbody>';
+
+    sequences.forEach((seq, index) => {
+        const preview = seq.sequence.length > 50 ? seq.sequence.substring(0, 50) + '...' : seq.sequence;
+        html += `
+            <tr>
+                <td><code class="small">${seq.id}</code></td>
+                <td><span class="badge bg-primary">${seq.length}</span></td>
+                <td><span class="badge bg-secondary">${seq.original_length}</span></td>
+                <td><small class="font-monospace">${preview}</small></td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function displayConvertedResult(converted, format) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Converted ${format.toUpperCase()} File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="form-control sequence-display" rows="20" readonly>${converted}</textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="gradient-btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="gradient-btn-primary" onclick="downloadConverted('${format}')">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+
+    modal.addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modal);
+    });
+}
+
+function downloadConverted(format) {
+    const convertedText = document.querySelector('.modal textarea').value;
+    const blob = new Blob([convertedText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `converted_sequences.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function enableButtons() {
+    document.getElementById('convertBtn').disabled = false;
+    document.getElementById('filterBtn').disabled = false;
+    document.getElementById('sortBtn').disabled = false;
+    document.getElementById('calculateStatsBtn').disabled = false;
+    document.getElementById('sliceBtn').disabled = false;
+    document.getElementById('useParsedBtn').disabled = false;
+}
+
+function useAlreadyParsedSequences() {
+    console.log('useAlreadyParsedSequences called');
+    console.log('parsedSequences:', parsedSequences);
+
+    if (!parsedSequences || parsedSequences.length === 0) {
+        showAlert('Please parse sequences first in the Parse & Convert tab', 'warning');
+        return;
+    }
+
+    // Check if parsed sequences have quality scores (FASTQ format)
+    const hasQualityScores = parsedSequences.some(seq => seq.quality_scores && seq.quality_scores.length > 0);
+    console.log('hasQualityScores:', hasQualityScores);
+
+    if (!hasQualityScores) {
+        showAlert('Parsed sequences do not contain quality scores. Please load a FASTQ file in Parse & Convert tab first.', 'warning');
+        return;
+    }
+
+    displayFASTQSequences(parsedSequences);
+    showAlert(`Displaying ${parsedSequences.length} FASTQ sequences with quality scores`, 'success');
+}
+
+function loadExample(fileType) {
+    const examples = {
+        'fasta': `>gi|5524211|gb|AAD44166.1| cytochrome b [Elephas maximus maximus]
+LCLYTHIGRNIYYGSYLYSETWNTGIMLLLITMATAFMGYVLPWGQMSFWGATVITNLFSAIPYIGTNLV
+EWIWGGFSVDKATLNRFFAFHFILPFTMVALAGVHLTFLHETGSNNPLGLTSDSDKIPFHPYYTIKDFLG
+LLILILLLLLLALLSPDMLGDPDNHMPADPLNTPLHIKPEWYFLFAYAILRSVPNKLGGVLALFLSIVIL
+
+>gi|5524212|gb|AAD44167.1| cytochrome b [Elephas maximus borneensis]
+LCLYTHIGRNIYYGSYLYSETWNTGIMLLLITMATAFMGYVLPWGQMSFWGATVITNLFSAIPYIGTNLV
+EWIWGGFSVDKATLNRFFAFHFILPFTMVALAGVHLTFLHETGSNNPLGLTSDSDKIPFHPYYTIKDFLG
+LLILILLLLLLALLSPDMLGDPDNHMPADPLNTPLHIKPEWYFLFAYAILRSVPNKLGGVLALFLSIVIL`,
+        'genbank': `LOCUS       AF177870                1395 bp    DNA     linear   PLN 28-MAY-1999
+DEFINITION  Oryza sativa (japonica cultivar-group) maturase K (matK) gene,
+            partial cds; chloroplast.
+ACCESSION   AF177870
+VERSION     AF177870.1
+KEYWORDS    .
+SOURCE      Oryza sativa (japonica cultivar-group)
+  ORGANISM  Oryza sativa
+            Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+            Spermatophyta; Magnoliophyta; Liliopsida; Poales; Poaceae; BEP
+            clade; Ehrhartoideae; Oryzeae; Oryza.
+FEATURES             Location/Qualifiers
+     source          1..1395
+                     /organism="Oryza sativa"
+                     /organelle="plastid:chloroplast"
+                     /mol_type="genomic DNA"
+                     /cultivar="japonica"
+                     /db_xref="taxon:4530"
+     gene            <1..>1395
+                     /gene="matK"
+     CDS             <1..>1395
+                     /gene="matK"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="maturase K"
+ORIGIN
+        1 atggcagcat tcgaatctct cgcaatccat tcttttttcg attctctcaa aaatctttat
+       61 ccttcaattt tcgcggcagg ttgcggcttc gacctttatt ttgtactcac tacaaccgga
+//`,
+        'fastq': `@SEQ_ID_1
+GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
++
+!''*((((***+))%%%++)(%%%%).1***-+*''))**55CCF>>>>>>CCCCCCC65
+@SEQ_ID_2
+GATCGATCGATCGATCGATCGATCGATC
++
+IIIIIIIIIIIIIIIIIIIIIIIIIIII`,
+        'embl': `ID   AB000263; SV 1; linear; genomic DNA; STD; PLN; 1362 BP.
+XX
+AC   AB000263;
+XX
+DT   23-NOV-1997 (Rel. 53, Created)
+DT   12-MAY-2000 (Rel. 64, Last updated, Version 4)
+XX
+DE   Oryza sativa gene for chloroplast RNA polymerase alpha subunit, complete
+DE   cds.
+XX
+KW   rpoA gene; chloroplast RNA polymerase alpha subunit.
+XX
+OS   Oryza sativa (rice)
+OC   Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+OC   Spermatophyta; Magnoliophyta; Liliopsida; Poales; Poaceae; BEP clade;
+OC   Ehrhartoideae; Oryzeae; Oryza.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..1362
+FT                   /organism="Oryza sativa"
+FT                   /cultivar="Nipponbare"
+FT                   /organelle="plastid:chloroplast"
+FT                   /mol_type="genomic DNA"
+SQ   Sequence 1362 BP; 408 A; 314 C; 316 G; 324 T; 0 other;
+     atggcttcta ttaaagatgc taattcaatt atagcaattg cttataatat aaatgatagt`
+    };
+
+    const formatSelect = document.getElementById('fileFormat');
+    formatSelect.value = fileType;
+
+    const exampleData = examples[fileType];
+    if (!exampleData) {
+        showAlert('Example not available for this format', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+    const blob = new Blob([exampleData], { type: 'text/plain' });
+    const file = new File([blob], `example.${fileType}`, { type: 'text/plain' });
+    formData.append('file', file);
+    formData.append('format', fileType);
+
+    showLoading('parseBtn');
+
+    // Use parse_fastq endpoint for FASTQ to get quality scores
+    const isFastq = fileType.startsWith('fastq');
+    const endpoint = isFastq ? '/api/seqio/parse_fastq' : '/api/seqio/parse';
+
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parseBtn', '<i class="fas fa-file-import me-2"></i> Parse File');
+
+        if (data.success) {
+            parsedSequences = data.sequences;
+            currentSequences = data.sequences;
+            displaySequences(data.sequences);
+            enableButtons();
+            const qualityInfo = isFastq ? ' (with quality scores)' : '';
+            showAlert(`Loaded ${fileType.toUpperCase()} example with ${data.sequences.length} sequences${qualityInfo}`, 'success');
+        } else {
+            showAlert('Error loading example: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parseBtn', '<i class="fas fa-file-import me-2"></i> Parse File');
+        showAlert('Error loading example', 'danger');
+    });
+}
+
+// Extract Features Form Handler
+document.getElementById('extractFeaturesForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    showLoading('extractBtn');
+
+    fetch('/api/seqio/extract_features', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('extractBtn', '<i class="fas fa-th-list me-2"></i> Extract Features');
+
+        if (data.success) {
+            const resultsDiv = document.getElementById('featureResults');
+            if (data.features && data.features.length > 0) {
+                let html = `<div class="alert alert-success py-2 mb-2 small">
+                    <i class="fas fa-check-circle"></i> Extracted ${data.features.length} features
+                </div>`;
+
+                data.features.forEach((feature, idx) => {
+                    html += `<div class="card mb-2">
+                        <div class="card-body p-2 small">
+                            <strong>${idx + 1}. ${feature.type}</strong>
+                            <div class="text-muted">Location: ${feature.location}</div>
+                            ${feature.sequence ? `<div class="mt-1">
+                                <code class="small">${feature.sequence.substring(0, 60)}${feature.sequence.length > 60 ? '...' : ''}</code>
+                            </div>` : ''}
+                            ${feature.qualifiers ? `<div class="mt-1 text-muted small">
+                                ${Object.entries(feature.qualifiers).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+                });
+                resultsDiv.innerHTML = html;
+                showAlert(`Extracted ${data.features.length} features from ${data.file_format} file`, 'success');
+            } else {
+                resultsDiv.innerHTML = '<p class="text-muted text-center">No features found</p>';
+                showAlert('No features found in the file', 'warning');
+            }
+        } else {
+            document.getElementById('featureResults').innerHTML = `<div class="alert alert-danger py-2 small">${data.error}</div>`;
+            showAlert('Error extracting features: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('extractBtn', '<i class="fas fa-th-list me-2"></i> Extract Features');
+        showAlert('Error extracting features', 'danger');
+    });
+});
+
+// Batch Convert Form Handler
+document.getElementById('batchConvertForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const filesInput = document.getElementById('batchFiles');
+
+    if (!filesInput.files || filesInput.files.length === 0) {
+        showAlert('Please select at least one file', 'warning');
+        return;
+    }
+
+    showLoading('batchBtn');
+
+    fetch('/api/seqio/batch_convert', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('batchBtn', '<i class="fas fa-sync-alt me-2"></i> Batch Convert');
+
+        if (data.success) {
+            const resultsDiv = document.getElementById('batchResults');
+            let html = `<div class="alert alert-${data.successful === data.total_files ? 'success' : 'warning'} py-2 mb-2 small">
+                <i class="fas fa-info-circle"></i> Converted ${data.successful}/${data.total_files} files
+            </div>`;
+
+            data.results.forEach((result, idx) => {
+                const status = result.success ? 'success' : 'danger';
+                const icon = result.success ? 'check-circle' : 'times-circle';
+                html += `<div class="card mb-2 border-${status}">
+                    <div class="card-body p-2 small">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-${icon} text-${status} me-2"></i>
+                            <strong>${result.filename}</strong>
+                        </div>
+                        ${result.success ? `<div class="text-success mt-1">✓ ${result.record_count} sequences converted</div>` :
+                                          `<div class="text-danger mt-1">✗ ${result.error}</div>`}
+                    </div>
+                </div>`;
+            });
+
+            resultsDiv.innerHTML = html;
+            showAlert(`Batch conversion complete: ${data.successful}/${data.total_files} files converted successfully`,
+                     data.successful === data.total_files ? 'success' : 'warning');
+        } else {
+            document.getElementById('batchResults').innerHTML = `<div class="alert alert-danger py-2 small">${data.error}</div>`;
+            showAlert('Error in batch conversion: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('batchBtn', '<i class="fas fa-sync-alt me-2"></i> Batch Convert');
+        showAlert('Error in batch conversion', 'danger');
+    });
+});
+</script>
+{% endblock %}

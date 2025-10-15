@@ -1,0 +1,1387 @@
+{% extends "base.html" %}
+
+{% block title %}Sequence Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #toolsTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #toolsTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-dna"></i> Sequence Analysis
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Panel: Input & Tools -->
+    <div class="col-md-5">
+        <div class="card mb-2">
+            <div class="card-header py-2 bg-primary text-white">
+                <h6 class="mb-0 small"><i class="fas fa-edit"></i> Sequence Input</h6>
+            </div>
+            <div class="card-body p-3">
+                <form id="sequenceForm">
+                    <select class="form-select mb-2" id="sequenceType">
+                        <option value="dna">DNA</option>
+                        <option value="rna">RNA</option>
+                        <option value="protein">Protein</option>
+                    </select>
+                    <button type="button" class="gradient-btn-small w-100 mb-3" onclick="loadExample()">
+                        <i class="fas fa-flask me-2"></i>Example
+                    </button>
+                    <textarea class="form-control sequence-display mb-3" id="sequenceInput" rows="5"
+                            placeholder="Enter sequence..." ></textarea>
+                    <button type="submit" class="gradient-btn-primary w-100" id="analyzeBtn">
+                        <i class="fas fa-search me-2"></i>Analyze
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabbed Tools Interface -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-gradient p-0 border-0" >
+                <div class="d-flex" id="toolsTabs" role="tablist">
+                    <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" >
+                        <i class="fas fa-star d-block mb-1" ></i>
+                        <small >Basic</small>
+                    </button>
+                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" >
+                        <i class="fas fa-tools d-block mb-1" ></i>
+                        <small >Advanced</small>
+                    </button>
+                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="dna-tab" data-bs-toggle="tab" data-bs-target="#dna" type="button" >
+                        <i class="fas fa-flask d-block mb-1" ></i>
+                        <small >DNA Tools</small>
+                    </button>
+                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" >
+                        <i class="fas fa-search d-block mb-1" ></i>
+                        <small >Search</small>
+                    </button>
+                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="utils-tab" data-bs-toggle="tab" data-bs-target="#utils" type="button" >
+                        <i class="fas fa-cog d-block mb-1" ></i>
+                        <small >Utils</small>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-4" >
+                <div class="tab-content" id="toolsTabContent">
+                    <!-- Basic Tab -->
+                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-primary w-100" onclick="sixFrameTranslation()" id="sixFrameBtn">
+                                    <i class="fas fa-exchange-alt me-3"></i>
+                                    <span>6-Frame Translation</span>
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-secondary w-100" onclick="proteinAnalysis()" id="protParamBtn">
+                                    <i class="fas fa-microscope me-3"></i>
+                                    <span>Protein Analysis (ProtParam)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tab -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6 class="text-uppercase fw-bold mb-2">Transcription</h6>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-info w-100" onclick="transcribe('transcribe')">
+                                    <i class="fas fa-arrow-right d-block mb-2"></i>
+                                    <small>DNA → RNA</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-success w-100" onclick="transcribe('back_transcribe')">
+                                    <i class="fas fa-arrow-left d-block mb-2"></i>
+                                    <small>RNA → DNA</small>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">GC Analysis</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-warning w-100" onclick="advancedGCAnalysis()">
+                                    <i class="fas fa-chart-line me-3"></i>
+                                    <span>GC Skew & GC123</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Protein Conversion</h6>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-outline w-100" onclick="proteinConvert('to_three')">
+                                    <i class="fas fa-text-width d-block mb-2"></i>
+                                    <small>1→3 Letter</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-outline w-100" onclick="proteinConvert('to_one')">
+                                    <i class="fas fa-compress d-block mb-2"></i>
+                                    <small>3→1 Letter</small>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Advanced Protein Analysis</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-secondary w-100" onclick="advancedProteinAnalysis()" id="advProtParamBtn">
+                                    <i class="fas fa-atom me-3"></i>
+                                    <span>Molar Extinction & Charge</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Molecular Weight</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-primary w-100" onclick="molecularWeightAdvanced()" id="molWeightBtn">
+                                    <i class="fas fa-weight me-3"></i>
+                                    <span>MW Variations (ss/ds DNA/RNA)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DNA Tools Tab -->
+                    <div class="tab-pane fade" id="dna" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6 class="text-uppercase fw-bold mb-2">Melting Temperature</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-info w-100" onclick="calculateMeltingTemp()" id="meltingTempBtn">
+                                    <i class="fas fa-thermometer-half me-3"></i>
+                                    <span>Calculate Tm</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">ORF Analysis</h6>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small mb-1">Minimum ORF Length (bp)</label>
+                                <input type="number" class="form-control mb-2" id="minOrfLength" value="75" min="30" step="3">
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-success w-100" onclick="findORFs()" id="orfBtn">
+                                    <i class="fas fa-dna me-3"></i>
+                                    <span>Find ORFs</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Codon Analysis</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-warning w-100" onclick="analyzeCodonUsage()" id="codonBtn">
+                                    <i class="fas fa-chart-pie me-3"></i>
+                                    <span>Codon Usage</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Checksums</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-outline w-100" onclick="calculateChecksums()" id="checksumBtn">
+                                    <i class="fas fa-fingerprint me-3"></i>
+                                    <span>Calculate Checksums</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Reference Data</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-primary w-100" onclick="showReferenceData()" id="refDataBtn">
+                                    <i class="fas fa-book me-3"></i>
+                                    <span>Codon Tables & IUPAC</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Tab -->
+                    <div class="tab-pane fade" id="search" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold mb-2">Search Pattern</label>
+                                <input type="text" class="form-control form-control-lg shadow-sm" id="searchPattern" placeholder="e.g., ATG">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold mb-2">Search Type</label>
+                                <select class="form-select form-select-lg shadow-sm" id="searchType">
+                                    <option value="find">Find Position</option>
+                                    <option value="count">Count Occurrences</option>
+                                    <option value="count_overlap">Count with Overlap</option>
+                                    <option value="nt_search">NT Search</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-secondary w-100" onclick="searchSequence()">
+                                    <i class="fas fa-search me-3"></i>
+                                    <span>Search Sequence</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utils Tab -->
+                    <div class="tab-pane fade" id="utils" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6 class="text-uppercase fw-bold mb-2">Sequence Manipulation</h6>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="gradient-btn-primary w-100" onclick="manipulateSequence('ungap')">
+                                    <i class="fas fa-eraser me-3"></i>
+                                    <span>Remove Gaps</span>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-info w-100" onclick="manipulateSequence('upper')">
+                                    <i class="fas fa-font d-block mb-2"></i>
+                                    <small>UPPERCASE</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="gradient-btn-success w-100" onclick="manipulateSequence('lower')">
+                                    <i class="fas fa-font d-block mb-2"></i>
+                                    <small>lowercase</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Results -->
+    <div class="col-md-7">
+        <div class="card" >
+            <div class="card-header py-2 bg-success text-white sticky-top">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Results</h6>
+            </div>
+            <div class="card-body p-3" id="resultsArea">
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-arrow-left fa-3x mb-3 opacity-25"></i>
+                    <p>Enter a sequence and run analysis</p>
+                    <small>Results will appear here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compact Feature Reference -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-2">
+                <details>
+                    <summary class="small fw-bold text-primary" >
+                        <i class="fas fa-info-circle"></i> Available Features (Click to expand)
+                    </summary>
+                    <div class="row mt-2 small">
+                        <div class="col-md-3">
+                            <strong>Basic Analysis:</strong> Length, Composition, Molecular Weight, GC Content, Complement, Translation, 6-Frame Translation, ProtParam
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Advanced:</strong> Transcription, GC Skew, GC123, Protein Conversion, Advanced ProtParam (Molar Extinction, Charge, Flexibility), MW Variations
+                        </div>
+                        <div class="col-md-3">
+                            <strong>DNA Tools:</strong> Melting Temperature (Tm), ORF Finding, Codon Usage, Checksums (SEGUID, CRC32, CRC64), Reference Data (Codon Tables, IUPAC)
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Search & Utils:</strong> Pattern Finding, Count (overlap/non-overlap), NT Search, Gap Removal, Case Conversion
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('sequenceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    const type = document.getElementById('sequenceType').value;
+
+    if (!sequence) {
+        return;
+    }
+
+    showLoading('analyzeBtn');
+
+    fetch('/api/sequence/analyze', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sequence: sequence,
+            type: type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('analyzeBtn', '<i class="fas fa-search"></i> Analyze');
+
+        if (data.success) {
+            displayResults(data.analysis);
+            window.sequenceAnalysis = data.analysis;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('analyzeBtn', '<i class="fas fa-search"></i> Analyze');
+    });
+});
+
+function displayResults(analysis) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = '';
+
+    // Basic properties in compact cards
+    html += '<div class="row g-2 mb-3">';
+    html += `
+        <div class="col-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="small text-muted mb-1">Length</div>
+                <div class="fw-bold">${analysis.length} bases</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-3 bg-light">
+                <div class="small text-muted mb-1">Molecular Weight</div>
+                <div class="fw-bold">${analysis.molecular_weight.toFixed(2)} Da</div>
+            </div>
+        </div>
+    `;
+    html += '</div>';
+
+    // Composition
+    html += `
+        <div class="border rounded p-3 bg-light mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="fas fa-chart-pie"></i> Composition</div>
+            <div class="row g-3">
+    `;
+    for (const [base, count] of Object.entries(analysis.composition)) {
+        const percentage = ((count / analysis.length) * 100).toFixed(1);
+        html += `<div class="col-3"><strong>${base}:</strong> ${count} (${percentage}%)</div>`;
+    }
+    html += '</div></div>';
+
+    // GC Content (for DNA/RNA)
+    if (analysis.gc_content !== null) {
+        html += `
+            <div class="border rounded p-3 bg-light mb-3">
+                <div class="fw-bold text-primary mb-2"><i class="fas fa-percentage"></i> GC Content</div>
+                <div class="h5 mb-2">${analysis.gc_content.toFixed(2)}%</div>
+                <div class="progress" >
+                    <div class="progress-bar bg-success" ></div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Complement sequences (for DNA/RNA)
+    if (analysis.complement) {
+        html += `
+            <div class="border rounded p-3 bg-light mb-3">
+                <div class="fw-bold text-primary mb-2"><i class="fas fa-exchange-alt"></i> Complement Sequences</div>
+                <div class="mb-2">
+                    <div class="small text-muted mb-1">Complement:</div>
+                    <div class="sequence-display">${analysis.complement}</div>
+                </div>
+                <div>
+                    <div class="small text-muted mb-1">Reverse Complement:</div>
+                    <div class="sequence-display">${analysis.reverse_complement}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Translation
+    if (analysis.translation) {
+        html += `
+            <div class="border rounded p-3 bg-light mb-3">
+                <div class="fw-bold text-primary mb-2"><i class="fas fa-language"></i> Translation</div>
+                <div class="sequence-display">${analysis.translation}</div>
+            </div>
+        `;
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+function loadExample() {
+    const examples = {
+        dna: 'ATGAAACGCATTAGCACCACCATTACCACCACCATCACCATTACCACAGGTAACGGTGCGGGCTGACGCGTACAGGAAACACAGAAAAAAGCCCGCACCTGACAGTGCGGGCTTTTTTTTTCGACCAAAGGTAACGAGGTAACAACCATGCGAGTGTTGAAGTTCGGCGGTACATCAGTGGCAAATGCAGAACGTTTTCTGCGTGTTGCCGATATTCTGGAAAGCAATGCCAGGCAGGGGCAGGTGGCCACCGTCCTCTCTGCCCCCGCCAAAATCACCAACCACCTGGTGGCGATGATTGAAAAAACCATTAGCGGCCAGGATGCTTTACCCAATATCAGCGATGCCGAACGTATTTTTGCCGAACTTTTGACGGGACTCGCCGCCGCCCAGCCGGGGTTCCCGCTGGCGCAATTGAAAACTTTCGTCGATCAGGAATTTGCCCAAATAAA',
+        rna: 'AUGAAACGCAUUAGCACCACCAUUACCACCACCAUCACCAUUACCACAGGUAACGGUGCGGGCUGACGCGUACAGGAAACACAGAAAAAAGCCCGCACCUGACAGUGCGGGCUUUUUUUUUCGACCAAAGGUAACGAGGUAACAACCAUGCGAGUGUCGAAAAGCUUAG',
+        protein: 'MKRLATTPPLPPLPPLPQVTVRADAYRKHRKQPAPTVRAFMQNRSPFSAEVLDQERFRQFMFQSKIADHWHHWGYRKLASDKFALSKAGHQTLADKLPQVPHVFVFHWEIKRKEGLQGGKGQGSGKGWGKTPKPRTQHVHQPKQKRRHKQNTRRHQPQNKRRHQPKQKR'
+    };
+
+    const currentType = document.getElementById('sequenceType').value;
+    document.getElementById('sequenceInput').value = examples[currentType];
+}
+
+function sixFrameTranslation() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        return;
+    }
+
+    showLoading('sixFrameBtn');
+
+    fetch('/api/sequence/six_frame', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sequence: sequence
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('sixFrameBtn', '<i class="fas fa-exchange-alt"></i> 6-Frame Translation');
+
+        if (data.success) {
+            displaySixFrameResults(data.translations);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('sixFrameBtn', '<i class="fas fa-exchange-alt"></i> 6-Frame Translation');
+    });
+}
+
+function proteinAnalysis() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        return;
+    }
+
+    showLoading('protParamBtn');
+
+    fetch('/api/sequence/protparam', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sequence: sequence
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('protParamBtn', '<i class="fas fa-microscope"></i> Protein Analysis');
+
+        if (data.success) {
+            displayProteinAnalysis(data.analysis);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('protParamBtn', '<i class="fas fa-microscope"></i> Protein Analysis');
+    });
+}
+
+function displaySixFrameResults(frames) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = '<div class="mb-2"><h6 class="text-primary"><i class="fas fa-exchange-alt"></i> Six-Frame Translation</h6></div>';
+
+    // Forward frames
+    html += '<div class="small fw-bold mb-1">Forward Frames</div>';
+    for (let i = 1; i <= 3; i++) {
+        html += `
+            <div class="border rounded p-2 bg-light mb-2">
+                <div class="small text-muted">Frame +${i}</div>
+                <div class="sequence-display small">${frames[`frame_${i}`]}</div>
+            </div>
+        `;
+    }
+
+    // Reverse frames
+    html += '<div class="small fw-bold mb-1 mt-2">Reverse Frames</div>';
+    for (let i = 4; i <= 6; i++) {
+        html += `
+            <div class="border rounded p-2 bg-light mb-2">
+                <div class="small text-muted">Frame -${i-3}</div>
+                <div class="sequence-display small">${frames[`frame_${i}`]}</div>
+            </div>
+        `;
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+function displayProteinAnalysis(analysis) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = '<div class="mb-2"><h6 class="text-primary"><i class="fas fa-microscope"></i> Protein Analysis</h6></div>';
+
+    // Basic properties in grid
+    html += '<div class="row g-2 mb-2">';
+    html += `
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">Length</div>
+                <div class="fw-bold">169 aa</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">MW</div>
+                <div class="fw-bold">${analysis.molecular_weight.toFixed(2)} Da</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">pI</div>
+                <div class="fw-bold">${analysis.isoelectric_point.toFixed(2)}</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">GRAVY</div>
+                <div class="fw-bold">${analysis.gravy.toFixed(4)}</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">Aromaticity</div>
+                <div class="fw-bold">${analysis.aromaticity.toFixed(4)}</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light">
+                <div class="small text-muted">Instability</div>
+                <div class="fw-bold">${analysis.instability_index.toFixed(2)}</div>
+            </div>
+        </div>
+    `;
+    html += '</div>';
+
+    // Secondary structure
+    if (analysis.secondary_structure && Array.isArray(analysis.secondary_structure)) {
+        html += `
+            <div class="border rounded p-2 bg-light mb-2">
+                <div class="small fw-bold text-primary mb-1">Secondary Structure</div>
+                <div class="row g-1 small">
+                    <div class="col-4">Helix: ${(analysis.secondary_structure[0] * 100).toFixed(1)}%</div>
+                    <div class="col-4">Turn: ${(analysis.secondary_structure[1] * 100).toFixed(1)}%</div>
+                    <div class="col-4">Sheet: ${(analysis.secondary_structure[2] * 100).toFixed(1)}%</div>
+                </div>
+            </div>
+        `;
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+// Transcription functions
+function transcribe(operation) {
+    console.log('transcribe() called with operation:', operation);
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    console.log('Sequence:', sequence);
+
+    if (!sequence) {
+        console.warn('No sequence entered');
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    console.log('Sending transcribe request...');
+    fetch('/api/sequence/transcribe', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence: sequence,
+            operation: operation
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Transcribe response:', data);
+        if (data.success) {
+            displaySimpleResult(data.operation, data.original, data.result);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Transcribe error:', error);
+        showAlert('Error performing transcription', 'danger');
+    });
+}
+
+// Advanced GC Analysis
+function advancedGCAnalysis() {
+    console.log('advancedGCAnalysis() called');
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        console.warn('No sequence entered');
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    console.log('Sending GC analysis request...');
+    fetch('/api/sequence/gc_analysis', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence, window: 100})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('GC analysis response:', data);
+        if (data.success) {
+            displayGCAnalysisResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('GC analysis error:', error);
+        showAlert('Error performing GC analysis', 'danger');
+    });
+}
+
+// Sequence Search
+function searchSequence() {
+    console.log('searchSequence() called');
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    const pattern = document.getElementById('searchPattern').value.trim();
+    const searchType = document.getElementById('searchType').value;
+    console.log('Sequence:', sequence, 'Pattern:', pattern, 'Type:', searchType);
+
+    if (!sequence || !pattern) {
+        console.warn('Missing sequence or pattern');
+        showAlert('Please enter both sequence and search pattern', 'warning');
+        return;
+    }
+
+    console.log('Sending search request...');
+    fetch('/api/sequence/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence: sequence,
+            pattern: pattern,
+            search_type: searchType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Search response:', data);
+        if (data.success) {
+            displaySearchResults(data.result);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        showAlert('Error searching sequence', 'danger');
+    });
+}
+
+// Protein Conversion
+function proteinConvert(conversion) {
+    console.log('proteinConvert() called with:', conversion);
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        console.warn('No sequence entered');
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    console.log('Sending protein convert request...');
+    fetch('/api/sequence/protein_convert', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence: sequence,
+            conversion: conversion
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Protein convert response:', data);
+        if (data.success) {
+            displaySimpleResult(data.conversion, data.original, data.result);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Protein convert error:', error);
+        showAlert('Error converting protein sequence', 'danger');
+    });
+}
+
+// Sequence Manipulation
+function manipulateSequence(operation) {
+    console.log('manipulateSequence() called with:', operation);
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        console.warn('No sequence entered');
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    console.log('Sending manipulate request...');
+    fetch('/api/sequence/manipulate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence: sequence,
+            operation: operation
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Manipulate response:', data);
+        if (data.success) {
+            displayManipulationResult(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Manipulate error:', error);
+        showAlert('Error manipulating sequence', 'danger');
+    });
+}
+
+// Display helper functions
+function displaySimpleResult(title, original, result) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-exchange-alt"></i> ${title}</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small text-muted mb-1">Original</div>
+            <div class="sequence-display small">${original}</div>
+        </div>
+        <div class="border rounded p-2 bg-light">
+            <div class="small text-muted mb-1">Result</div>
+            <div class="sequence-display small">${result}</div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+
+function displayGCAnalysisResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-chart-line"></i> Advanced GC Analysis</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-1">GC Content</div>
+            <div class="h5 mb-1">${data.gc_content}%</div>
+            <div class="progress" >
+                <div class="progress-bar bg-success" ></div>
+            </div>
+        </div>
+    `;
+
+    // GC123 results
+    if (data.gc123) {
+        html += `
+            <div class="border rounded p-2 bg-light mb-2">
+                <div class="small fw-bold text-primary mb-1">GC by Codon Position</div>
+                <div class="row g-1 small">
+                    <div class="col-4">Pos 1: ${(data.gc123[0] * 100).toFixed(2)}%</div>
+                    <div class="col-4">Pos 2: ${(data.gc123[1] * 100).toFixed(2)}%</div>
+                    <div class="col-4">Pos 3: ${(data.gc123[2] * 100).toFixed(2)}%</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // GC Skew
+    if (data.gc_skew && data.gc_skew.length > 0) {
+        const avgSkew = (data.gc_skew.reduce((a, b) => a + b, 0) / data.gc_skew.length).toFixed(4);
+        html += `
+            <div class="border rounded p-2 bg-light">
+                <div class="small fw-bold text-primary mb-1">GC Skew (Window: ${data.window_size}bp)</div>
+                <div class="small"><strong>Average:</strong> ${avgSkew}</div>
+                <div class="small"><strong>First 10 values:</strong> ${data.gc_skew.slice(0, 10).map(v => v.toFixed(4)).join(', ')}${data.gc_skew.length > 10 ? '...' : ''}</div>
+            </div>
+        `;
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+function displaySearchResults(result) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-search"></i> Search Results</h6>
+        </div>
+        <div class="border rounded p-2 bg-light">
+            <div class="small fw-bold text-primary mb-1">Pattern: ${result.pattern}</div>
+    `;
+
+    if (result.type === 'find') {
+        html += `
+            <div class="small"><strong>Position:</strong> ${result.position >= 0 ? result.position : 'Not found'}</div>
+            <div class="small"><strong>Found:</strong> ${result.found ? 'Yes' : 'No'}</div>
+        `;
+    } else if (result.type === 'count' || result.type === 'count_overlap') {
+        html += `
+            <div class="small"><strong>Count:</strong> ${result.count}</div>
+            <div class="small"><strong>Type:</strong> ${result.type === 'count_overlap' ? 'Overlapping' : 'Non-overlapping'}</div>
+        `;
+    } else if (result.type === 'nt_search') {
+        html += `
+            <div class="small"><strong>Count:</strong> ${result.count}</div>
+            <div class="small"><strong>Positions:</strong> ${result.positions.length > 0 ? result.positions.join(', ') : 'None'}</div>
+        `;
+    }
+
+    html += '</div>';
+    resultsArea.innerHTML = html;
+}
+
+function displayManipulationResult(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-tools"></i> ${data.operation}</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small text-muted mb-1">Original (${data.original_length} chars)</div>
+            <div class="sequence-display small">${data.original}</div>
+        </div>
+        <div class="border rounded p-2 bg-light">
+            <div class="small text-muted mb-1">Result (${data.result_length} chars)</div>
+            <div class="sequence-display small">${data.result}</div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+
+// Melting Temperature Calculation
+function calculateMeltingTemp() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        showAlert('Please enter a DNA sequence first', 'warning');
+        return;
+    }
+
+    showLoading('meltingTempBtn');
+
+    fetch('/api/sequence/melting_temp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('meltingTempBtn', '<i class="fas fa-thermometer-half"></i> Calculate Tm');
+
+        if (data.success) {
+            displayMeltingTempResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('meltingTempBtn', '<i class="fas fa-thermometer-half"></i> Calculate Tm');
+        showAlert('Error calculating melting temperature', 'danger');
+    });
+}
+
+function displayMeltingTempResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-thermometer-half"></i> Melting Temperature</h6>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <div class="border rounded p-3 bg-light">
+                    <div class="small text-muted mb-1">Wallace Method</div>
+                    <div class="h5 mb-0">${data.tm_wallace.toFixed(2)}°C</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded p-3 bg-light">
+                    <div class="small text-muted mb-1">GC-Based</div>
+                    <div class="h5 mb-0">${data.tm_gc.toFixed(2)}°C</div>
+                </div>
+            </div>
+    `;
+
+    if (data.tm_nn !== null) {
+        html += `
+            <div class="col-12">
+                <div class="border rounded p-3 bg-light">
+                    <div class="small text-muted mb-1">Nearest-Neighbor (Most Accurate)</div>
+                    <div class="h5 mb-0">${data.tm_nn.toFixed(2)}°C</div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        </div>
+        <div class="border rounded p-2 bg-light">
+            <div class="small text-muted">
+                <strong>Note:</strong> Wallace method is for short oligos (&lt;14bp). Nearest-neighbor method is most accurate for longer sequences.
+            </div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+
+// Find ORFs
+function findORFs() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    const minLength = parseInt(document.getElementById('minOrfLength').value) || 75;
+
+    if (!sequence) {
+        showAlert('Please enter a DNA sequence first', 'warning');
+        return;
+    }
+
+    showLoading('orfBtn');
+
+    fetch('/api/sequence/find_orfs', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence, min_length: minLength})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('orfBtn', '<i class="fas fa-dna"></i> Find ORFs');
+
+        if (data.success) {
+            displayORFResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('orfBtn', '<i class="fas fa-dna"></i> Find ORFs');
+        showAlert('Error finding ORFs', 'danger');
+    });
+}
+
+function displayORFResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-dna"></i> Open Reading Frames (ORFs)</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small"><strong>Total ORFs found:</strong> ${data.total_found}</div>
+            <div class="small"><strong>Showing:</strong> Top ${data.orfs.length} longest ORFs</div>
+        </div>
+    `;
+
+    if (data.orfs.length === 0) {
+        html += '<div class="text-muted">No ORFs found with minimum length criteria</div>';
+    } else {
+        data.orfs.forEach((orf, idx) => {
+            const strandIcon = orf.strand === 1 ? '→' : '←';
+            html += `
+                <div class="border rounded p-2 bg-light mb-2">
+                    <div class="row g-1 small">
+                        <div class="col-12 fw-bold">ORF ${idx + 1} ${strandIcon} Frame ${orf.frame > 0 ? '+' : ''}${orf.frame}</div>
+                        <div class="col-4">Position: ${orf.start}-${orf.end}</div>
+                        <div class="col-4">Length: ${orf.length} bp</div>
+                        <div class="col-4">Protein: ${orf.protein_length} aa</div>
+                        <div class="col-12 mt-1">
+                            <div class="text-muted" style="font-size: 0.7rem;">Protein:</div>
+                            <div class="sequence-display" style="font-size: 0.75rem;">${orf.protein_sequence.substring(0, 60)}${orf.protein_sequence.length > 60 ? '...' : ''}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+// Codon Usage Analysis
+function analyzeCodonUsage() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    showLoading('codonBtn');
+
+    fetch('/api/sequence/codon_usage_analysis', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('codonBtn', '<i class="fas fa-chart-pie"></i> Codon Usage');
+
+        if (data.success) {
+            displayCodonUsageResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('codonBtn', '<i class="fas fa-chart-pie"></i> Codon Usage');
+        showAlert('Error analyzing codon usage', 'danger');
+    });
+}
+
+function displayCodonUsageResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-chart-pie"></i> Codon Usage Analysis</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small"><strong>Total Codons:</strong> ${data.total_codons}</div>
+            <div class="small"><strong>Unique Codons:</strong> ${data.unique_codons}</div>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-1">Top 20 Most Frequent Codons</div>
+            <div class="row g-1 small">
+    `;
+
+    data.top_codons.forEach(item => {
+        html += `
+            <div class="col-6">
+                <strong>${item.codon}:</strong> ${item.count} (${item.frequency.toFixed(2)}%)
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+
+// Calculate Checksums
+function calculateChecksums() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    showLoading('checksumBtn');
+
+    fetch('/api/sequence/checksums', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('checksumBtn', '<i class="fas fa-fingerprint"></i> Calculate Checksums');
+
+        if (data.success) {
+            displayChecksumsResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('checksumBtn', '<i class="fas fa-fingerprint"></i> Calculate Checksums');
+        showAlert('Error calculating checksums', 'danger');
+    });
+}
+
+function displayChecksumsResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-fingerprint"></i> Sequence Checksums</h6>
+        </div>
+        <div class="border rounded p-3 bg-light mb-2">
+            <div class="small text-muted mb-1">SEGUID</div>
+            <div class="fw-bold font-monospace">${data.seguid}</div>
+        </div>
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="border rounded p-3 bg-light">
+                    <div class="small text-muted mb-1">CRC32</div>
+                    <div class="fw-bold font-monospace">${data.crc32}</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded p-3 bg-light">
+                    <div class="small text-muted mb-1">CRC64</div>
+                    <div class="fw-bold font-monospace">${data.crc64}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+
+// Advanced Protein Analysis
+function advancedProteinAnalysis() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+
+    if (!sequence) {
+        showAlert('Please enter a protein sequence first', 'warning');
+        return;
+    }
+
+    showLoading('advProtParamBtn');
+
+    fetch('/api/sequence/protparam_advanced', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('advProtParamBtn', '<i class="fas fa-atom"></i> Molar Extinction & Charge');
+
+        if (data.success) {
+            displayAdvancedProteinResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('advProtParamBtn', '<i class="fas fa-atom"></i> Molar Extinction & Charge');
+        showAlert('Error performing advanced protein analysis', 'danger');
+    });
+}
+
+function displayAdvancedProteinResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-atom"></i> Advanced Protein Analysis</h6>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-2">Molar Extinction Coefficient (280nm)</div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="small text-muted">Reduced Cysteines</div>
+                    <div class="fw-bold">${data.molar_extinction.reduced} M<sup>-1</sup> cm<sup>-1</sup></div>
+                </div>
+                <div class="col-6">
+                    <div class="small text-muted">Disulfide Bridges</div>
+                    <div class="fw-bold">${data.molar_extinction.oxidized} M<sup>-1</sup> cm<sup>-1</sup></div>
+                </div>
+            </div>
+        </div>
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-1">Charge at pH 7.0</div>
+            <div class="h5 mb-0">${data.charge_at_pH7.toFixed(4)}</div>
+        </div>
+    `;
+
+    if (data.flexibility && data.flexibility.length > 0) {
+        const avgFlex = (data.flexibility.reduce((a, b) => a + b, 0) / data.flexibility.length).toFixed(4);
+        html += `
+            <div class="border rounded p-2 bg-light">
+                <div class="small fw-bold text-primary mb-1">Flexibility Analysis</div>
+                <div class="small"><strong>Average Flexibility:</strong> ${avgFlex}</div>
+                <div class="small"><strong>First 10 values:</strong> ${data.flexibility.slice(0, 10).map(v => v.toFixed(3)).join(', ')}${data.flexibility.length > 10 ? '...' : ''}</div>
+            </div>
+        `;
+    }
+
+    resultsArea.innerHTML = html;
+}
+
+// Molecular Weight Advanced
+function molecularWeightAdvanced() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    const type = document.getElementById('sequenceType').value;
+
+    if (!sequence) {
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+
+    showLoading('molWeightBtn');
+
+    fetch('/api/sequence/molecular_weight_advanced', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sequence: sequence, type: type})
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('molWeightBtn', '<i class="fas fa-weight"></i> MW Variations');
+
+        if (data.success) {
+            displayMolecularWeightResults(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('molWeightBtn', '<i class="fas fa-weight"></i> MW Variations');
+        showAlert('Error calculating molecular weights', 'danger');
+    });
+}
+
+function displayMolecularWeightResults(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-weight"></i> Molecular Weight Variations</h6>
+        </div>
+        <div class="row g-2">
+    `;
+
+    // Display all available molecular weight variations
+    for (const [key, value] of Object.entries(data.molecular_weights)) {
+        if (value !== null) {
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `
+                <div class="col-6">
+                    <div class="border rounded p-2 bg-light">
+                        <div class="small text-muted">${label}</div>
+                        <div class="fw-bold">${value.toFixed(2)} Da</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    html += '</div>';
+    resultsArea.innerHTML = html;
+}
+
+// Reference Data
+function showReferenceData() {
+    showLoading('refDataBtn');
+
+    fetch('/api/sequence/reference_data', {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('refDataBtn', '<i class="fas fa-book"></i> Codon Tables & IUPAC');
+
+        if (data.success) {
+            displayReferenceData(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('refDataBtn', '<i class="fas fa-book"></i> Codon Tables & IUPAC');
+        showAlert('Error fetching reference data', 'danger');
+    });
+}
+
+function displayReferenceData(data) {
+    const resultsArea = document.getElementById('resultsArea');
+
+    let html = `
+        <div class="mb-2">
+            <h6 class="text-primary"><i class="fas fa-book"></i> Reference Data</h6>
+        </div>
+
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-2">Standard Genetic Code (Table 1)</div>
+            <div class="row g-1 small" style="max-height: 200px; overflow-y: auto;">
+    `;
+
+    // Display codon table
+    for (const [codon, aa] of Object.entries(data.codon_table.forward_table)) {
+        html += `<div class="col-3">${codon} → ${aa}</div>`;
+    }
+
+    html += `
+            </div>
+            <div class="mt-2 small">
+                <strong>Start Codons:</strong> ${data.codon_table.start_codons.join(', ')}<br>
+                <strong>Stop Codons:</strong> ${data.codon_table.stop_codons.join(', ')}
+            </div>
+        </div>
+
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-2">IUPAC DNA Codes</div>
+            <div class="row g-1 small">
+    `;
+
+    for (const [code, meaning] of Object.entries(data.iupac_dna)) {
+        html += `<div class="col-4">${code} = ${meaning}</div>`;
+    }
+
+    html += `
+            </div>
+        </div>
+
+        <div class="border rounded p-2 bg-light mb-2">
+            <div class="small fw-bold text-primary mb-2">IUPAC Protein Codes</div>
+            <div class="row g-1 small">
+    `;
+
+    for (const [code, aa] of Object.entries(data.iupac_protein)) {
+        html += `<div class="col-4">${code} = ${aa}</div>`;
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    resultsArea.innerHTML = html;
+}
+</script>
+{% endblock %}

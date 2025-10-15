@@ -1,0 +1,26 @@
+ID   AB000263; SV 1; linear; genomic DNA; STD; PLN; 1362 BP.
+XX
+AC   AB000263;
+XX
+DT   23-NOV-1997 (Rel. 53, Created)
+DT   12-MAY-2000 (Rel. 64, Last updated, Version 4)
+XX
+DE   Oryza sativa gene for chloroplast RNA polymerase alpha subunit, complete
+DE   cds.
+XX
+KW   rpoA gene; chloroplast RNA polymerase alpha subunit.
+XX
+OS   Oryza sativa (rice)
+OC   Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+OC   Spermatophyta; Magnoliophyta; Liliopsida; Poales; Poaceae; BEP clade;
+OC   Ehrhartoideae; Oryzeae; Oryza.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..1362
+FT                   /organism="Oryza sativa"
+FT                   /cultivar="Nipponbare"
+FT                   /organelle="plastid:chloroplast"
+FT                   /mol_type="genomic DNA"
+SQ   Sequence 1362 BP; 408 A; 314 C; 316 G; 324 T; 0 other;
+     atggcttcta ttaaagatgc taattcaatt atagcaattg cttataatat aaatgatagt

@@ -1,0 +1,1107 @@
+{% extends "base.html" %}
+
+{% block title %}Phylogenetics - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #phyloTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #phyloTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-project-diagram"></i> Phylogenetics
+        </h2>
+        <p class="lead mb-3">Comprehensive phylogenetic tree analysis using Bio.Phylo</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="phyloTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab">
+                <i class="fas fa-upload d-block mb-1"></i>
+                <small>Parse Tree</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="build-tab" data-bs-toggle="tab" data-bs-target="#build" type="button" role="tab">
+                <i class="fas fa-hammer d-block mb-1"></i>
+                <small>Build Tree</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="manipulate-tab" data-bs-toggle="tab" data-bs-target="#manipulate" type="button" role="tab">
+                <i class="fas fa-edit d-block mb-1"></i>
+                <small>Manipulate</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="analyze-tab" data-bs-toggle="tab" data-bs-target="#analyze" type="button" role="tab">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>Analyze</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                <i class="fas fa-download d-block mb-1"></i>
+                <small>Export</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="phyloTabContent">
+            <!-- Parse Tree Tab -->
+            <div class="tab-pane fade show active" id="parse" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Phylogenetic Tree Input</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning mb-2 small"><i class="fas fa-file"></i> Upload Tree File</h6>
+                                        <form id="treeForm" enctype="multipart/form-data">
+                                            <div class="mb-2">
+                                                <label for="treeFile" class="form-label small">Tree File</label>
+                                                <input type="file" class="form-control form-control-sm" id="treeFile" name="file"
+                                                       accept=".nwk,.newick,.nex,.nexus,.xml,.phyloxml">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label for="treeFormat" class="form-label small">Tree Format</label>
+                                                <select class="form-select form-select-sm" id="treeFormat" name="format">
+                                                    <option value="newick">Newick</option>
+                                                    <option value="nexus">NEXUS</option>
+                                                    <option value="phyloxml">PhyloXML</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="showConfidence" name="show_confidence">
+                                                <label class="form-check-label small" for="showConfidence">
+                                                    Show confidence values
+                                                </label>
+                                            </div>
+                                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseTreeBtn">
+                                                <i class="fas fa-project-diagram me-2"></i> Parse Tree
+                                            </button>
+                                            <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleTree()">
+                                                <i class="fas fa-flask me-2"></i> Load Example
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning mb-2 small"><i class="fas fa-edit"></i> Or Enter Tree String</h6>
+                                        <div class="mb-2">
+                                            <label for="treeString" class="form-label small">Tree String</label>
+                                            <textarea class="form-control form-control-sm" id="treeString" rows="6"
+                                                    placeholder="Enter tree in Newick format, e.g., ((A,B),(C,D));"></textarea>
+                                        </div>
+                                        <button type="button" class="gradient-btn-outline w-100 mb-2" onclick="parseTreeString()">
+                                            <i class="fas fa-code me-2"></i> Parse String
+                                        </button>
+                                        <button type="button" class="gradient-btn-small w-100" onclick="clearTreeString()">
+                                            <i class="fas fa-eraser me-2"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card mb-3 h-100">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Tree Information</h6>
+                            </div>
+                            <div class="card-body py-2" id="treeInfo">
+                                <p class="text-muted text-center small">
+                                    <i class="fas fa-arrow-left fa-2x mb-2"></i><br>
+                                    Upload or enter a phylogenetic tree
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree Visualization -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-image"></i> Tree Visualization</h6>
+                            </div>
+                            <div class="card-body py-2 text-center" id="treeVisualization">
+                                <p class="text-muted">
+                                    <i class="fas fa-eye fa-2x mb-3"></i><br>
+                                    Tree visualization will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Build Tree Tab -->
+            <div class="tab-pane fade" id="build" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-hammer"></i> Build Tree from Alignment</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="buildTreeForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="alignmentFile" class="form-label small">Alignment File (or paste below)</label>
+                                        <input type="file" class="form-control form-control-sm" id="alignmentFile" name="file">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="alignmentString" class="form-label small">Or Paste Alignment</label>
+                                        <textarea class="form-control form-control-sm" id="alignmentString" rows="6"
+                                                placeholder=">Seq1&#10;ATCGATCG&#10;>Seq2&#10;ATCGGTCG"></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="alignmentFormat" class="form-label small">Alignment Format</label>
+                                        <select class="form-select form-select-sm" id="alignmentFormat" name="alignment_format">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="stockholm">Stockholm</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="buildMethod" class="form-label small">Tree Building Method</label>
+                                        <select class="form-select form-select-sm" id="buildMethod" name="method">
+                                            <option value="nj">Neighbor Joining (NJ)</option>
+                                            <option value="upgma">UPGMA</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="distanceModel" class="form-label small">Distance Model</label>
+                                        <select class="form-select form-select-sm" id="distanceModel" name="model">
+                                            <option value="identity">Identity</option>
+                                            <option value="blastn">BLASTN</option>
+                                            <option value="trans">Transition</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mt-2" id="buildTreeBtn">
+                                        <i class="fas fa-hammer me-2"></i> Build Tree
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Distance Matrix</h6>
+                            </div>
+                            <div class="card-body py-2" id="distanceMatrixDisplay">
+                                <p class="text-muted text-center small">Distance matrix will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manipulate Tree Tab -->
+            <div class="tab-pane fade" id="manipulate" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-cut"></i> Prune Tree</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="pruneTerminal" class="form-label small">Terminal to Remove</label>
+                                    <select class="form-select form-select-sm" id="pruneTerminal">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="pruneTree()">
+                                    <i class="fas fa-cut me-2"></i> Prune
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-arrows-alt"></i> Re-root Tree</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="rootMethod" id="rootMidpoint" value="midpoint" checked>
+                                    <label class="form-check-label small" for="rootMidpoint">
+                                        Root at midpoint
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="rootMethod" id="rootOutgroup" value="outgroup">
+                                    <label class="form-check-label small" for="rootOutgroup">
+                                        Root with outgroup
+                                    </label>
+                                </div>
+                                <div class="mb-2">
+                                    <select class="form-select form-select-sm" id="rerootTerminal" disabled>
+                                        <option value="">Select outgroup...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="rerootTree()">
+                                    <i class="fas fa-arrows-alt me-2"></i> Re-root
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-sort"></i> Ladderize Tree</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="ladderizeReverse">
+                                    <label class="form-check-label small" for="ladderizeReverse">
+                                        Reverse order
+                                    </label>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="ladderizeTree()">
+                                    <i class="fas fa-sort me-2"></i> Ladderize
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-compress"></i> Collapse Branches</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="collapseThreshold" class="form-label small">Branch Length Threshold</label>
+                                    <input type="number" class="form-control form-control-sm" id="collapseThreshold"
+                                           step="0.01" placeholder="e.g., 0.1">
+                                    <div class="form-text">Collapse branches shorter than threshold</div>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="collapseTree()">
+                                    <i class="fas fa-compress me-2"></i> Collapse
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Current Tree Status</h6>
+                            </div>
+                            <div class="card-body py-2" id="manipulateInfo">
+                                <p class="text-muted text-center">Load a tree first to enable manipulation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Tree Tab -->
+            <div class="tab-pane fade" id="analyze" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> View Terminals & Clades</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="viewTerminals()">
+                                    <i class="fas fa-leaf me-2"></i> View All Terminals
+                                </button>
+                                <button class="gradient-btn-outline w-100" onclick="viewClades()">
+                                    <i class="fas fa-sitemap me-2"></i> View All Clades
+                                </button>
+                                <div id="terminalsCladesList" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-route"></i> Find Path to Root</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="pathTerminal" class="form-label small">Select Terminal</label>
+                                    <select class="form-select form-select-sm" id="pathTerminal">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="findPath()">
+                                    <i class="fas fa-route me-2"></i> Find Path
+                                </button>
+                                <div id="pathDisplay" class="mt-3"></div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-code-branch"></i> Common Ancestor</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="ancestor1" class="form-label small">First Terminal</label>
+                                    <select class="form-select form-select-sm" id="ancestor1">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="ancestor2" class="form-label small">Second Terminal</label>
+                                    <select class="form-select form-select-sm" id="ancestor2">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="findCommonAncestor()">
+                                    <i class="fas fa-code-branch me-2"></i> Find Common Ancestor
+                                </button>
+                                <div id="ancestorDisplay" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-balance-scale"></i> Compare Trees</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-2">Compare current tree with another tree</p>
+                                <div class="mb-2">
+                                    <label for="compareTreeString" class="form-label small">Second Tree (Newick)</label>
+                                    <textarea class="form-control form-control-sm" id="compareTreeString" rows="4"
+                                            placeholder="Enter tree in Newick format"></textarea>
+                                </div>
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="compareTrees()">
+                                    <i class="fas fa-balance-scale me-2"></i> Compare Trees
+                                </button>
+                                <div id="comparisonDisplay"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Tab -->
+            <div class="tab-pane fade" id="export" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-file-export"></i> Export Tree</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="exportFormat" class="form-label small">Export Format</label>
+                                    <select class="form-select form-select-sm" id="exportFormat">
+                                        <option value="newick">Newick</option>
+                                        <option value="nexus">NEXUS</option>
+                                        <option value="phyloxml">PhyloXML</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="exportTree()">
+                                    <i class="fas fa-file-export me-2"></i> Export Tree
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-palette"></i> Visualization Options</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="vizShowConfidence">
+                                    <label class="form-check-label small" for="vizShowConfidence">
+                                        Show confidence values
+                                    </label>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="updateVisualization()">
+                                    <i class="fas fa-sync me-2"></i> Update Visualization
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exported Tree Result -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-code"></i> Exported Tree</h6>
+                            </div>
+                            <div class="card-body py-2" id="exportedTree">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-file-export fa-2x mb-3"></i><br>
+                                    Exported tree will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variable to track if tree is loaded
+let treeLoaded = false;
+
+// Parse Tree from Form
+document.getElementById('treeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const fileInput = document.getElementById('treeFile');
+    const formatInput = document.getElementById('treeFormat');
+    const showConfidence = document.getElementById('showConfidence').checked;
+
+    if (!fileInput.files[0]) {
+        return;
+    }
+
+    formData.append('file', fileInput.files[0]);
+    formData.append('format', formatInput.value);
+    formData.append('show_confidence', showConfidence);
+
+    showLoading('parseTreeBtn');
+
+    fetch('/api/phylo/parse', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parseTreeBtn', '<i class="fas fa-project-diagram"></i> Parse Tree');
+        if (data.success) {
+            displayTreeResults(data);
+            treeLoaded = true;
+            populateTerminalSelects(data.terminals);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parseTreeBtn', '<i class="fas fa-project-diagram"></i> Parse Tree');
+        showAlert('Error parsing tree', 'danger');
+    });
+});
+
+// Parse Tree from String
+function parseTreeString() {
+    const treeString = document.getElementById('treeString').value.trim();
+
+    if (!treeString) {
+        showAlert('Please enter a tree string', 'warning');
+        return;
+    }
+
+    const selectedFormat = document.getElementById('treeFormat').value;
+    const showConfidence = document.getElementById('showConfidence').checked;
+    const formData = new FormData();
+    formData.append('tree_string', treeString);
+    formData.append('format', selectedFormat);
+    formData.append('show_confidence', showConfidence);
+
+    fetch('/api/phylo/parse', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTreeResults(data);
+            treeLoaded = true;
+            populateTerminalSelects(data.terminals);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error parsing tree', 'danger');
+    });
+}
+
+// Display Tree Results
+function displayTreeResults(data) {
+    // Display tree information
+    const treeInfoDiv = document.getElementById('treeInfo');
+    let infoHtml = '<div class="row g-2">';
+
+    infoHtml += `
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light text-center">
+                <small class="text-warning d-block">Terminals</small>
+                <strong>${data.terminal_count}</strong>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light text-center">
+                <small class="text-warning d-block">Internal Nodes</small>
+                <strong>${data.internal_nodes || 'N/A'}</strong>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light text-center">
+                <small class="text-warning d-block">Branch Length</small>
+                <strong>${data.total_branch_length ? data.total_branch_length.toFixed(4) : 'N/A'}</strong>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="border rounded p-2 bg-light text-center">
+                <small class="text-warning d-block">Bifurcating</small>
+                <strong>${data.is_bifurcating ? 'Yes' : 'No'}</strong>
+            </div>
+        </div>
+    `;
+
+    infoHtml += '</div>';
+    treeInfoDiv.innerHTML = infoHtml;
+
+    // Display tree visualization
+    const treeVisDiv = document.getElementById('treeVisualization');
+    if (data.tree_image) {
+        treeVisDiv.innerHTML = `
+            <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree" style="max-width: 100%; height: auto;">
+            <div class="mt-2">
+                <button class="gradient-btn-outline btn-sm" onclick="downloadTreeImage('${data.tree_image}')">
+                    <i class="fas fa-download"></i> Download Image
+                </button>
+            </div>
+        `;
+    }
+
+    // Update manipulate info
+    document.getElementById('manipulateInfo').innerHTML = `
+        <p class="small"><strong>Tree loaded successfully!</strong></p>
+        <p class="small mb-0">You can now manipulate the tree using the controls on the left.</p>
+    `;
+}
+
+// Populate terminal selects
+function populateTerminalSelects(terminals) {
+    const selects = ['pruneTerminal', 'rerootTerminal', 'pathTerminal', 'ancestor1', 'ancestor2'];
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">Select terminal...</option>';
+        terminals.forEach(term => {
+            const option = document.createElement('option');
+            option.value = term;
+            option.textContent = term;
+            select.appendChild(option);
+        });
+    });
+}
+
+// Build Tree from Alignment
+document.getElementById('buildTreeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const fileInput = document.getElementById('alignmentFile');
+    const alignmentString = document.getElementById('alignmentString').value.trim();
+
+    if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+    } else if (alignmentString) {
+        formData.append('alignment_string', alignmentString);
+    } else {
+        showAlert('Please provide an alignment', 'warning');
+        return;
+    }
+
+    formData.append('alignment_format', document.getElementById('alignmentFormat').value);
+    formData.append('method', document.getElementById('buildMethod').value);
+    formData.append('model', document.getElementById('distanceModel').value);
+
+    showLoading('buildTreeBtn');
+
+    fetch('/api/phylo/build', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('buildTreeBtn', '<i class="fas fa-hammer"></i> Build Tree');
+        if (data.success) {
+            displayTreeResults(data);
+            treeLoaded = true;
+            populateTerminalSelects(data.terminals);
+            displayDistanceMatrix(data.distance_matrix);
+            showAlert('Tree built successfully!', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('buildTreeBtn', '<i class="fas fa-hammer"></i> Build Tree');
+        showAlert('Error building tree', 'danger');
+    });
+});
+
+// Display Distance Matrix
+function displayDistanceMatrix(dm) {
+    const container = document.getElementById('distanceMatrixDisplay');
+    let html = '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th></th>';
+
+    dm.names.forEach(name => {
+        html += `<th class="small">${name}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    dm.matrix.forEach((row, i) => {
+        html += `<tr><th class="small">${dm.names[i]}</th>`;
+        row.forEach(val => {
+            html += `<td class="small">${val.toFixed(3)}</td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Prune Tree
+function pruneTree() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const terminal = document.getElementById('pruneTerminal').value;
+    if (!terminal) {
+        showAlert('Please select a terminal to prune', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/prune', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({terminal_name: terminal})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTreeResults(data);
+            populateTerminalSelects(data.terminals);
+            showAlert('Tree pruned successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Re-root Tree
+document.getElementById('rootOutgroup').addEventListener('change', function() {
+    document.getElementById('rerootTerminal').disabled = false;
+});
+document.getElementById('rootMidpoint').addEventListener('change', function() {
+    document.getElementById('rerootTerminal').disabled = true;
+});
+
+function rerootTree() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const method = document.querySelector('input[name="rootMethod"]:checked').value;
+    const payload = {
+        at_midpoint: method === 'midpoint'
+    };
+
+    if (method === 'outgroup') {
+        const outgroup = document.getElementById('rerootTerminal').value;
+        if (!outgroup) {
+            showAlert('Please select an outgroup', 'warning');
+            return;
+        }
+        payload.outgroup_name = outgroup;
+    }
+
+    fetch('/api/phylo/reroot', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTreeResults(data);
+            showAlert('Tree re-rooted successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Ladderize Tree
+function ladderizeTree() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const reverse = document.getElementById('ladderizeReverse').checked;
+
+    fetch('/api/phylo/ladderize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reverse: reverse})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTreeResults(data);
+            showAlert('Tree ladderized successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Collapse Tree
+function collapseTree() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const threshold = document.getElementById('collapseThreshold').value;
+    if (!threshold) {
+        showAlert('Please enter a threshold', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/collapse', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({threshold: parseFloat(threshold)})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTreeResults(data);
+            showAlert('Branches collapsed successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// View Terminals
+function viewTerminals() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/terminals')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<h6 class="small text-warning">Terminals:</h6><ul class="list-group list-group-flush">';
+            data.terminals.forEach(term => {
+                html += `<li class="list-group-item py-1 small">
+                    <strong>${term.name}</strong>
+                    ${term.branch_length ? `(length: ${term.branch_length.toFixed(4)})` : ''}
+                </li>`;
+            });
+            html += '</ul>';
+            document.getElementById('terminalsCladesList').innerHTML = html;
+        }
+    });
+}
+
+// View Clades
+function viewClades() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/clades')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<h6 class="small text-warning">All Clades:</h6><ul class="list-group list-group-flush">';
+            data.clades.forEach(clade => {
+                html += `<li class="list-group-item py-1 small">
+                    <strong>${clade.name}</strong>
+                    ${clade.is_terminal ? '<span class="badge bg-success">Terminal</span>' : '<span class="badge bg-info">Internal</span>'}
+                    ${clade.branch_length ? ` (length: ${clade.branch_length.toFixed(4)})` : ''}
+                </li>`;
+            });
+            html += '</ul>';
+            document.getElementById('terminalsCladesList').innerHTML = html;
+        }
+    });
+}
+
+// Find Path
+function findPath() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const terminal = document.getElementById('pathTerminal').value;
+    if (!terminal) {
+        showAlert('Please select a terminal', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/path', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({terminal_name: terminal})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<h6 class="small text-warning mt-2">Path to Root:</h6><ol class="list-group list-group-numbered">';
+            data.path.forEach(node => {
+                html += `<li class="list-group-item py-1 small">${node.name}</li>`;
+            });
+            html += '</ol>';
+            document.getElementById('pathDisplay').innerHTML = html;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Find Common Ancestor
+function findCommonAncestor() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const name1 = document.getElementById('ancestor1').value;
+    const name2 = document.getElementById('ancestor2').value;
+
+    if (!name1 || !name2) {
+        showAlert('Please select two terminals', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/common-ancestor', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name1: name1, name2: name2})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const ancestor = data.common_ancestor;
+            let html = `
+                <div class="alert alert-info mt-2 py-2">
+                    <small><strong>Common Ancestor:</strong> ${ancestor.name}</small><br>
+                    <small><strong>Descendants:</strong> ${ancestor.terminal_count} terminals</small>
+                </div>
+            `;
+            document.getElementById('ancestorDisplay').innerHTML = html;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Compare Trees
+function compareTrees() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const tree2String = document.getElementById('compareTreeString').value.trim();
+    if (!tree2String) {
+        showAlert('Please enter a second tree', 'warning');
+        return;
+    }
+
+    fetch('/api/phylo/compare', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            tree2_string: tree2String,
+            tree2_format: 'newick'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `
+                <div class="alert alert-info mt-2 py-2">
+                    <small><strong>Shared Terminals:</strong> ${data.shared_terminals}</small><br>
+                    <small><strong>Unique to Tree 1:</strong> ${data.unique_to_tree1}</small><br>
+                    <small><strong>Unique to Tree 2:</strong> ${data.unique_to_tree2}</small><br>
+                    <small><strong>Symmetric Difference:</strong> ${data.symmetric_difference}</small>
+                </div>
+            `;
+            document.getElementById('comparisonDisplay').innerHTML = html;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Export Tree
+function exportTree() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const format = document.getElementById('exportFormat').value;
+
+    fetch('/api/phylo/export', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({export_format: format})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = `
+                <div class="mb-2">
+                    <label class="form-label small">Exported Tree (${data.format}):</label>
+                    <textarea class="form-control form-control-sm" rows="10" readonly>${data.tree_string}</textarea>
+                </div>
+                <button class="gradient-btn-small w-100" onclick="copyExportedTree()">
+                    <i class="fas fa-copy"></i> Copy to Clipboard
+                </button>
+            `;
+            document.getElementById('exportedTree').innerHTML = html;
+            showAlert('Tree exported successfully', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+function copyExportedTree() {
+    const textarea = document.querySelector('#exportedTree textarea');
+    textarea.select();
+    document.execCommand('copy');
+    showAlert('Copied to clipboard!', 'success');
+}
+
+// Update Visualization
+function updateVisualization() {
+    if (!treeLoaded) {
+        showAlert('Please load a tree first', 'warning');
+        return;
+    }
+
+    const showConfidence = document.getElementById('vizShowConfidence').checked;
+
+    fetch('/api/phylo/visualize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({show_confidence: showConfidence})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const treeVisDiv = document.getElementById('treeVisualization');
+            treeVisDiv.innerHTML = `
+                <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree">
+                <div class="mt-2">
+                    <button class="gradient-btn-outline btn-sm" onclick="downloadTreeImage('${data.tree_image}')">
+                        <i class="fas fa-download"></i> Download Image
+                    </button>
+                </div>
+            `;
+            showAlert('Visualization updated', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+}
+
+// Load Example Tree
+function loadExampleTree() {
+    const examples = {
+        newick: '((raccoon:19.2,bear:6.8)0.95:0.85,((sea_lion:12.0,seal:12.0)0.87:7.5,((monkey:100.9,cat:47.1)0.92:20.6,weasel:18.9)0.83:2.1)0.91:3.9,dog:25.5)0.99;',
+        nexus: `#NEXUS
+BEGIN TAXA;
+    DIMENSIONS NTAX=8;
+    TAXLABELS raccoon bear sea_lion seal monkey cat weasel dog;
+END;
+
+BEGIN TREES;
+    TREE tree1 = ((raccoon:19.2,bear:6.8)0.95:0.85,((sea_lion:12.0,seal:12.0)0.87:7.5,((monkey:100.9,cat:47.1)0.92:20.6,weasel:18.9)0.83:2.1)0.91:3.9,dog:25.5)0.99;
+END;`,
+        phyloxml: `<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.phyloxml.org http://www.phyloxml.org/1.10/phyloxml.xsd" xmlns="http://www.phyloxml.org">
+<phylogeny rooted="true">
+  <name>example</name>
+  <clade>
+    <confidence type="bootstrap">0.99</confidence>
+    <clade branch_length="19.2">
+      <name>raccoon</name>
+    </clade>
+    <clade branch_length="6.8">
+      <name>bear</name>
+    </clade>
+    <clade>
+      <confidence type="bootstrap">0.91</confidence>
+      <clade>
+        <confidence type="bootstrap">0.87</confidence>
+        <clade branch_length="12.0">
+          <name>sea_lion</name>
+        </clade>
+        <clade branch_length="12.0">
+          <name>seal</name>
+        </clade>
+      </clade>
+      <clade>
+        <confidence type="bootstrap">0.83</confidence>
+        <clade branch_length="100.9">
+          <name>monkey</name>
+        </clade>
+        <clade branch_length="47.1">
+          <name>cat</name>
+        </clade>
+      </clade>
+    </clade>
+    <clade branch_length="25.5">
+      <name>dog</name>
+    </clade>
+  </clade>
+</phylogeny>
+</phyloxml>`
+    };
+
+    const currentFormat = document.getElementById('treeFormat').value;
+    const exampleTree = examples[currentFormat] || examples.newick;
+
+    document.getElementById('treeString').value = exampleTree;
+    parseTreeString();
+}
+
+function clearTreeString() {
+    document.getElementById('treeString').value = '';
+}
+
+function downloadTreeImage(imageSrc) {
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = 'phylogenetic_tree.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %}

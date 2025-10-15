@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Database & Search - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #databaseTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #databaseTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-database"></i> Database & Search
+        </h2>
+        <p class="lead mb-3">Search and retrieve data from NCBI databases using Bio.Entrez</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="databaseTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>Search</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="global-tab" data-bs-toggle="tab" data-bs-target="#global" type="button">
+                <i class="fas fa-globe d-block mb-1"></i>
+                <small>Global Query</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fetch-tab" data-bs-toggle="tab" data-bs-target="#fetch" type="button">
+                <i class="fas fa-download d-block mb-1"></i>
+                <small>Fetch Records</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
+                <i class="fas fa-link d-block mb-1"></i>
+                <small>Related Records</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+                <i class="fas fa-info-circle d-block mb-1"></i>
+                <small>Database Info</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- Search Tab -->
+            <div class="tab-pane fade show active" id="search">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-search"></i> NCBI Entrez Search</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="entrezForm">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label for="database" class="form-label small">Database</label>
+                                            <select class="form-select form-select-sm" id="database">
+                                                <option value="pubmed">PubMed</option>
+                                                <option value="nucleotide">Nucleotide</option>
+                                                <option value="protein">Protein</option>
+                                                <option value="genome">Genome</option>
+                                                <option value="gene">Gene</option>
+                                                <option value="structure">Structure (PDB)</option>
+                                                <option value="taxonomy">Taxonomy</option>
+                                                <option value="snp">SNP</option>
+                                                <option value="sra">SRA</option>
+                                                <option value="bioproject">BioProject</option>
+                                                <option value="biosample">BioSample</option>
+                                                <option value="assembly">Assembly</option>
+                                                <option value="gds">GEO Datasets</option>
+                                                <option value="clinvar">ClinVar</option>
+                                                <option value="omim">OMIM</option>
+                                                <option value="mesh">MeSH</option>
+                                                <option value="pmc">PMC</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="retmax" class="form-label small">Max Results</label>
+                                            <select class="form-select form-select-sm" id="retmax">
+                                                <option value="10">10</option>
+                                                <option value="20" selected>20</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="sortOrder" class="form-label small">Sort By</label>
+                                            <select class="form-select form-select-sm" id="sortOrder">
+                                                <option value="relevance">Relevance</option>
+                                                <option value="pub_date">Publication Date</option>
+                                                <option value="first_author">First Author</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 mt-3">
+                                        <label for="searchTerm" class="form-label small">Search Term</label>
+                                        <input type="text" class="form-control form-control-sm" id="searchTerm" placeholder="Enter search terms (e.g., 'covid-19 AND vaccine')">
+                                        <div class="form-text"><i class="fas fa-info-circle"></i> Use Boolean: AND, OR, NOT. Use quotes for exact phrases.</div>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label for="dateFrom" class="form-label small">Date From (optional)</label>
+                                            <input type="date" class="form-control form-control-sm" id="dateFrom">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="dateTo" class="form-label small">Date To (optional)</label>
+                                            <input type="date" class="form-control form-control-sm" id="dateTo">
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 mt-2">
+                                        <label for="email" class="form-label small">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm" id="email" placeholder="your@email.com" required>
+                                        <div class="form-text"><i class="fas fa-exclamation-triangle text-warning"></i> NCBI requires email for API access</div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
+                                        <i class="fas fa-search me-2"></i>Search Database
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleSearch()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-lightbulb"></i> Search Tips</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <h6 class="text-secondary small">Boolean Operators</h6>
+                                <ul class="small list-unstyled">
+                                    <li><code>AND</code> - Both terms</li>
+                                    <li><code>OR</code> - Either term</li>
+                                    <li><code>NOT</code> - Exclude term</li>
+                                </ul>
+                                <h6 class="text-secondary small mt-2">Field Searches</h6>
+                                <ul class="small list-unstyled">
+                                    <li><code>[auth]</code> - Author</li>
+                                    <li><code>[title]</code> - Title</li>
+                                    <li><code>[jour]</code> - Journal</li>
+                                    <li><code>[pdat]</code> - Pub date</li>
+                                </ul>
+                                <h6 class="text-secondary small mt-2">Examples</h6>
+                                <ul class="small list-unstyled">
+                                    <li><code>"CRISPR"[title]</code></li>
+                                    <li><code>Smith[auth] 2024[pdat]</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Search Results</h6>
+                                <span class="badge bg-info" id="resultCount" style="display:none;"></span>
+                            </div>
+                            <div class="card-body py-2" id="searchResults">
+                                <p class="text-muted text-center"><i class="fas fa-arrow-up fa-2x mb-3"></i><br>Enter search terms and click "Search Database"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Query Tab -->
+            <div class="tab-pane fade" id="global">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-globe"></i> Global Query Across All Databases</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="globalQueryForm">
+                                    <div class="mb-2">
+                                        <label for="globalTerm" class="form-label small">Search Term</label>
+                                        <input type="text" class="form-control form-control-sm" id="globalTerm" placeholder="Enter search term">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="globalEmail" class="form-label small">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm" id="globalEmail" placeholder="your@email.com" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="globalQueryBtn">
+                                        <i class="fas fa-search me-2"></i>Search All Databases
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Global Query</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Global Query searches your term across ALL NCBI databases simultaneously and shows hit counts for each.</p>
+                                <p class="small">This helps you discover which databases contain relevant data for your search.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Global Query Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="globalResults">
+                                <p class="text-muted text-center"><i class="fas fa-arrow-up fa-2x mb-3"></i><br>Enter a search term to query all databases</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fetch Records Tab -->
+            <div class="tab-pane fade" id="fetch">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-download"></i> Batch Fetch Records</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="fetchForm">
+                                    <div class="mb-2">
+                                        <label for="fetchDatabase" class="form-label small">Database</label>
+                                        <select class="form-select form-select-sm" id="fetchDatabase">
+                                            <option value="nucleotide">Nucleotide</option>
+                                            <option value="protein">Protein</option>
+                                            <option value="pubmed">PubMed</option>
+                                            <option value="gene">Gene</option>
+                                            <option value="genome">Genome</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="fetchIds" class="form-label small">Record IDs (comma-separated)</label>
+                                        <textarea class="form-control form-control-sm" id="fetchIds" rows="3" placeholder="Enter IDs separated by commas (e.g., NM_001301717,NM_000546)"></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="fetchFormat" class="form-label small">Output Format</label>
+                                        <select class="form-select form-select-sm" id="fetchFormat">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="gb">GenBank</option>
+                                            <option value="gp">GenPept</option>
+                                            <option value="xml">XML</option>
+                                            <option value="text">Text</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="fetchEmail" class="form-label small">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm" id="fetchEmail" placeholder="your@email.com" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="fetchBtn">
+                                        <i class="fas fa-download me-2"></i>Fetch Records
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Fetch</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Download complete records from NCBI databases using their unique IDs.</p>
+                                <p class="small">Supports multiple formats including FASTA, GenBank, and XML.</p>
+                                <p class="small"><strong>Example IDs:</strong></p>
+                                <ul class="small">
+                                    <li>Nucleotide: NM_000546</li>
+                                    <li>Protein: NP_000537</li>
+                                    <li>PubMed: 34686770</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-file-code"></i> Fetched Records</h6>
+                                <button type="button" class="gradient-btn-small" id="downloadFetchedBtn" style="display:none;" onclick="downloadFetchedRecords()">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                            </div>
+                            <div class="card-body py-2" id="fetchResults">
+                                <p class="text-muted text-center"><i class="fas fa-arrow-up fa-2x mb-3"></i><br>Enter record IDs and click "Fetch Records"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Records Tab -->
+            <div class="tab-pane fade" id="link">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-link"></i> Find Related Records (ELink)</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="linkForm">
+                                    <div class="mb-2">
+                                        <label for="linkId" class="form-label small">Record ID</label>
+                                        <input type="text" class="form-control form-control-sm" id="linkId" placeholder="Enter record ID">
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label for="linkFromDb" class="form-label small">Source Database</label>
+                                            <select class="form-select form-select-sm" id="linkFromDb">
+                                                <option value="nucleotide">Nucleotide</option>
+                                                <option value="protein">Protein</option>
+                                                <option value="gene">Gene</option>
+                                                <option value="pubmed">PubMed</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="linkToDb" class="form-label small">Target Database</label>
+                                            <select class="form-select form-select-sm" id="linkToDb">
+                                                <option value="protein">Protein</option>
+                                                <option value="nucleotide">Nucleotide</option>
+                                                <option value="gene">Gene</option>
+                                                <option value="pubmed">PubMed</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 mt-2">
+                                        <label for="linkEmail" class="form-label small">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm" id="linkEmail" placeholder="your@email.com" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="linkBtn">
+                                        <i class="fas fa-link me-2"></i>Find Related Records
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About ELink</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">ELink finds records in other databases that are related to your query record.</p>
+                                <p class="small"><strong>Common Links:</strong></p>
+                                <ul class="small">
+                                    <li>Nucleotide → Protein</li>
+                                    <li>Protein → Gene</li>
+                                    <li>Gene → PubMed</li>
+                                    <li>PubMed → Related articles</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-network-wired"></i> Related Records</h6>
+                                <span class="badge bg-info" id="linkCount" style="display:none;"></span>
+                            </div>
+                            <div class="card-body py-2" id="linkResults">
+                                <p class="text-muted text-center"><i class="fas fa-arrow-up fa-2x mb-3"></i><br>Enter a record ID to find related records</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Info Tab -->
+            <div class="tab-pane fade" id="info">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Database Information (EInfo)</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="infoForm">
+                                    <div class="mb-2">
+                                        <label for="infoDatabase" class="form-label small">Select Database</label>
+                                        <select class="form-select form-select-sm" id="infoDatabase">
+                                            <option value="">All Databases List</option>
+                                            <option value="pubmed">PubMed</option>
+                                            <option value="nucleotide">Nucleotide</option>
+                                            <option value="protein">Protein</option>
+                                            <option value="gene">Gene</option>
+                                            <option value="genome">Genome</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="infoEmail" class="form-label small">Email Address</label>
+                                        <input type="email" class="form-control form-control-sm" id="infoEmail" placeholder="your@email.com" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100" id="infoBtn">
+                                        <i class="fas fa-info-circle me-2"></i>Get Database Info
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-lightbulb"></i> About EInfo</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">EInfo provides metadata about NCBI databases including:</p>
+                                <ul class="small">
+                                    <li>Database description</li>
+                                    <li>Total record count</li>
+                                    <li>Last update date</li>
+                                    <li>Searchable fields</li>
+                                    <li>Available links</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-server"></i> Database Information</h6>
+                            </div>
+                            <div class="card-body py-2" id="infoResults">
+                                <p class="text-muted text-center"><i class="fas fa-arrow-up fa-2x mb-3"></i><br>Select a database and click "Get Database Info"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- End Tab Content -->
+    </div><!-- End Card Body -->
+</div><!-- End Card -->
+
+<!-- Record Details Modal -->
+<div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordModalLabel">Record Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="recordModalContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="gradient-btn-primary" id="downloadRecordBtn">
+                    <i class="fas fa-download me-2"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/database.js') }}"></script>
+{% endblock %}

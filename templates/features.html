@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Sequence Features - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #featuresTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #featuresTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-tags"></i> Sequence Features
+        </h2>
+        <p class="lead mb-3">Work with ORFs, CDS, annotations, and SeqFeature objects</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="featuresTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="orf-tab" data-bs-toggle="tab" data-bs-target="#orf" type="button">
+                <i class="fas fa-dna d-block mb-1"></i>
+                <small>ORF Finder</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button">
+                <i class="fas fa-plus-circle d-block mb-1"></i>
+                <small>Create Feature</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+                <i class="fas fa-file-alt d-block mb-1"></i>
+                <small>Parse GenBank</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="extract-tab" data-bs-toggle="tab" data-bs-target="#extract" type="button">
+                <i class="fas fa-cut d-block mb-1"></i>
+                <small>Extract</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="compound-tab" data-bs-toggle="tab" data-bs-target="#compound" type="button">
+                <i class="fas fa-layer-group d-block mb-1"></i>
+                <small>Compound</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="annotate-tab" data-bs-toggle="tab" data-bs-target="#annotate" type="button">
+                <i class="fas fa-edit d-block mb-1"></i>
+                <small>Annotate</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- ORF Finder Tab -->
+            <div class="tab-pane fade show active" id="orf">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-dna"></i> ORF Finder Settings</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="orfForm">
+                            <div class="mb-2">
+                                <label class="form-label small">DNA Sequence</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="orfSequence" rows="4" placeholder="Enter DNA sequence..."></textarea>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Minimum ORF Length (bp)</label>
+                                    <input type="number" class="form-control form-control-sm" id="minLength" value="100" min="30">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Strand</label>
+                                    <select class="form-select form-select-sm" id="strand">
+                                        <option value="both">Both strands</option>
+                                        <option value="forward">Forward only</option>
+                                        <option value="reverse">Reverse only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="orfBtn">
+                                <i class="fas fa-search me-2"></i>Find ORFs
+                            </button>
+                            <button type="button" class="gradient-btn-small w-100" onclick="loadORFExample()">
+                                <i class="fas fa-flask me-2"></i>Example
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="orfResults"></div>
+            </div>
+
+            <!-- Create Feature Tab -->
+            <div class="tab-pane fade" id="create">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-plus-circle"></i> Feature Creation</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="createFeatureForm">
+                            <div class="mb-2">
+                                <label class="form-label small">Sequence</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="createSequence" rows="3" placeholder="Enter sequence..."></textarea>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small">Feature Type</label>
+                                    <select class="form-select form-select-sm" id="featureType">
+                                        <option value="CDS">CDS</option>
+                                        <option value="gene">gene</option>
+                                        <option value="mRNA">mRNA</option>
+                                        <option value="promoter">promoter</option>
+                                        <option value="terminator">terminator</option>
+                                        <option value="misc_feature">misc_feature</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Start Position</label>
+                                    <input type="number" class="form-control form-control-sm" id="createStart" value="0" min="0">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">End Position</label>
+                                    <input type="number" class="form-control form-control-sm" id="createEnd" value="100">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Strand</label>
+                                    <select class="form-select form-select-sm" id="createStrand">
+                                        <option value="1">+</option>
+                                        <option value="-1">-</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="createBtn">
+                                <i class="fas fa-plus me-2"></i>Create Feature
+                            </button>
+                            <button type="button" class="gradient-btn-small w-100" onclick="loadCreateExample()">
+                                <i class="fas fa-flask me-2"></i>Example
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="createResults"></div>
+            </div>
+
+            <!-- Parse GenBank Tab -->
+            <div class="tab-pane fade" id="parse">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-file-alt"></i> GenBank/EMBL Feature Parser</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="parseForm">
+                            <div class="mb-2">
+                                <label class="form-label small">Upload GenBank/EMBL File</label>
+                                <input type="file" class="form-control form-control-sm" id="parseFile" accept=".gb,.gbk,.genbank,.embl">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Format</label>
+                                <select class="form-select form-select-sm" id="parseFormat">
+                                    <option value="genbank">GenBank</option>
+                                    <option value="embl">EMBL</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="gradient-btn-primary w-100" id="parseBtn">
+                                <i class="fas fa-file-import me-2"></i>Parse Features
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="parseResults"></div>
+            </div>
+
+            <!-- Extract Feature Tab -->
+            <div class="tab-pane fade" id="extract">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-cut"></i> Feature Extraction</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="extractForm">
+                            <div class="mb-2">
+                                <label class="form-label small">Sequence</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="extractSequence" rows="3" placeholder="Enter sequence..."></textarea>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small">Start Position</label>
+                                    <input type="number" class="form-control form-control-sm" id="extractStart" value="0" min="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">End Position</label>
+                                    <input type="number" class="form-control form-control-sm" id="extractEnd" value="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Strand</label>
+                                    <select class="form-select form-select-sm" id="extractStrand">
+                                        <option value="1">+ (forward)</option>
+                                        <option value="-1">- (reverse)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="translateCheck">
+                                <label class="form-check-label small" for="translateCheck">
+                                    Translate to protein
+                                </label>
+                            </div>
+                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="extractBtn">
+                                <i class="fas fa-cut me-2"></i>Extract Feature
+                            </button>
+                            <button type="button" class="gradient-btn-small w-100" onclick="loadExtractExample()">
+                                <i class="fas fa-flask me-2"></i>Example
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="extractResults"></div>
+            </div>
+
+            <!-- Compound Location Tab -->
+            <div class="tab-pane fade" id="compound">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-layer-group"></i> Compound Location (Exons/Introns)</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="compoundForm">
+                            <div class="mb-2">
+                                <label class="form-label small">Sequence</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="compoundSequence" rows="3" placeholder="Enter sequence..."></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Feature Locations (one per line: start,end,strand)</label>
+                                <textarea class="form-control form-control-sm" id="compoundLocations" rows="3" placeholder="Example:&#10;0,100,1&#10;150,250,1&#10;300,400,1"></textarea>
+                                <small class="text-muted">Format: start,end,strand (strand: 1 for +, -1 for -)</small>
+                            </div>
+                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="compoundBtn">
+                                <i class="fas fa-layer-group me-2"></i>Create Compound Feature
+                            </button>
+                            <button type="button" class="gradient-btn-small w-100" onclick="loadCompoundExample()">
+                                <i class="fas fa-flask me-2"></i>Example
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="compoundResults"></div>
+            </div>
+
+            <!-- Annotate Tab -->
+            <div class="tab-pane fade" id="annotate">
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-edit"></i> Sequence Annotation</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form id="annotateForm">
+                            <div class="mb-2">
+                                <label class="form-label small">Sequence</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="annotateSequence" rows="3" placeholder="Enter sequence..."></textarea>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Sequence ID</label>
+                                    <input type="text" class="form-control form-control-sm" id="annotateId" value="seq1" placeholder="Sequence ID">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Description</label>
+                                    <input type="text" class="form-control form-control-sm" id="annotateDesc" placeholder="Sequence description">
+                                </div>
+                            </div>
+                            <div id="annotateFeaturesList">
+                                <label class="form-label small">Features to Add</label>
+                                <div class="feature-entry p-2 border rounded mb-2">
+                                    <div class="row g-2">
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control form-control-sm feat-type" placeholder="Type (e.g., CDS)">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="number" class="form-control form-control-sm feat-start" placeholder="Start">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="number" class="form-control form-control-sm feat-end" placeholder="End">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <select class="form-select form-select-sm feat-strand">
+                                                <option value="1">+</option>
+                                                <option value="-1">-</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control form-control-sm feat-label" placeholder="Label/Gene">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" id="addFeatureBtn">
+                                <i class="fas fa-plus"></i> Add Another Feature
+                            </button>
+                            <button type="submit" class="gradient-btn-primary w-100 mb-2" id="annotateSubmitBtn">
+                                <i class="fas fa-file-export me-2"></i>Generate GenBank File
+                            </button>
+                            <button type="button" class="gradient-btn-small w-100" onclick="loadAnnotateExample()">
+                                <i class="fas fa-flask me-2"></i>Example
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="annotateResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/features.js"></script>
+{% endblock %}

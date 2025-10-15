@@ -1,0 +1,27 @@
+LOCUS       SAMPLE1                130 bp    DNA     linear       01-JAN-2024
+DEFINITION  Sample DNA sequence for testing.
+ACCESSION   SAMPLE1
+VERSION     SAMPLE1.1
+KEYWORDS    sample; test.
+SOURCE      synthetic construct
+  ORGANISM  synthetic construct
+            other sequences; artificial sequences.
+REFERENCE   1  (bases 1 to 130)
+  AUTHORS   NuGenBioPython
+  TITLE     Sample sequence for testing
+  JOURNAL   Unpublished
+FEATURES             Location/Qualifiers
+     source          1..130
+                     /organism="synthetic construct"
+                     /mol_type="genomic DNA"
+     gene            1..130
+                     /gene="sample_gene"
+     CDS             1..130
+                     /gene="sample_gene"
+                     /product="sample protein"
+                     /translation="MKLIVWGSIKKEGVYHRLGEYFTNGKEVTVDGKKVKAHGKKVLGAFSDGLAHLDNLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH"
+ORIGIN      
+        1 gaattcaagc ttatcgatcg aattcctgca gggatccaag ctttctagat gcatgcctgc
+       61 aggaattcaa gcttatcgat cgaattcctg cagggatcca agctttctag atgcatgcct
+      121 gcaggaattc
+//

@@ -1,0 +1,9 @@
+# STOCKHOLM 1.0
+#=GF ID   Sample_alignment
+#=GF AC   XX01234.5
+#=GF DE   Sample alignment for testing
+seq1     ATGCGATCGATCGATCGATCGATCGATCGATCG
+seq2     ATGCGATC....GATCGATCGATCGATCGATCG
+seq3     ATGCGATCGATCGATC....GATCGATCGATCG
+#=GC SS_cons  ::::::::::::::::::::::::::::::::
+//

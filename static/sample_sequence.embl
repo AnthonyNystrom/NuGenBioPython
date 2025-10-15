@@ -1,0 +1,36 @@
+ID   SAMPLE1; SV 1; linear; genomic DNA; STD; SYN; 130 BP.
+XX
+AC   SAMPLE1;
+XX
+DE   Sample DNA sequence for testing.
+XX
+KW   sample; test.
+XX
+OS   synthetic construct
+OC   other sequences; artificial sequences.
+XX
+RN   [1]
+RX   MEDLINE; 000000000.
+RA   NuGenBioPython;
+RT   "Sample sequence for testing";
+RL   Unpublished.
+XX
+DR   EMBL; SAMPLE1; SAMPLE1.1; -.
+XX
+FH   Key             Location/Qualifiers
+FH
+FT   source          1..130
+FT                   /organism="synthetic construct"
+FT                   /mol_type="genomic DNA"
+FT   gene            1..130
+FT                   /gene="sample_gene"
+FT   CDS             1..130
+FT                   /gene="sample_gene"
+FT                   /product="sample protein"
+FT                   /translation="MKLIVWGSIKKEGVYHRLGEYFTNGKEVTVDGKKVKAHGKKVLGAFSDGLAHLDNLKGTFATLSELHCDKLHVDPENFRLLGNVLVCVLAHHFGKEFTPPVQAAYQKVVAGVANALAHKYH"
+XX
+SQ   Sequence 130 BP; 30 A; 30 C; 30 G; 40 T; 0 other;
+     gaattcaagc ttatcgatcg aattcctgca gggatccaag ctttctagat gcatgcctgc        60
+     aggaattcaa gcttatcgat cgaattcctg cagggatcca agctttctag atgcatgcct       120
+     gcaggaattc                                                              130
+//

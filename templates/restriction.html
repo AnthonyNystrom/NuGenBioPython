@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block title %}Restriction Enzymes - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #restrictionTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #restrictionTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+    .enzyme-badge {
+        cursor: pointer;
+        margin: 2px;
+        font-size: 0.75rem;
+    }
+    .enzyme-badge:hover {
+        transform: scale(1.05);
+        transition: transform 0.2s;
+    }
+    .restriction-map {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        background: #f8f9fa;
+        overflow-x: auto;
+    }
+</style>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-success mb-1">
+            <i class="fas fa-cut"></i> Restriction Enzymes
+        </h2>
+        <p class="lead mb-3">Complete restriction enzyme analysis using Bio.Restriction</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="restrictionTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                <i class="fas fa-cut d-block mb-1"></i>
+                <small>Basic Analysis</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                <i class="fas fa-filter d-block mb-1"></i>
+                <small>Advanced Filters</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="browser-tab" data-bs-toggle="tab" data-bs-target="#browser" type="button" role="tab">
+                <i class="fas fa-database d-block mb-1"></i>
+                <small>Enzyme Browser</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button" role="tab">
+                <i class="fas fa-map d-block mb-1"></i>
+                <small>Restriction Map</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" role="tab">
+                <i class="fas fa-tools d-block mb-1"></i>
+                <small>Utilities</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="restrictionTabContent">
+
+            <!-- Basic Analysis Tab -->
+            <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> DNA Sequence Input</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <form id="basicAnalysisForm">
+                                    <div class="mb-3">
+                                        <label for="basicSequence" class="form-label small mb-1">DNA Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="basicSequence" rows="5"
+                                                placeholder="Enter DNA sequence (only A, T, G, C allowed)..."></textarea>
+                                        <div class="mt-2">
+                                            <input type="file" class="form-control form-control-sm" id="basicSequenceFile"
+                                                   accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
+                                                   onchange="handleBasicFileUpload(event)">
+                                            <div class="form-text small">
+                                                <i class="fas fa-upload text-muted"></i> Upload: FASTA, GenBank, EMBL, or plain text
+                                            </div>
+                                            <div id="basicFileInfo" class="mt-1" style="display:none;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small mb-2">Select Restriction Enzymes</label>
+                                        <div class="d-flex gap-2 mb-2">
+                                            <button type="button" class="btn btn-sm btn-outline-success flex-fill" onclick="selectAllBasicEnzymes()">
+                                                <i class="fas fa-check-square"></i> All
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="clearAllBasicEnzymes()">
+                                                <i class="fas fa-square"></i> Clear
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectCommonBasicEnzymes()">
+                                                <i class="fas fa-star"></i> Common
+                                            </button>
+                                        </div>
+                                        <div id="basicEnzymeCheckboxes" class="row g-2 p-2 border rounded bg-light">
+                                            <div class="col-12 text-center py-2">
+                                                <div class="spinner-border spinner-border-sm text-success" role="status">
+                                                    <span class="visually-hidden">Loading enzymes...</span>
+                                                </div>
+                                                <span class="ms-2 small">Loading restriction enzymes...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check mb-3 p-2 bg-light rounded">
+                                        <input class="form-check-input" type="checkbox" id="includeFragmentSequences">
+                                        <label class="form-check-label small" for="includeFragmentSequences">
+                                            <i class="fas fa-dna text-muted"></i> Include fragment sequences (slower for large sequences)
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="basicAnalyzeBtn">
+                                        <i class="fas fa-cut me-2"></i>Analyze Restriction Sites
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadBasicExample()">
+                                        <i class="fas fa-flask me-2"></i>Load Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Analysis Summary</h6>
+                            </div>
+                            <div class="card-body p-3" id="basicSummary">
+                                <p class="text-muted text-center small mb-0">
+                                    <i class="fas fa-arrow-left fa-2x mb-3 d-block"></i>
+                                    Analyze a sequence to see summary
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Detailed Results</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="exportBasicResults('csv')" id="exportBasicBtn" style="display:none;">
+                                    <i class="fas fa-download me-1"></i>Export CSV
+                                </button>
+                            </div>
+                            <div class="card-body p-3" id="basicResults">
+                                <p class="text-muted text-center small mb-0 py-3">
+                                    <i class="fas fa-table fa-2x mb-3 d-block"></i>
+                                    Detailed restriction analysis results will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Fragment Size Distribution</h6>
+                            </div>
+                            <div class="card-body p-3 text-center" id="basicFragmentChart">
+                                <p class="text-muted small mb-0 py-3">
+                                    <i class="fas fa-chart-bar fa-2x mb-3 d-block"></i>
+                                    Fragment size chart will appear after analysis
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Filters Tab -->
+            <div class="tab-pane fade" id="advanced" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> DNA Sequence Input</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="advancedAnalysisForm">
+                                    <div class="mb-2">
+                                        <label for="advancedSequence" class="form-label small">DNA Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="advancedSequence" rows="4"
+                                                placeholder="Enter DNA sequence..."></textarea>
+                                        <input type="file" class="form-control form-control-sm mt-1" id="advancedSequenceFile"
+                                               accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
+                                               onchange="handleAdvancedFileUpload(event)">
+                                        <div id="advancedFileInfo" class="mt-1" style="display:none;"></div>
+                                    </div>
+
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label for="filterType" class="form-label small">Filter Type</label>
+                                            <select class="form-select form-select-sm" id="filterType">
+                                                <option value="all">All cutting enzymes</option>
+                                                <option value="unique">Unique cutters (cut once)</option>
+                                                <option value="non_cutters">Non-cutters (don't cut)</option>
+                                                <option value="blunt">Blunt end cutters</option>
+                                                <option value="5overhang">5' overhang cutters</option>
+                                                <option value="3overhang">3' overhang cutters</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="minCuts" class="form-label small">Min Cuts</label>
+                                            <input type="number" class="form-control form-control-sm" id="minCuts" value="0" min="0">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="maxCuts" class="form-label small">Max Cuts</label>
+                                            <input type="number" class="form-control form-control-sm" id="maxCuts" placeholder="No limit" min="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="useAllEnzymes" checked>
+                                        <label class="form-check-label small" for="useAllEnzymes">
+                                            Search all 1,088 enzymes (uncheck to use selected subset)
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="advancedAnalyzeBtn">
+                                        <i class="fas fa-filter me-2"></i>Run Advanced Analysis
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadAdvancedExample()">
+                                        <i class="fas fa-flask me-2"></i>Load Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Advanced Analysis</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-2"><strong>Unique Cutters:</strong> Find enzymes that cut exactly once - ideal for cloning and linearization.</p>
+                                <p class="small mb-2"><strong>Non-Cutters:</strong> Find enzymes that don't cut - useful for vector selection.</p>
+                                <p class="small mb-2"><strong>Blunt/Overhang:</strong> Filter by cut type for specific cloning strategies.</p>
+                                <p class="small mb-0"><strong>All Enzymes:</strong> Searches the complete database of 1,088 restriction enzymes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Advanced Analysis Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="advancedResults">
+                                <p class="text-muted text-center small">
+                                    Advanced analysis results will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enzyme Browser Tab -->
+            <div class="tab-pane fade" id="browser" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-search"></i> Enzyme Search & Filters</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-0">Database</label>
+                                        <select class="form-select form-select-sm" id="enzymeDatabaseFilter" onchange="loadEnzymeBrowser()">
+                                            <option value="common">Common (30)</option>
+                                            <option value="commercial">Commercial (623)</option>
+                                            <option value="all">All Enzymes (1,088)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-0">Overhang Type</label>
+                                        <select class="form-select form-select-sm" id="overhangFilter" onchange="loadEnzymeBrowser()">
+                                            <option value="">All types</option>
+                                            <option value="blunt">Blunt</option>
+                                            <option value="5">5' overhang</option>
+                                            <option value="3">3' overhang</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Site Size</label>
+                                        <select class="form-select form-select-sm" id="siteSizeFilter" onchange="loadEnzymeBrowser()">
+                                            <option value="">All sizes</option>
+                                            <option value="4">4 bp</option>
+                                            <option value="6">6 bp</option>
+                                            <option value="8">8 bp</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Search Name</label>
+                                        <input type="text" class="form-control form-control-sm" id="enzymeSearch"
+                                               placeholder="Search enzyme name..." onkeyup="loadEnzymeBrowser()">
+                                    </div>
+                                </div>
+                                <div id="enzymeBrowserResults">
+                                    <div class="text-center">
+                                        <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                                        <span class="ms-2 small">Loading enzyme database...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card" id="enzymeDetailsCard" style="display:none;">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Enzyme Details</h6>
+                            </div>
+                            <div class="card-body py-2" id="enzymeDetailsContent">
+                            </div>
+                        </div>
+                        <div class="card" id="enzymeBrowserPlaceholder">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Enzyme Browser</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-0">Browse and search through the complete restriction enzyme database. Click on any enzyme to see detailed information including suppliers, isoschizomers, and cut properties.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restriction Map Tab -->
+            <div class="tab-pane fade" id="map" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Sequence for Map</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="mapForm">
+                                    <div class="mb-2">
+                                        <label for="mapSequence" class="form-label small">DNA Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="mapSequence" rows="4"
+                                                placeholder="Enter DNA sequence..."></textarea>
+                                        <input type="file" class="form-control form-control-sm mt-1" id="mapSequenceFile"
+                                               accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
+                                               onchange="handleMapFileUpload(event)">
+                                        <div id="mapFileInfo" class="mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="mapEnzymes" class="form-label small">Select Enzymes for Map</label>
+                                        <input type="text" class="form-control form-control-sm" id="mapEnzymes"
+                                               placeholder="e.g., EcoRI, BamHI, HindIII (comma separated)">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="generateMapBtn">
+                                        <i class="fas fa-map me-2"></i>Generate Restriction Map
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadMapExample()">
+                                        <i class="fas fa-flask me-2"></i>Load Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Restriction Maps</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-2">Visual representation of restriction enzyme cut sites along your DNA sequence.</p>
+                                <p class="small mb-0">Useful for planning cloning strategies and understanding restriction patterns.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-map"></i> Restriction Map Visualization</h6>
+                            </div>
+                            <div class="card-body py-2" id="mapVisualization">
+                                <p class="text-muted text-center small">
+                                    <i class="fas fa-map fa-2x mb-3"></i><br>
+                                    Generate a map to see visualization
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utilities Tab -->
+            <div class="tab-pane fade" id="tools" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-link"></i> Compatible Ends Finder</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-2">Find enzymes with compatible cohesive ends for ligation.</p>
+                                <form id="compatibleEndsForm">
+                                    <div class="mb-2">
+                                        <label for="compatibleEnzymes" class="form-label small">Enzyme List</label>
+                                        <input type="text" class="form-control form-control-sm" id="compatibleEnzymes"
+                                               placeholder="e.g., EcoRI, BamHI, BglII, XbaI">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2">
+                                        <i class="fas fa-search me-2"></i>Find Compatible Pairs
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCompatibleExample()">
+                                        <i class="fas fa-flask me-2"></i>Load Example
+                                    </button>
+                                </form>
+                                <div id="compatibleResults" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-file-export"></i> Export Options</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-2">Export your analysis results in various formats.</p>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-success" onclick="exportLastResults('csv')">
+                                        <i class="fas fa-file-csv"></i> Export as CSV
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="exportLastResults('tsv')">
+                                        <i class="fas fa-file-alt"></i> Export as TSV
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="exportLastResults('json')">
+                                        <i class="fas fa-file-code"></i> Export as JSON
+                                    </button>
+                                </div>
+                                <p class="small text-muted mt-2 mb-0"><i class="fas fa-info-circle"></i> Run an analysis first to enable export.</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-book"></i> Quick Reference</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small mb-1"><strong>Blunt ends:</strong> No overhang (e.g., EcoRV, SmaI)</p>
+                                <p class="small mb-1"><strong>5' overhang:</strong> 5' strand extends (e.g., EcoRI, BamHI)</p>
+                                <p class="small mb-0"><strong>3' overhang:</strong> 3' strand extends (e.g., KpnI, PstI)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Enzyme Info Section -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Restriction Enzyme Information</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Recognition Sites</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success"></i> Specific DNA sequences</li>
+                            <li><i class="fas fa-check text-success"></i> Usually palindromic</li>
+                            <li><i class="fas fa-check text-success"></i> 4-8 base pairs long</li>
+                            <li><i class="fas fa-check text-success"></i> Double-strand breaks</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Cut Types</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success"></i> Blunt ends (0 overhang)</li>
+                            <li><i class="fas fa-check text-success"></i> Sticky/cohesive ends</li>
+                            <li><i class="fas fa-check text-success"></i> 5' overhangs</li>
+                            <li><i class="fas fa-check text-success"></i> 3' overhangs</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Applications</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success"></i> Molecular cloning</li>
+                            <li><i class="fas fa-check text-success"></i> DNA fingerprinting</li>
+                            <li><i class="fas fa-check text-success"></i> Gene mapping</li>
+                            <li><i class="fas fa-check text-success"></i> Vector construction</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/restriction.js') }}"></script>
+{% endblock %}

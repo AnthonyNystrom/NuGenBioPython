@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}KEGG Database - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #keggTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #keggTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1"><i class="fas fa-project-diagram"></i> KEGG Database</h2>
+        <p class="lead mb-2">Access KEGG pathways, genes, compounds, and more using Bio.KEGG</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="keggTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                <i class="fas fa-search d-block mb-1"></i><small>Search</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">
+                <i class="fas fa-list d-block mb-1"></i><small>List Database</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
+                <i class="fas fa-link d-block mb-1"></i><small>Link Entries</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
+                <i class="fas fa-exchange-alt d-block mb-1"></i><small>Convert IDs</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+                <i class="fas fa-info-circle d-block mb-1"></i><small>Database Info</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="tab-content">
+            
+            <!-- Search Tab -->
+            <div class="tab-pane fade show active" id="search">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="searchForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Database</label>
+                                            <select class="form-select form-select-sm" id="searchDatabase">
+                                                <option value="pathway">Pathway</option>
+                                                <option value="genes">Genes</option>
+                                                <option value="compound">Compound</option>
+                                                <option value="drug">Drug</option>
+                                                <option value="disease">Disease</option>
+                                                <option value="enzyme">Enzyme</option>
+                                                <option value="reaction">Reaction</option>
+                                                <option value="module">Module</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Organism (for genes)</label>
+                                            <input type="text" class="form-control form-control-sm" id="searchOrganism" placeholder="hsa, mmu, eco...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Search Query</label>
+                                            <input type="text" class="form-control form-control-sm" id="searchQuery" placeholder="e.g., MAPK, cancer" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
+                                        <i class="fas fa-search me-2"></i>Search
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSearchExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Results</strong>
+                                    <span class="badge bg-primary" id="searchCount" style="display:none;">0</span>
+                                </div>
+                                <div id="searchResults">
+                                    <p class="text-muted text-center small mb-0">Enter search criteria above</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About kegg_find</strong></p>
+                                <p class="small mb-1">Search KEGG databases by keyword.</p>
+                                <p class="small mb-0"><strong>Examples:</strong> "cancer", "MAPK", "glucose"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List Tab -->
+            <div class="tab-pane fade" id="list">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="listForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Database</label>
+                                            <select class="form-select form-select-sm" id="listDatabase">
+                                                <option value="pathway">Pathway</option>
+                                                <option value="organism">Organism</option>
+                                                <option value="compound">Compound</option>
+                                                <option value="drug">Drug</option>
+                                                <option value="disease">Disease</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Organism (optional)</label>
+                                            <input type="text" class="form-control form-control-sm" id="listOrganism" placeholder="hsa, mmu...">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Limit</label>
+                                            <select class="form-select form-select-sm" id="listLimit">
+                                                <option value="50">50</option>
+                                                <option value="100" selected>100</option>
+                                                <option value="200">200</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="listBtn">
+                                        <i class="fas fa-list me-2"></i>List Entries
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadListExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Database Entries</strong>
+                                    <span class="badge bg-primary" id="listCount" style="display:none;">0</span>
+                                </div>
+                                <div id="listResults">
+                                    <p class="text-muted text-center small mb-0">Select database above</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About kegg_list</strong></p>
+                                <p class="small mb-1">Browse all entries in a database.</p>
+                                <p class="small mb-0"><strong>Use cases:</strong> List organisms, pathways, compounds</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Link Tab -->
+            <div class="tab-pane fade" id="link">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="linkForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Target Database</label>
+                                            <select class="form-select form-select-sm" id="linkTargetDb">
+                                                <option value="pathway">Pathway</option>
+                                                <option value="genes">Genes</option>
+                                                <option value="compound">Compound</option>
+                                                <option value="disease">Disease</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Source Database</label>
+                                            <select class="form-select form-select-sm" id="linkSourceDb">
+                                                <option value="genes">Genes</option>
+                                                <option value="pathway">Pathway</option>
+                                                <option value="compound">Compound</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Source ID (optional)</label>
+                                            <input type="text" class="form-control form-control-sm" id="linkSourceId" placeholder="e.g., hsa:5594">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="linkBtn">
+                                        <i class="fas fa-link me-2"></i>Find Links
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadLinkExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Linked Entries</strong>
+                                    <span class="badge bg-primary" id="linkCount" style="display:none;">0</span>
+                                </div>
+                                <div id="linkResults">
+                                    <p class="text-muted text-center small mb-0">Select databases above</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About kegg_link</strong></p>
+                                <p class="small mb-1">Find related entries across databases.</p>
+                                <p class="small mb-0"><strong>Examples:</strong> Genes→Pathways, Diseases→Drugs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Convert Tab -->
+            <div class="tab-pane fade" id="convert">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="convertForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Target Database</label>
+                                            <select class="form-select form-select-sm" id="convertTargetDb">
+                                                <option value="ncbi-geneid">NCBI Gene ID</option>
+                                                <option value="ncbi-proteinid">NCBI Protein ID</option>
+                                                <option value="uniprot">UniProt</option>
+                                                <option value="pubchem">PubChem</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Source Database</label>
+                                            <select class="form-select form-select-sm" id="convertSourceDb">
+                                                <option value="hsa">Homo sapiens (hsa)</option>
+                                                <option value="mmu">Mus musculus (mmu)</option>
+                                                <option value="eco">E. coli (eco)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">IDs (optional)</label>
+                                            <input type="text" class="form-control form-control-sm" id="convertIds" placeholder="hsa:5594">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
+                                        <i class="fas fa-exchange-alt me-2"></i>Convert
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConvertExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Conversion Results</strong>
+                                    <span class="badge bg-primary" id="convertCount" style="display:none;">0</span>
+                                </div>
+                                <div id="convertResults">
+                                    <p class="text-muted text-center small mb-0">Select databases above</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About kegg_conv</strong></p>
+                                <p class="small mb-1">Convert between ID systems.</p>
+                                <p class="small mb-0"><strong>Examples:</strong> KEGG↔NCBI, KEGG↔UniProt</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Tab -->
+            <div class="tab-pane fade" id="info">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="infoForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-12">
+                                            <label class="form-label small mb-0">Database</label>
+                                            <select class="form-select form-select-sm" id="infoDatabase">
+                                                <option value="">All KEGG Databases</option>
+                                                <option value="pathway">Pathway</option>
+                                                <option value="brite">Brite</option>
+                                                <option value="module">Module</option>
+                                                <option value="ko">Orthology (KO)</option>
+                                                <option value="genome">Genome</option>
+                                                <option value="compound">Compound</option>
+                                                <option value="drug">Drug</option>
+                                                <option value="disease">Disease</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mt-2" id="infoBtn">
+                                        <i class="fas fa-info-circle me-2"></i>Get Database Info
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <strong class="small">Database Information</strong>
+                                <div id="infoResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Select database above</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About kegg_info</strong></p>
+                                <p class="small mb-1">Get database metadata and statistics.</p>
+                                <p class="small mb-0"><strong>Info:</strong> Counts, updates, fields</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="entryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="entryModalLabel">Entry Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="entryModalContent">
+                <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/kegg.js') }}"></script>
+{% endblock %}

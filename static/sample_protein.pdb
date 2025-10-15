@@ -1,0 +1,103 @@
+HEADER    PROTEIN                               01-JAN-2024   SAMPLE
+TITLE     SAMPLE PROTEIN STRUCTURE FOR TESTING
+COMPND    MOL_ID: 1;
+COMPND   2 MOLECULE: SAMPLE PROTEIN;
+COMPND   3 CHAIN: A;
+COMPND   4 EC: UNKNOWN;
+SOURCE    MOL_ID: 1;
+SOURCE   2 ORGANISM_SCIENTIFIC: SYNTHETIC;
+SOURCE   3 ORGANISM_COMMON: SYNTHETIC;
+SOURCE   4 ORGANISM_TAXID: 0;
+KEYWDS    SAMPLE, TEST, PROTEIN
+EXPDTA    THEORETICAL MODEL
+AUTHOR    NUGENBIOPYTHON
+REVDAT   1   01-JAN-2024 0    SAMPLE
+JRNL        AUTH   A.USER
+JRNL        TITL   SAMPLE PROTEIN STRUCTURE
+JRNL        REF    BIOINFORMATICS 2024
+REMARK   1
+REMARK   2 RESOLUTION. NOT APPLICABLE.
+REMARK   3
+REMARK   4
+REMARK   5
+REMARK   6
+REMARK   7
+REMARK   8
+REMARK   9
+REMARK  10
+CRYST1   50.000   50.000   50.000  90.00  90.00  90.00 P 1           1
+ORIGX1      1.000000  0.000000  0.000000        0.00000
+ORIGX2      0.000000  1.000000  0.000000        0.00000
+ORIGX3      0.000000  0.000000  1.000000        0.00000
+SCALE1      0.020000  0.000000  0.000000        0.00000
+SCALE2      0.000000  0.020000  0.000000        0.00000
+SCALE3      0.000000  0.000000  0.020000        0.00000
+MODEL        1
+ATOM      1  N   ALA A   1      10.000  10.000  10.000  1.00 20.00           N
+ATOM      2  CA  ALA A   1      11.000  10.000  10.000  1.00 20.00           C
+ATOM      3  C   ALA A   1      11.500  11.000  10.000  1.00 20.00           C
+ATOM      4  O   ALA A   1      12.000  11.500  10.000  1.00 20.00           O
+ATOM      5  CB  ALA A   1      11.000   9.000  11.000  1.00 20.00           C
+ATOM      6  N   GLY A   2      11.000  11.500  10.000  1.00 20.00           N
+ATOM      7  CA  GLY A   2      11.500  12.500  10.000  1.00 20.00           C
+ATOM      8  C   GLY A   2      12.000  13.000  10.000  1.00 20.00           C
+ATOM      9  O   GLY A   2      12.500  13.500  10.000  1.00 20.00           O
+ATOM     10  N   SER A   3      11.500  13.000  10.000  1.00 20.00           N
+ATOM     11  CA  SER A   3      12.000  14.000  10.000  1.00 20.00           C
+ATOM     12  C   SER A   3      12.500  14.500  10.000  1.00 20.00           C
+ATOM     13  O   SER A   3      13.000  15.000  10.000  1.00 20.00           O
+ATOM     14  CB  SER A   3      12.000  14.000  11.000  1.00 20.00           C
+ATOM     15  OG  SER A   3      12.500  14.500  11.000  1.00 20.00           O
+ATOM     16  N   VAL A   4      12.000  14.500  10.000  1.00 20.00           N
+ATOM     17  CA  VAL A   4      12.500  15.500  10.000  1.00 20.00           C
+ATOM     18  C   VAL A   4      13.000  16.000  10.000  1.00 20.00           C
+ATOM     19  O   VAL A   4      13.500  16.500  10.000  1.00 20.00           O
+ATOM     20  CB  VAL A   4      12.500  15.500  11.000  1.00 20.00           C
+ATOM     21  CG1 VAL A   4      13.000  16.500  11.000  1.00 20.00           C
+ATOM     22  CG2 VAL A   4      12.000  14.500  11.000  1.00 20.00           C
+ATOM     23  N   LYS A   5      12.500  16.000  10.000  1.00 20.00           N
+ATOM     24  CA  LYS A   5      13.000  17.000  10.000  1.00 20.00           C
+ATOM     25  C   LYS A   5      13.500  17.500  10.000  1.00 20.00           C
+ATOM     26  O   LYS A   5      14.000  18.000  10.000  1.00 20.00           O
+ATOM     27  CB  LYS A   5      13.000  17.000  11.000  1.00 20.00           C
+ATOM     28  CG  LYS A   5      13.500  18.000  11.000  1.00 20.00           C
+ATOM     29  CD  LYS A   5      14.000  18.500  11.000  1.00 20.00           C
+ATOM     30  CE  LYS A   5      14.500  19.000  11.000  1.00 20.00           C
+ATOM     31  NZ  LYS A   5      15.000  19.500  11.000  1.00 20.00           N
+TER      32      LYS A   5
+HETATM   33  O   HOH B   1      20.000  20.000  20.000  1.00 20.00           O
+HETATM   34  O   HOH B   2      21.000  21.000  21.000  1.00 20.00           O
+HETATM   35  O   HOH B   3      22.000  22.000  22.000  1.00 20.00           O
+CONECT    1    2
+CONECT    2    1    3    5
+CONECT    3    2    4    6
+CONECT    4    3
+CONECT    5    2
+CONECT    6    3    7
+CONECT    7    6    8    9
+CONECT    8    7    9   10
+CONECT    9    7    8
+CONECT   10    8   11
+CONECT   11   10   12   13   15
+CONECT   12   11   13   16
+CONECT   13   11   12   14
+CONECT   14   13   15
+CONECT   15   11   14
+CONECT   16   12   17
+CONECT   17   16   18   19   21   22
+CONECT   18   17   19   23
+CONECT   19   17   18   20
+CONECT   20   19   21   22
+CONECT   21   17   20
+CONECT   22   17   20
+CONECT   23   18   24
+CONECT   24   23   25   27
+CONECT   25   24   26   30
+CONECT   26   25
+CONECT   27   24   28
+CONECT   28   27   29
+CONECT   29   28   30
+CONECT   30   25   29   31
+CONECT   31   30
+MASTER      235    0    0    5   31    0    0    6 1335    2    0   35
+END

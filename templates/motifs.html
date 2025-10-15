@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Motif Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #motifTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #motifTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-search-plus"></i> Motif Analysis
+        </h2>
+        <p class="lead mb-3">Comprehensive sequence motif analysis using Bio.motifs</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="motifTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
+                <i class="fas fa-plus d-block mb-1"></i>
+                <small>Create Motif</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>Search</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare" type="button" role="tab">
+                <i class="fas fa-balance-scale d-block mb-1"></i>
+                <small>Compare</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                <i class="fas fa-info-circle d-block mb-1"></i>
+                <small>Motif Info</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                <i class="fas fa-download d-block mb-1"></i>
+                <small>Export</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="motifTabContent">
+            <!-- Create Motif Tab -->
+            <div class="tab-pane fade show active" id="create" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-keyboard"></i> Create from Sequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <label for="motifSequences" class="form-label small">Input Sequences (one per line)</label>
+                                <textarea class="form-control form-control-sm sequence-display mb-2" id="motifSequences" rows="6"
+                                        placeholder="ACGTACGTACGT&#10;ACGTTCGTACGT&#10;ACGTCCGTACGT"></textarea>
+                                <div class="d-grid gap-2">
+                                    <button class="gradient-btn-secondary" onclick="loadMotifExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                    <button class="gradient-btn-primary" id="createMotifBtn" onclick="createMotif()">
+                                        <i class="fas fa-plus me-1"></i> Create Motif
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Upload Motif File</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <label for="motifFile" class="form-label small">Select File</label>
+                                <input type="file" class="form-control form-control-sm mb-2" id="motifFile" accept=".jaspar,.meme,.pfm,.txt">
+                                <label for="motifFormat" class="form-label small">Format</label>
+                                <select class="form-select form-select-sm mb-2" id="motifFormat">
+                                    <option value="jaspar">JASPAR</option>
+                                    <option value="meme">MEME</option>
+                                    <option value="transfac">TRANSFAC</option>
+                                    <option value="pfm">PFM</option>
+                                </select>
+                                <button class="gradient-btn-info" onclick="uploadMotifFile()">
+                                    <i class="fas fa-upload me-1"></i> Upload & Parse
+                                </button>
+                                <small class="text-muted d-block mt-2">Supported: JASPAR, MEME, TRANSFAC, PFM formats</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-image"></i> Sequence Logo</h6>
+                    </div>
+                    <div class="card-body py-2 text-center" id="createLogoView" style="min-height:250px;">
+                        <p class="text-muted small">Create a motif to see the sequence logo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Tab -->
+            <div class="tab-pane fade" id="search" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Target Sequence</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <textarea class="form-control form-control-sm sequence-display mb-2" id="searchSequence" rows="4"
+                                        placeholder="Enter sequence to search for motif"></textarea>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="thresholdType" class="form-label small">Threshold Type</label>
+                                        <select class="form-select form-select-sm mb-2" id="thresholdType">
+                                            <option value="rel">Relative (0-1)</option>
+                                            <option value="abs">Absolute Score</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="searchThreshold" class="form-label small">Threshold: <span id="thresholdValue">0.7</span></label>
+                                        <input type="range" class="form-range" id="searchThreshold" min="0" max="1" step="0.05" value="0.7">
+                                    </div>
+                                </div>
+                                <button class="gradient-btn-success" id="searchMotifBtn" onclick="searchMotif()">
+                                    <i class="fas fa-search me-1"></i> Search Motif
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Statistics</h6>
+                            </div>
+                            <div class="card-body py-2" id="searchStats">
+                                <p class="text-muted small text-center m-0">Statistics will appear after search</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0 small"><i class="fas fa-list"></i> Search Results <span class="badge bg-success" id="matchCount" style="display:none;">0</span></h6>
+                    </div>
+                    <div class="card-body py-2" id="searchResults">
+                        <p class="text-muted small text-center m-0">Results will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compare Tab -->
+            <div class="tab-pane fade" id="compare" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-keyboard"></i> Second Motif Sequences</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <textarea class="form-control form-control-sm sequence-display mb-2" id="compareSequences" rows="6"
+                                        placeholder="Enter sequences for second motif"></textarea>
+                                <button class="gradient-btn-primary" onclick="compareMotifs()">
+                                    <i class="fas fa-balance-scale me-1"></i> Compare Motifs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Comparison Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="comparisonResults">
+                                <p class="text-muted small text-center m-0">Comparison results will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-image"></i> Motif 1</h6>
+                            </div>
+                            <div class="card-body py-2 text-center" id="compareLogo1" style="min-height:200px;">
+                                <p class="text-muted small">Logo will appear after comparison</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-image"></i> Motif 2</h6>
+                            </div>
+                            <div class="card-body py-2 text-center" id="compareLogo2" style="min-height:200px;">
+                                <p class="text-muted small">Logo will appear after comparison</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Tab -->
+            <div class="tab-pane fade" id="info" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                            </div>
+                            <div class="card-body py-2" id="motifBasicInfo">
+                                <p class="text-muted small text-center m-0">Create a motif to see information</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-area"></i> Relative Entropy</h6>
+                            </div>
+                            <div class="card-body py-2" id="entropyInfo">
+                                <p class="text-muted small text-center m-0">Entropy per position will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Position Weight Matrix (PWM)</h6>
+                            </div>
+                            <div class="card-body py-2" id="pwmTable">
+                                <p class="text-muted small text-center m-0">PWM will appear here</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-calculator"></i> PSSM (Log-Odds)</h6>
+                            </div>
+                            <div class="card-body py-2" id="pssmTable">
+                                <p class="text-muted small text-center m-0">PSSM will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Tab -->
+            <div class="tab-pane fade" id="export" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-file-export"></i> Export Motif</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <label for="exportFormat" class="form-label small">Export Format</label>
+                                <select class="form-select form-select-sm mb-3" id="exportFormat">
+                                    <option value="jaspar">JASPAR</option>
+                                    <option value="meme">MEME</option>
+                                    <option value="transfac">TRANSFAC</option>
+                                    <option value="pfm">PFM</option>
+                                </select>
+                                <button class="gradient-btn-primary" onclick="exportMotif()">
+                                    <i class="fas fa-download me-1"></i> Export Motif
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-file-code"></i> Exported Content</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <pre class="bg-light p-2 small" id="exportedContent" style="max-height:300px; overflow-y:auto; min-height:200px;">Exported motif will appear here</pre>
+                                <button class="gradient-btn-secondary" onclick="copyExport()">
+                                    <i class="fas fa-copy me-1"></i> Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info small" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <strong>Note:</strong> Create a motif from sequences or upload a motif file to begin analysis. Motifs are stored in your session.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentMotif = null;
+
+// Update threshold display
+document.getElementById('searchThreshold').addEventListener('input', function(e) {
+    document.getElementById('thresholdValue').textContent = e.target.value;
+});
+
+function loadMotifExample() {
+    document.getElementById('motifSequences').value = `ACGTACGTACGT
+ACGTTCGTACGT
+ACGTCCGTACGT
+ACGTGCGTACGT
+ACGTAACTACGT`;
+    document.getElementById('searchSequence').value = 'AAAACGTACGTACGTAAAGGGCCCACGTCCGTACGTTTTACGTGCGTACGTCCC';
+}
+
+function createMotif() {
+    const sequencesText = document.getElementById('motifSequences').value.trim();
+    if (!sequencesText) {
+        showAlert('Please enter sequences', 'warning');
+        return;
+    }
+
+    const sequences = sequencesText.split('\n').filter(seq => seq.trim() !== '').map(seq => seq.trim().toUpperCase());
+    if (sequences.length < 2) {
+        showAlert('At least 2 sequences required', 'warning');
+        return;
+    }
+
+    showLoading('createMotifBtn', '<i class="fas fa-spinner fa-spin me-1"></i> Creating...');
+
+    fetch('/api/motifs/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('createMotifBtn', '<i class="fas fa-plus me-1"></i> Create Motif');
+        if (data.success) {
+            currentMotif = data.motif;
+            displayMotifInCreate(data.motif);
+            displayMotifInInfo(data.motif);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('createMotifBtn', '<i class="fas fa-plus me-1"></i> Create Motif');
+        showAlert('Error creating motif', 'danger');
+    });
+}
+
+function uploadMotifFile() {
+    const fileInput = document.getElementById('motifFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showAlert('Please select a file', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('motifFile', fileInput.files[0]);
+    formData.append('format', document.getElementById('motifFormat').value);
+
+    fetch('/api/motifs/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentMotif = data.motif;
+            displayMotifInCreate(data.motif);
+            displayMotifInInfo(data.motif);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error uploading motif', 'danger');
+    });
+}
+
+function displayMotifInCreate(motif) {
+    const logoDiv = document.getElementById('createLogoView');
+    if (motif.logo) {
+        logoDiv.innerHTML = `<img src="${motif.logo}" class="img-fluid" alt="Sequence Logo" style="max-height: 400px;">`;
+    } else {
+        logoDiv.innerHTML = '<p class="text-muted small">Logo generation failed</p>';
+    }
+}
+
+function displayMotifInInfo(motif) {
+    // Basic info
+    const basicDiv = document.getElementById('motifBasicInfo');
+    let html = `<div class="small">
+        <p class="mb-1"><strong>Consensus:</strong> <code>${motif.consensus}</code></p>
+        <p class="mb-1"><strong>Degenerate:</strong> <code>${motif.degenerate_consensus || 'N/A'}</code></p>
+        <p class="mb-1"><strong>Length:</strong> ${motif.length} bp</p>
+        <p class="mb-0"><strong>Information Content:</strong> ${motif.information_content ? motif.information_content.toFixed(2) + ' bits' : 'N/A'}</p>
+    </div>`;
+    basicDiv.innerHTML = html;
+
+    // PWM
+    const pwmDiv = document.getElementById('pwmTable');
+    if (motif.pwm && motif.pwm.length > 0) {
+        let table = '<div class="table-responsive" style="max-height:300px;overflow-y:auto;"><table class="table table-sm table-striped small mb-0">';
+        table += '<thead class="table-dark sticky-top"><tr><th>Pos</th><th>A</th><th>C</th><th>G</th><th>T</th></tr></thead><tbody>';
+        motif.pwm.forEach(row => {
+            table += `<tr><td class="fw-bold">${row.position}</td><td>${row.A.toFixed(3)}</td><td>${row.C.toFixed(3)}</td><td>${row.G.toFixed(3)}</td><td>${row.T.toFixed(3)}</td></tr>`;
+        });
+        table += '</tbody></table></div>';
+        pwmDiv.innerHTML = table;
+    }
+
+    // PSSM
+    const pssmDiv = document.getElementById('pssmTable');
+    if (motif.pssm && motif.pssm.length > 0) {
+        let table = '<div class="table-responsive" style="max-height:300px;overflow-y:auto;"><table class="table table-sm table-striped small mb-0">';
+        table += '<thead class="table-dark sticky-top"><tr><th>Pos</th><th>A</th><th>C</th><th>G</th><th>T</th></tr></thead><tbody>';
+        motif.pssm.forEach(row => {
+            table += `<tr><td class="fw-bold">${row.position}</td><td>${row.A.toFixed(2)}</td><td>${row.C.toFixed(2)}</td><td>${row.G.toFixed(2)}</td><td>${row.T.toFixed(2)}</td></tr>`;
+        });
+        table += '</tbody></table></div>';
+        pssmDiv.innerHTML = table;
+    } else {
+        pssmDiv.innerHTML = '<p class="text-muted small text-center m-0">PSSM not available</p>';
+    }
+
+    // Entropy
+    const entropyDiv = document.getElementById('entropyInfo');
+    if (motif.relative_entropy && motif.relative_entropy.length > 0) {
+        let table = '<div class="table-responsive" style="max-height:200px;overflow-y:auto;"><table class="table table-sm small mb-0">';
+        table += '<thead class="table-light sticky-top"><tr><th>Position</th><th>Relative Entropy (bits)</th></tr></thead><tbody>';
+        motif.relative_entropy.forEach(row => {
+            table += `<tr><td>${row.position}</td><td>${row.entropy.toFixed(3)}</td></tr>`;
+        });
+        table += '</tbody></table></div>';
+        entropyDiv.innerHTML = table;
+    } else {
+        entropyDiv.innerHTML = '<p class="text-muted small text-center m-0">Entropy data not available</p>';
+    }
+}
+
+function searchMotif() {
+    if (!currentMotif) {
+        showAlert('Create a motif first', 'warning');
+        return;
+    }
+
+    const sequence = document.getElementById('searchSequence').value.trim();
+    if (!sequence) {
+        showAlert('Please enter a target sequence', 'warning');
+        return;
+    }
+
+    showLoading('searchMotifBtn', '<i class="fas fa-spinner fa-spin me-1"></i> Searching...');
+
+    fetch('/api/motifs/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence: sequence,
+            threshold_type: document.getElementById('thresholdType').value,
+            threshold: parseFloat(document.getElementById('searchThreshold').value)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('searchMotifBtn', '<i class="fas fa-search me-1"></i> Search Motif');
+        if (data.success) {
+            displaySearchResults(data.matches, data.statistics);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('searchMotifBtn', '<i class="fas fa-search me-1"></i> Search Motif');
+        showAlert('Error searching motif', 'danger');
+    });
+}
+
+function displaySearchResults(matches, stats) {
+    const resultsDiv = document.getElementById('searchResults');
+    const countBadge = document.getElementById('matchCount');
+    const statsDiv = document.getElementById('searchStats');
+
+    countBadge.textContent = matches.length;
+    countBadge.style.display = 'inline-block';
+
+    if (matches.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted small text-center m-0">No matches found</p>';
+    } else {
+        let html = '<div class="table-responsive"><table class="table table-sm table-hover small mb-0">';
+        html += '<thead class="table-light"><tr><th>Position</th><th>Score</th><th>Norm. Score</th><th>Strand</th><th>Sequence</th></tr></thead><tbody>';
+        matches.forEach(match => {
+            html += `<tr><td>${match.position}</td><td>${match.score.toFixed(2)}</td><td>${match.normalized_score.toFixed(3)}</td><td>${match.strand}</td><td><code>${match.sequence}</code></td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        resultsDiv.innerHTML = html;
+    }
+
+    // Display statistics
+    if (stats) {
+        let statHtml = `<div class="small">
+            <p class="mb-1"><strong>Mean Score:</strong> ${stats.mean_score.toFixed(2)}</p>
+            <p class="mb-1"><strong>Std Dev:</strong> ${stats.std_score.toFixed(2)}</p>
+            <p class="mb-1"><strong>Max Score:</strong> ${stats.max_score.toFixed(2)}</p>
+            <p class="mb-0"><strong>Positions:</strong> ${stats.num_positions}</p>
+        </div>`;
+        statsDiv.innerHTML = statHtml;
+    }
+}
+
+function compareMotifs() {
+    if (!currentMotif) {
+        showAlert('Create a motif first', 'warning');
+        return;
+    }
+
+    const sequencesText = document.getElementById('compareSequences').value.trim();
+    if (!sequencesText) {
+        showAlert('Please enter sequences for second motif', 'warning');
+        return;
+    }
+
+    const sequences = sequencesText.split('\n').filter(seq => seq.trim() !== '').map(seq => seq.trim().toUpperCase());
+    if (sequences.length < 2) {
+        showAlert('At least 2 sequences required for second motif', 'warning');
+        return;
+    }
+
+    fetch('/api/motifs/compare', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayComparison(data);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error comparing motifs', 'danger');
+    });
+}
+
+function displayComparison(data) {
+    const resultsDiv = document.getElementById('comparisonResults');
+    const logo1Div = document.getElementById('compareLogo1');
+    const logo2Div = document.getElementById('compareLogo2');
+
+    // Display comparison metrics
+    const comp = data.comparison;
+    let html = `<div class="small">
+        <p class="mb-1"><strong>Pearson Correlation:</strong> ${comp.pearson_correlation.toFixed(4)}</p>
+        <p class="mb-1"><strong>P-value:</strong> ${comp.p_value.toExponential(3)}</p>
+        <p class="mb-1"><strong>Euclidean Distance:</strong> ${comp.euclidean_distance.toFixed(4)}</p>
+        <p class="mb-0"><strong>Compared Length:</strong> ${comp.compared_length} bp</p>
+    </div>`;
+    resultsDiv.innerHTML = html;
+
+    // Display logos
+    if (data.motif1.logo) {
+        logo1Div.innerHTML = `<img src="${data.motif1.logo}" class="img-fluid" style="max-height: 250px;">`;
+    }
+    if (data.motif2.logo) {
+        logo2Div.innerHTML = `<img src="${data.motif2.logo}" class="img-fluid" style="max-height: 250px;">`;
+    }
+}
+
+function exportMotif() {
+    if (!currentMotif) {
+        showAlert('Create a motif first', 'warning');
+        return;
+    }
+
+    const format = document.getElementById('exportFormat').value;
+
+    fetch(`/api/motifs/export?format=${format}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('exportedContent').textContent = data.content;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error exporting motif', 'danger');
+    });
+}
+
+function copyExport() {
+    const content = document.getElementById('exportedContent').textContent;
+    if (content === 'Exported motif will appear here') {
+        showAlert('Nothing to copy', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(content);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,908 @@
+{% extends "base.html" %}
+
+{% block title %}Clustering Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <h2 class="text-info">
+            <i class="fas fa-project-diagram"></i> Clustering Analysis
+        </h2>
+        <p class="lead">Perform clustering analysis on biological data using various algorithms</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-table"></i> Data Input</h6>
+            </div>
+            <div class="card-body py-2">
+                <form id="clusteringForm">
+                    <div class="mb-2">
+                        <label for="dataMatrix" class="form-label small">Data Matrix</label>
+                        <textarea class="form-control form-control-sm" id="dataMatrix" rows="6" 
+                                placeholder="Enter data matrix (CSV format):&#10;1.2,2.3,3.1&#10;2.1,1.8,3.5&#10;3.2,3.8,1.2&#10;1.1,2.1,3.7"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Enter data as comma-separated values, one sample per row
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label for="sampleNames" class="form-label small">Sample Names (Optional)</label>
+                        <input type="text" class="form-control form-control-sm" id="sampleNames" 
+                               placeholder="e.g., GeneA,GeneB,GeneC,GeneD or Patient1,Patient2,Patient3">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Comma-separated names for each row (leave empty for auto-numbering)
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="clusterMethod" class="form-label small">Clustering Method</label>
+                                <select class="form-select form-select-sm" id="clusterMethod" onchange="updateParameters()">
+                                    <optgroup label="Scikit-Learn Methods">
+                                        <option value="kmeans">K-Means</option>
+                                        <option value="hierarchical">Hierarchical</option>
+                                        <option value="dbscan">DBSCAN</option>
+                                    </optgroup>
+                                    <optgroup label="BioPython Bio.Cluster">
+                                        <option value="biocluster_kcluster">Bio.Cluster K-Means</option>
+                                        <option value="biocluster_kmedoids">Bio.Cluster K-Medoids</option>
+                                        <option value="biocluster_tree">Bio.Cluster Hierarchical</option>
+                                        <option value="biocluster_som">Bio.Cluster SOM</option>
+                                        <option value="biocluster_pca">Bio.Cluster PCA</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2" id="clustersGroup">
+                                <label for="nClusters" class="form-label small">Number of Clusters</label>
+                                <input type="number" class="form-control form-control-sm" id="nClusters" value="3" min="2" max="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="dbscanParameters" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="eps" class="form-label small">Epsilon (ε)</label>
+                                    <input type="number" step="0.1" class="form-control form-control-sm" id="eps" value="0.5" min="0.1">
+                                    <div class="form-text">Maximum distance between points in the same cluster</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="minSamples" class="form-label small">Min Samples</label>
+                                    <input type="number" class="form-control form-control-sm" id="minSamples" value="5" min="1">
+                                    <div class="form-text">Minimum points required to form a dense region</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bioclusterParameters" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6" id="distanceMethodGroup">
+                                <div class="mb-2">
+                                    <label for="distanceMethod" class="form-label small">Distance Method</label>
+                                    <select class="form-select form-select-sm" id="distanceMethod">
+                                        <option value="e">Euclidean Distance</option>
+                                        <option value="c">Pearson Correlation</option>
+                                        <option value="a">Absolute Correlation</option>
+                                        <option value="u">Uncentered Correlation</option>
+                                        <option value="x">Absolute Uncentered Correlation</option>
+                                        <option value="s">Spearman's Rank</option>
+                                        <option value="k">Kendall's τ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="nPassGroup">
+                                <div class="mb-2">
+                                    <label for="nPass" class="form-label small">Number of Passes</label>
+                                    <input type="number" class="form-control form-control-sm" id="nPass" value="10" min="1">
+                                    <div class="form-text">Number of times clustering is performed</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="linkageMethodGroup" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="linkageMethod" class="form-label small">Linkage Method</label>
+                                    <select class="form-select form-select-sm" id="linkageMethod">
+                                        <option value="s">Single Linkage</option>
+                                        <option value="m">Complete Linkage</option>
+                                        <option value="a">Average Linkage</option>
+                                        <option value="c">Centroid Linkage</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="somParametersGroup" style="display: none;">
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somXDim" class="form-label small">Grid X Dimension</label>
+                                    <input type="number" class="form-control form-control-sm" id="somXDim" value="3" min="2" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somYDim" class="form-label small">Grid Y Dimension</label>
+                                    <input type="number" class="form-control form-control-sm" id="somYDim" value="3" min="2" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somIter" class="form-label small">Iterations</label>
+                                    <input type="number" class="form-control form-control-sm" id="somIter" value="1000" min="100" step="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-3" id="clusterBtn">
+                        <i class="fas fa-project-diagram"></i> Perform Clustering
+                    </button>
+                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadClusteringExample()">
+                        <i class="fas fa-flask"></i> Load Example
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Clustering Results</h6>
+            </div>
+            <div class="card-body py-3" id="clusteringInfo">
+                <div class="text-muted text-center py-4">
+                    <i class="fas fa-arrow-left fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <p class="mb-0">Perform clustering to see results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-chart-scatter"></i> Cluster Visualization</h6>
+            </div>
+            <div class="card-body py-4" id="clusterVisualization">
+                <div class="text-muted text-center py-5">
+                    <i class="fas fa-chart-scatter fa-3x mb-3" style="opacity: 0.2;"></i>
+                    <p class="mb-0">Cluster visualization will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-table"></i> Cluster Assignments</h6>
+            </div>
+            <div class="card-body py-3" id="clusterAssignments">
+                <div class="text-muted text-center py-4">
+                    <p class="mb-0">Cluster assignments will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Clustering Methods Information</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-info small">K-Means</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Partitional clustering</li>
+                            <li><i class="fas fa-check text-success"></i> Requires number of clusters</li>
+                            <li><i class="fas fa-check text-success"></i> Minimizes within-cluster variance</li>
+                            <li><i class="fas fa-check text-success"></i> Good for spherical clusters</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Hierarchical</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Creates cluster hierarchy</li>
+                            <li><i class="fas fa-check text-success"></i> Produces dendrogram</li>
+                            <li><i class="fas fa-check text-success"></i> No need to specify cluster count</li>
+                            <li><i class="fas fa-check text-success"></i> Good for nested clusters</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">DBSCAN</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Density-based clustering</li>
+                            <li><i class="fas fa-check text-success"></i> Finds arbitrary shaped clusters</li>
+                            <li><i class="fas fa-check text-success"></i> Handles noise and outliers</li>
+                            <li><i class="fas fa-check text-success"></i> No need to specify cluster count</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Bio.Cluster Methods</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster K-Means:</strong> Gene expression clustering with various distance metrics</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster K-Medoids:</strong> Robust clustering using actual data points as centers</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster Hierarchical:</strong> Build phylogenetic-like trees for gene relationships</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster SOM:</strong> Self-organizing map for pattern discovery</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster PCA:</strong> Dimensionality reduction and variance analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info small"><i class="fas fa-lightbulb"></i> Use Cases</h6>
+                        <div>
+                            <strong>Gene Expression Analysis:</strong>
+                            <ul class="small">
+                                <li>Group genes with similar expression patterns</li>
+                                <li>Identify co-regulated gene clusters</li>
+                                <li>Sample classification based on expression profiles</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Protein Analysis:</strong>
+                            <ul class="small">
+                                <li>Classify proteins by structural similarity</li>
+                                <li>Group sequences by evolutionary relationships</li>
+                                <li>Identify functional protein families</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateParameters() {
+    const method = document.getElementById('clusterMethod').value;
+    const clustersGroup = document.getElementById('clustersGroup');
+    const dbscanParams = document.getElementById('dbscanParameters');
+    const bioclusterParams = document.getElementById('bioclusterParameters');
+    const distanceMethodGroup = document.getElementById('distanceMethodGroup');
+    const nPassGroup = document.getElementById('nPassGroup');
+    const linkageMethodGroup = document.getElementById('linkageMethodGroup');
+    const somParametersGroup = document.getElementById('somParametersGroup');
+
+    // Hide all parameter groups initially
+    clustersGroup.style.display = 'none';
+    dbscanParams.style.display = 'none';
+    bioclusterParams.style.display = 'none';
+    linkageMethodGroup.style.display = 'none';
+    somParametersGroup.style.display = 'none';
+
+    if (method === 'dbscan') {
+        dbscanParams.style.display = 'block';
+    } else if (method.startsWith('biocluster_')) {
+        // Show Bio.Cluster parameters
+        bioclusterParams.style.display = 'block';
+
+        if (method === 'biocluster_kcluster') {
+            // K-means: show n_clusters, distance method, n_pass
+            clustersGroup.style.display = 'block';
+            distanceMethodGroup.style.display = 'block';
+            nPassGroup.style.display = 'block';
+        } else if (method === 'biocluster_kmedoids') {
+            // K-medoids: show n_clusters, distance method, n_pass
+            clustersGroup.style.display = 'block';
+            distanceMethodGroup.style.display = 'block';
+            nPassGroup.style.display = 'block';
+        } else if (method === 'biocluster_tree') {
+            // Hierarchical: show distance method and linkage method (no n_clusters)
+            distanceMethodGroup.style.display = 'block';
+            linkageMethodGroup.style.display = 'block';
+        } else if (method === 'biocluster_som') {
+            // SOM: show grid dimensions, iterations, tau (no n_clusters)
+            somParametersGroup.style.display = 'block';
+        } else if (method === 'biocluster_pca') {
+            // PCA: no additional parameters needed
+            distanceMethodGroup.style.display = 'none';
+            nPassGroup.style.display = 'none';
+        }
+    } else {
+        // Scikit-learn methods
+        clustersGroup.style.display = 'block';
+    }
+}
+
+document.getElementById('clusteringForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const matrixText = document.getElementById('dataMatrix').value.trim();
+    const method = document.getElementById('clusterMethod').value;
+    const nClusters = parseInt(document.getElementById('nClusters').value);
+    const sampleNamesText = document.getElementById('sampleNames').value.trim();
+    
+    if (!matrixText) {
+        return;
+    }
+    
+    // Parse matrix
+    let matrix;
+    try {
+        matrix = matrixText.split('\n')
+            .filter(line => line.trim())
+            .map(line => line.split(',').map(val => parseFloat(val.trim())));
+        
+        // Validate matrix
+        if (matrix.length === 0) {
+            throw new Error('Empty matrix');
+        }
+        
+        const numCols = matrix[0].length;
+        for (let row of matrix) {
+            if (row.length !== numCols) {
+                throw new Error('Inconsistent number of columns');
+            }
+            for (let val of row) {
+                if (isNaN(val)) {
+                    throw new Error('Non-numeric values found');
+                }
+            }
+        }
+    } catch (error) {
+        return;
+    }
+    
+    // Parse sample names
+    let sampleNames = [];
+    if (sampleNamesText) {
+        sampleNames = sampleNamesText.split(',').map(name => name.trim());
+        if (sampleNames.length !== matrix.length) {
+            sampleNames = [];
+        }
+    }
+    
+    // Generate default names if not provided
+    if (sampleNames.length === 0) {
+        sampleNames = matrix.map((_, i) => `Row_${i + 1}`);
+    }
+    
+    const requestData = {
+        matrix: matrix,
+        method: method,
+        n_clusters: nClusters
+    };
+
+    if (method === 'dbscan') {
+        requestData.eps = parseFloat(document.getElementById('eps').value);
+        requestData.min_samples = parseInt(document.getElementById('minSamples').value);
+    } else if (method.startsWith('biocluster_')) {
+        // Add Bio.Cluster-specific parameters
+        if (method === 'biocluster_kcluster' || method === 'biocluster_kmedoids') {
+            requestData.distance = document.getElementById('distanceMethod').value;
+            requestData.n_pass = parseInt(document.getElementById('nPass').value);
+        } else if (method === 'biocluster_tree') {
+            requestData.distance = document.getElementById('distanceMethod').value;
+            requestData.linkage = document.getElementById('linkageMethod').value;
+        } else if (method === 'biocluster_som') {
+            requestData.xdim = parseInt(document.getElementById('somXDim').value);
+            requestData.ydim = parseInt(document.getElementById('somYDim').value);
+            requestData.n_iter = parseInt(document.getElementById('somIter').value);
+        }
+        // PCA doesn't need additional parameters
+    }
+    
+    showLoading('clusterBtn');
+
+    // Determine API endpoint based on method
+    let endpoint = '/api/clustering/analyze';
+    if (method.startsWith('biocluster_')) {
+        const bioclusterMethod = method.replace('biocluster_', '');
+        endpoint = `/api/clustering/biocluster/${bioclusterMethod}`;
+    }
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('clusterBtn', '<i class="fas fa-project-diagram"></i> Perform Clustering');
+        
+        if (data.success) {
+            displayClusteringResults(data.results, data.method, matrix, sampleNames);
+            window.clusteringResults = { results: data.results, method: data.method, matrix: matrix, sampleNames: sampleNames };
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('clusterBtn', '<i class="fas fa-project-diagram"></i> Perform Clustering');
+    });
+});
+
+function displayClusteringResults(results, method, originalMatrix, sampleNames) {
+    displayClusteringInfo(results, method);
+    displayClusterAssignments(results, originalMatrix, sampleNames);
+    displayClusterVisualization(results, method, sampleNames);
+}
+
+function displayClusteringInfo(results, method) {
+    const infoDiv = document.getElementById('clusteringInfo');
+    let html = '';
+
+    if (method === 'kmeans') {
+        const uniqueClusters = new Set(results.labels).size;
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Clusters Found</h6>
+                        <h4 class="mb-0">${uniqueClusters}</h4>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Inertia</h6>
+                        <h4 class="mb-0">${results.inertia.toFixed(2)}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (method === 'hierarchical') {
+        const uniqueClusters = new Set(results.labels).size;
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Clusters Found</h6>
+                        <h4 class="mb-0">${uniqueClusters}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (method === 'dbscan') {
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Clusters Found</h6>
+                        <h4 class="mb-0">${results.n_clusters}</h4>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Noise Points</h6>
+                        <h4 class="mb-0">${results.n_noise}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (method === 'Bio.Cluster.kcluster' || method === 'Bio.Cluster.kmedoids') {
+        const uniqueClusters = new Set(results.labels).size;
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Clusters Found</h6>
+                        <h4 class="mb-0">${results.n_clusters || uniqueClusters}</h4>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Clustering Error</h6>
+                        <h4 class="mb-0">${results.error.toFixed(4)}</h4>
+                    </div>
+                </div>
+                ${results.nfound !== undefined ? `
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Solutions Found</h6>
+                        <h4 class="mb-0">${results.nfound}</h4>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    } else if (method === 'Bio.Cluster.treecluster') {
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Tree Nodes</h6>
+                        <h4 class="mb-0">${results.n_nodes}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (method === 'Bio.Cluster.somcluster') {
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Grid Shape</h6>
+                        <h4 class="mb-0">${results.grid_shape[0]} × ${results.grid_shape[1]}</h4>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Total Cells</h6>
+                        <h4 class="mb-0">${results.grid_shape[0] * results.grid_shape[1]}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (method === 'Bio.Cluster.pca') {
+        const totalVariance = results.explained_variance.reduce((a, b) => a + b, 0);
+        html = `
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Components</h6>
+                        <h4 class="mb-0">${results.components.length}</h4>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light text-center">
+                        <h6 class="text-info mb-1">Top PC Variance</h6>
+                        <h4 class="mb-0">${results.explained_variance[0].toFixed(2)}%</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    infoDiv.innerHTML = html;
+}
+
+function displayClusterAssignments(results, matrix, sampleNames = []) {
+    const assignmentsDiv = document.getElementById('clusterAssignments');
+
+    // Handle PCA results differently (no cluster labels)
+    if (results.coordinates !== undefined) {
+        let html = '<div class="table-responsive">';
+        html += '<h6 class="text-info mb-3">PCA Coordinates</h6>';
+        html += '<table class="table table-hover table-sm">';
+        html += '<thead><tr><th>Sample</th>';
+        for (let i = 0; i < results.coordinates[0].length; i++) {
+            html += `<th>PC${i + 1}</th>`;
+        }
+        html += '</tr></thead><tbody>';
+
+        results.coordinates.forEach((coords, index) => {
+            const sampleName = sampleNames[index] || `Row_${index + 1}`;
+            html += `<tr><td><strong>${sampleName}</strong></td>`;
+            coords.forEach(coord => {
+                html += `<td>${coord.toFixed(4)}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+
+        // Add explained variance table
+        html += '<div class="mt-3 p-3 bg-light rounded">';
+        html += '<h6 class="text-info">Explained Variance by Component</h6>';
+        html += '<table class="table table-sm table-borderless mb-0">';
+        results.explained_variance.forEach((variance, index) => {
+            html += `
+                <tr>
+                    <td><strong>PC${index + 1}</strong></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: ${variance}%">
+                                ${variance.toFixed(2)}%
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        html += '</table></div>';
+
+        assignmentsDiv.innerHTML = html;
+        return;
+    }
+
+    // Handle tree results differently (no cluster labels, just tree structure)
+    if (results.tree !== undefined) {
+        let html = '<div class="p-3">';
+        html += '<h6 class="text-info mb-3">Hierarchical Tree Structure</h6>';
+        html += '<div class="table-responsive">';
+        html += '<table class="table table-hover table-sm">';
+        html += '<thead><tr><th>Node</th><th>Left Child</th><th>Right Child</th><th>Distance</th></tr></thead><tbody>';
+
+        results.tree.forEach((node, index) => {
+            html += `
+                <tr>
+                    <td><strong>Node ${index}</strong></td>
+                    <td>${node.left}</td>
+                    <td>${node.right}</td>
+                    <td>${node.distance.toFixed(4)}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div></div>';
+        assignmentsDiv.innerHTML = html;
+        return;
+    }
+
+    // Standard cluster label display
+    if (!results.labels) {
+        assignmentsDiv.innerHTML = '<div class="text-muted text-center py-4"><p>No cluster assignments available</p></div>';
+        return;
+    }
+
+    // Group samples by cluster
+    const clusterGroups = {};
+    results.labels.forEach((label, index) => {
+        if (!clusterGroups[label]) {
+            clusterGroups[label] = [];
+        }
+        clusterGroups[label].push(index);
+    });
+
+    // Create summary statistics
+    let summaryHtml = '<div class="mb-3 p-3 bg-light rounded">';
+    summaryHtml += '<h6 class="text-info">Clustering Summary</h6>';
+    summaryHtml += '<div class="row">';
+    Object.entries(clusterGroups).forEach(([cluster, indices]) => {
+        const clusterName = cluster === '-1' ? 'Noise' : `Cluster ${cluster}`;
+        const percentage = ((indices.length / results.labels.length) * 100).toFixed(1);
+        summaryHtml += `
+            <div class="col-md-4 mb-2">
+                <span class="badge ${cluster === '-1' ? 'bg-secondary' : 'bg-primary'}">${clusterName}</span>
+                <small class="ms-2">${indices.length} samples (${percentage}%)</small>
+            </div>
+        `;
+    });
+    summaryHtml += '</div></div>';
+
+    // Create detailed table
+    let html = summaryHtml + '<div class="table-responsive">';
+    html += '<table class="table table-hover table-sm">';
+    html += '<thead><tr><th>ID</th><th>Name</th><th>Cluster</th><th>Data Values</th></tr></thead><tbody>';
+
+    results.labels.forEach((label, index) => {
+        const sampleName = sampleNames[index] || `Row_${index + 1}`;
+        const clusterBadge = label === -1 ?
+            '<span class="badge bg-secondary">Noise</span>' :
+            `<span class="badge bg-primary">Cluster ${label}</span>`;
+
+        const dataStr = matrix[index].map(val => val.toFixed(2)).join(', ');
+
+        // Color-code rows by cluster
+        const rowClass = label === -1 ? 'table-secondary' : '';
+
+        html += `
+            <tr class="${rowClass}">
+                <td class="text-muted">${index + 1}</td>
+                <td><strong>${sampleName}</strong></td>
+                <td>${clusterBadge}</td>
+                <td><small class="font-monospace">[${dataStr}]</small></td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    assignmentsDiv.innerHTML = html;
+}
+
+function displayClusterVisualization(results, method, sampleNames = []) {
+    const visDiv = document.getElementById('clusterVisualization');
+    
+    if (method === 'hierarchical' && results.dendrogram) {
+        visDiv.innerHTML = `
+            <div class="text-center">
+                <h6 class="text-info mb-3">Hierarchical Clustering Dendrogram</h6>
+                <img src="${results.dendrogram}" class="img-fluid rounded" alt="Dendrogram" style="max-height: 400px;">
+            </div>
+        `;
+    } else {
+        // Enhanced cluster visualization with better layout
+        const clusters = {};
+        results.labels.forEach((label, index) => {
+            if (!clusters[label]) clusters[label] = [];
+            const sampleName = sampleNames[index] || `Row_${index + 1}`;
+            clusters[label].push({ index: index + 1, name: sampleName });
+        });
+        
+        // Sort clusters by label
+        const sortedClusters = Object.entries(clusters).sort((a, b) => {
+            if (a[0] === '-1') return 1;
+            if (b[0] === '-1') return -1;
+            return parseInt(a[0]) - parseInt(b[0]);
+        });
+        
+        // Create visual cluster representation
+        let html = '<div class="cluster-visualization">';
+        
+        // Create cluster cards
+        html += '<div class="row g-3">';
+        sortedClusters.forEach(([cluster, samples], idx) => {
+            const clusterName = cluster === '-1' ? 'Noise' : `Cluster ${parseInt(cluster) + 1}`;
+            
+            // Define colors with fallback values
+            let bgColor, headerBg, textColor;
+            if (cluster === '-1') {
+                bgColor = '#f8f9fa';
+                headerBg = 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)';
+                textColor = '#6c757d';
+            } else {
+                const colorSchemes = [
+                    { bg: '#e3f2fd', header: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', text: '#0284c7' },
+                    { bg: '#f0fdf4', header: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', text: '#16a34a' },
+                    { bg: '#f0f9ff', header: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)', text: '#0369a1' },
+                    { bg: '#fffbeb', header: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', text: '#d97706' }
+                ];
+                const scheme = colorSchemes[parseInt(cluster) % 4];
+                bgColor = scheme.bg;
+                headerBg = scheme.header;
+                textColor = scheme.text;
+            }
+            
+            html += `
+                <div class="col-lg-4 col-md-6">
+                    <div class="cluster-card border-0 h-100" style="background: ${bgColor}; border-radius: 16px; overflow: visible; position: relative;">
+                        <div class="p-3" style="background: ${headerBg}; color: white; border-radius: 16px 16px 0 0;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" style="color: white; font-weight: 600;">${clusterName}</h5>
+                                <span class="badge bg-white" style="color: ${textColor}; font-size: 14px; padding: 6px 12px;">${samples.length}</span>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${samples.map((s, i) => `
+                                    <div class="d-flex align-items-center py-1 ${i > 0 ? 'border-top' : ''}" style="border-color: rgba(0,0,0,0.05) !important;">
+                                        <span class="text-muted me-2" style="font-size: 11px; min-width: 20px;">${s.index}</span>
+                                        <span style="font-size: 13px; font-weight: 500;">${s.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        // Add cluster statistics
+        const totalSamples = results.labels.length;
+        const numClusters = new Set(results.labels.filter(l => l !== -1)).size;
+        const noiseCount = results.labels.filter(l => l === -1).length;
+        
+        html += `
+            <div class="mt-4 mb-3 p-4 bg-light rounded" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <div class="row text-center g-3">
+                    <div class="col-md-4">
+                        <div class="stat-mini p-3 bg-white rounded">
+                            <div class="stat-value-mini text-primary">${totalSamples}</div>
+                            <div class="stat-label-mini">Total Samples</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-mini p-3 bg-white rounded">
+                            <div class="stat-value-mini text-success">${numClusters}</div>
+                            <div class="stat-label-mini">Clusters Found</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-mini p-3 bg-white rounded">
+                            <div class="stat-value-mini text-secondary">${noiseCount}</div>
+                            <div class="stat-label-mini">Noise Points</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        html += '</div>';
+        
+        // Add custom styles for this visualization
+        html += `
+            <style>
+                .cluster-visualization {
+                    padding-bottom: 20px;
+                }
+                .cluster-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    margin-bottom: 10px;
+                }
+                .cluster-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                    z-index: 10;
+                }
+                .stat-mini {
+                    transition: transform 0.2s ease;
+                }
+                .stat-mini:hover {
+                    transform: scale(1.05);
+                }
+                .stat-value-mini {
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                }
+                .stat-label-mini {
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: var(--secondary-600);
+                    font-weight: 600;
+                }
+            </style>
+        `;
+        
+        visDiv.innerHTML = html;
+    }
+}
+
+function loadClusteringExample() {
+    // Example gene expression data - normalized values
+    document.getElementById('dataMatrix').value = `2.1,1.3,3.2,0.8
+1.8,1.1,2.9,0.9
+3.2,2.8,1.1,2.1
+3.0,2.9,1.3,2.0
+1.2,1.0,3.1,1.1
+1.5,1.2,3.3,0.7
+2.8,3.1,1.2,1.9
+3.1,2.7,1.0,2.2`;
+    
+    // Example gene names
+    document.getElementById('sampleNames').value = 'BRCA1,BRCA2,TP53,EGFR,MYC,KRAS,PIK3CA,PTEN';
+    
+    // Get current method to set appropriate parameters
+    const currentMethod = document.getElementById('clusterMethod').value;
+    
+    if (currentMethod === 'kmeans') {
+        document.getElementById('nClusters').value = '3';
+    } else if (currentMethod === 'hierarchical') {
+        document.getElementById('nClusters').value = '3';
+    } else if (currentMethod === 'dbscan') {
+        // Set better DBSCAN parameters for this small dataset
+        document.getElementById('eps').value = '1.5';  // Larger epsilon for small dataset
+        document.getElementById('minSamples').value = '2';  // Lower min_samples for 8 samples
+    }
+    
+    updateParameters();
+    
+    // Example data loaded
+}
+
+// Add event listener to update example parameters when method changes
+document.getElementById('clusterMethod').addEventListener('change', function() {
+    const method = this.value;
+    // If example data is loaded (check if sample names are present)
+    if (document.getElementById('sampleNames').value.includes('BRCA')) {
+        if (method === 'dbscan') {
+            document.getElementById('eps').value = '1.5';
+            document.getElementById('minSamples').value = '2';
+        }
+    }
+});
+</script>
+{% endblock %}

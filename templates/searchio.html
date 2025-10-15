@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}SearchIO Parser - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #searchioTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #searchioTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1"><i class="fas fa-search"></i> SearchIO Parser</h2>
+        <p class="lead mb-2">Parse and analyze search results from BLAST, HMMER, and other tools using Bio.SearchIO</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="searchioTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+                <i class="fas fa-file-import d-block mb-1"></i><small>Parse</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
+                <i class="fas fa-book-open d-block mb-1"></i><small>Read</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="index-tab" data-bs-toggle="tab" data-bs-target="#index" type="button">
+                <i class="fas fa-database d-block mb-1"></i><small>Index</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
+                <i class="fas fa-exchange-alt d-block mb-1"></i><small>Convert</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
+                <i class="fas fa-filter d-block mb-1"></i><small>Filter</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="write-tab" data-bs-toggle="tab" data-bs-target="#write" type="button">
+                <i class="fas fa-file-export d-block mb-1"></i><small>Write</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="formats-tab" data-bs-toggle="tab" data-bs-target="#formats" type="button">
+                <i class="fas fa-list-alt d-block mb-1"></i><small>Formats</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="tab-content">
+            
+            <!-- Parse Tab -->
+            <div class="tab-pane fade show active" id="parse">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="parseForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Search Results File</label>
+                                            <input type="file" class="form-control form-control-sm" id="parseFile" accept=".xml,.txt,.out,.tab,.hmmer,.blast">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Format</label>
+                                            <select class="form-select form-select-sm" id="parseFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                                <option value="hmmer3-text">HMMER3 Text</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseBtn">
+                                        <i class="fas fa-file-import me-2"></i>Parse Results
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadParseExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Parsed Queries</strong>
+                                    <span class="badge bg-primary" id="parseCount" style="display:none;">0</span>
+                                </div>
+                                <div id="parseResults">
+                                    <p class="text-muted text-center small mb-0">Upload file to parse multiple queries</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SearchIO.parse</strong></p>
+                                <p class="small mb-1">Parse search result files with multiple query sequences.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Multi-query BLAST/HMMER results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Read Tab -->
+            <div class="tab-pane fade" id="read">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="readForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Search Results File (Single Query)</label>
+                                            <input type="file" class="form-control form-control-sm" id="readFile" accept=".xml,.txt,.out,.tab">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Format</label>
+                                            <select class="form-select form-select-sm" id="readFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="readBtn">
+                                        <i class="fas fa-book-open me-2"></i>Read Result
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadReadExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <strong class="small">Query Details</strong>
+                                <div id="readResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Upload file with single query</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SearchIO.read</strong></p>
+                                <p class="small mb-1">Read file with exactly one query and get detailed HSP info.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Single-query detailed analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Index Tab -->
+            <div class="tab-pane fade" id="index">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="indexForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Large Results File</label>
+                                            <input type="file" class="form-control form-control-sm" id="indexFile" accept=".xml,.txt,.out">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Format</label>
+                                            <select class="form-select form-select-sm" id="indexFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Preview Limit</label>
+                                            <select class="form-select form-select-sm" id="indexLimit">
+                                                <option value="50">50 queries</option>
+                                                <option value="100" selected>100 queries</option>
+                                                <option value="200">200 queries</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="indexBtn">
+                                        <i class="fas fa-database me-2"></i>Create Index
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadIndexExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Indexed Queries</strong>
+                                    <span class="badge bg-primary" id="indexCount" style="display:none;">0</span>
+                                </div>
+                                <div id="indexResults">
+                                    <p class="text-muted text-center small mb-0">Upload large file for indexed access</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SearchIO.index</strong></p>
+                                <p class="small mb-1">Create memory-efficient index for large files.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Large files with many queries</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Convert Tab -->
+            <div class="tab-pane fade" id="convert">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="convertForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Input File</label>
+                                            <input type="file" class="form-control form-control-sm" id="convertFile" accept=".xml,.txt,.out,.tab">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Input Format</label>
+                                            <select class="form-select form-select-sm" id="convertInputFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Output Format</label>
+                                            <select class="form-select form-select-sm" id="convertOutputFormat">
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
+                                        <i class="fas fa-exchange-alt me-2"></i>Convert Format
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConvertExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <strong class="small">Converted Output</strong>
+                                <div id="convertResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Convert between search result formats</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SearchIO.convert</strong></p>
+                                <p class="small mb-1">Convert search results between different formats.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Format compatibility</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tab -->
+            <div class="tab-pane fade" id="filter">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="filterForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Results File</label>
+                                            <input type="file" class="form-control form-control-sm" id="filterFile" accept=".xml,.txt,.out,.tab">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Format</label>
+                                            <select class="form-select form-select-sm" id="filterFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="hmmer3-tab">HMMER3 Table</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small mb-0">Max E-value</label>
+                                            <input type="text" class="form-control form-control-sm" id="filterEvalue" placeholder="0.001">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small mb-0">Min Bit Score</label>
+                                            <input type="text" class="form-control form-control-sm" id="filterBitscore" placeholder="50">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small mb-0">Min Identity %</label>
+                                            <input type="text" class="form-control form-control-sm" id="filterIdentity" placeholder="70">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="filterBtn">
+                                        <i class="fas fa-filter me-2"></i>Apply Filters
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadFilterExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="small">Filtered Results</strong>
+                                    <span class="badge bg-primary" id="filterCount" style="display:none;">0</span>
+                                </div>
+                                <div id="filterResults">
+                                    <p class="text-muted text-center small mb-0">Filter hits by E-value, bit score, or identity</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About Filtering</strong></p>
+                                <p class="small mb-1">Filter search results by quality thresholds.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Quality control, hit selection</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Write Tab -->
+            <div class="tab-pane fade" id="write">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <form id="writeForm" enctype="multipart/form-data">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Input File</label>
+                                            <input type="file" class="form-control form-control-sm" id="writeFile" accept=".xml,.txt,.out,.tab">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Input Format</label>
+                                            <select class="form-select form-select-sm" id="writeInputFormat">
+                                                <option value="blast-xml">BLAST XML</option>
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Output Format</label>
+                                            <select class="form-select form-select-sm" id="writeOutputFormat">
+                                                <option value="blast-tab">BLAST Tabular</option>
+                                                <option value="blast-xml">BLAST XML</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small mb-0">Max Queries</label>
+                                            <input type="number" class="form-control form-control-sm" id="writeMaxQueries" value="10" min="1" max="100">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="writeBtn">
+                                        <i class="fas fa-file-export me-2"></i>Write Output
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadWriteExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <strong class="small">Written Output</strong>
+                                <div id="writeResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Write QueryResult objects to file</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SearchIO.write</strong></p>
+                                <p class="small mb-1">Write QueryResult objects to files in various formats.</p>
+                                <p class="small mb-0"><strong>Use for:</strong> Exporting processed results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formats Tab -->
+            <div class="tab-pane fade" id="formats">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <button class="gradient-btn-primary w-100 mt-2" id="formatsBtn" onclick="loadFormats()">
+                                    <i class="fas fa-list-alt me-2"></i>Load Supported Formats
+                                </button>
+                                <hr class="my-2">
+                                <strong class="small">Supported SearchIO Formats</strong>
+                                <div id="formatsResults" class="mt-2">
+                                    <p class="text-muted text-center small mb-0">Click button to load all supported formats</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About Formats</strong></p>
+                                <p class="small mb-1">View all supported SearchIO input/output formats.</p>
+                                <p class="small mb-0"><strong>Categories:</strong> BLAST, HMMER, BLAT, Exonerate, FASTA</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/searchio.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,627 @@
+{% extends "base.html" %}
+
+{% block title %}Structure Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #structureTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #structureTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-cube"></i> Structure Analysis
+        </h2>
+        <p class="lead mb-3">Parse and analyze protein structures using Bio.PDB</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex" id="structureTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+                <i class="fas fa-cube d-block mb-1"></i>
+                <small>Parse</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="superimpose-tab" data-bs-toggle="tab" data-bs-target="#superimpose" type="button">
+                <i class="fas fa-project-diagram d-block mb-1"></i>
+                <small>Superimpose</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="geometry-tab" data-bs-toggle="tab" data-bs-target="#geometry" type="button">
+                <i class="fas fa-ruler d-block mb-1"></i>
+                <small>Geometry</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="quality-tab" data-bs-toggle="tab" data-bs-target="#quality" type="button">
+                <i class="fas fa-check-circle d-block mb-1"></i>
+                <small>Quality</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button">
+                <i class="fas fa-network-wired d-block mb-1"></i>
+                <small>Contacts</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="interactions-tab" data-bs-toggle="tab" data-bs-target="#interactions" type="button">
+                <i class="fas fa-link d-block mb-1"></i>
+                <small>Interactions</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="dssp-tab" data-bs-toggle="tab" data-bs-target="#dssp" type="button">
+                <i class="fas fa-dna d-block mb-1"></i>
+                <small>DSSP</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="ramachandran-tab" data-bs-toggle="tab" data-bs-target="#ramachandran" type="button">
+                <i class="fas fa-chart-scatter d-block mb-1"></i>
+                <small>Ramachandran</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="sasa-tab" data-bs-toggle="tab" data-bs-target="#sasa" type="button">
+                <i class="fas fa-water d-block mb-1"></i>
+                <small>SASA</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="selection-tab" data-bs-toggle="tab" data-bs-target="#selection" type="button">
+                <i class="fas fa-crop d-block mb-1"></i>
+                <small>Selection</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- Parse Tab -->
+            <div class="tab-pane fade show active" id="parse">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Structure Input</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="structureForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Upload PDB/mmCIF File</label>
+                                        <input type="file" class="form-control form-control-sm" id="structureFile" accept=".pdb,.ent,.cif,.mmcif">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Or Enter PDB ID</label>
+                                        <input type="text" class="form-control form-control-sm" id="pdbId" placeholder="e.g., 1BL8" maxlength="4">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseStructureBtn">
+                                        <i class="fas fa-cube me-2"></i>Parse
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100 mb-2" onclick="fetchFromPDB()">
+                                        <i class="fas fa-download me-2"></i>Fetch
+                                    </button>
+                                    <button type="button" class="gradient-btn-small w-100" onclick="loadExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Chain Details</h6>
+                            </div>
+                            <div class="card-body py-2" id="chainDetails">
+                                <p class="text-muted text-center small">Chain information will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Structure Information</h6>
+                            </div>
+                            <div class="card-body py-2" id="structureInfo">
+                                <p class="text-muted text-center small">Upload a structure file</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-lightbulb"></i> Supported Formats</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small"><strong>PDB Format:</strong> Traditional format, human-readable (.pdb, .ent)</p>
+                                <p class="small"><strong>mmCIF Format:</strong> Modern format, handles large structures (.cif, .mmcif)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Superimpose Tab -->
+            <div class="tab-pane fade" id="superimpose">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-project-diagram"></i> Structural Superposition</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="superimposeForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Structure 1</label>
+                                        <input type="file" class="form-control form-control-sm" id="superFile1" accept=".pdb">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Structure 2</label>
+                                        <input type="file" class="form-control form-control-sm" id="superFile2" accept=".pdb">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="superimposeBtn">
+                                        <i class="fas fa-project-diagram me-2"></i>Align Structures
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSuperimposeExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Superposition</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Superimpose calculates the optimal rotation and translation to align two protein structures.</p>
+                                <p class="small"><strong>RMSD:</strong> Root Mean Square Deviation measures structural similarity.</p>
+                                <p class="small">Lower RMSD = more similar structures</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Superposition Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="superimposeResults">
+                                <p class="text-muted text-center small">Upload two structures to see results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Geometry Tab -->
+            <div class="tab-pane fade" id="geometry">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-ruler"></i> Geometric Calculations</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="geometryForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Chain ID</label>
+                                        <input type="text" class="form-control form-control-sm" id="geomChainId" value="A" maxlength="1">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="geometryBtn">
+                                        <i class="fas fa-ruler me-2"></i>Calculate Geometry
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadGeometryExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Geometry</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small"><strong>Distances:</strong> CA-CA distances between consecutive residues</p>
+                                <p class="small"><strong>Angles:</strong> CA-CA-CA bond angles</p>
+                                <p class="small"><strong>Dihedrals:</strong> CA-CA-CA-CA torsion angles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-calculator"></i> Geometric Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="geometryResults">
+                                <p class="text-muted text-center small">Parse a structure first, then calculate geometry</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quality Tab -->
+            <div class="tab-pane fade" id="quality">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-check-circle"></i> Quality Metrics</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="qualityForm">
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="qualityBtn">
+                                        <i class="fas fa-check-circle me-2"></i>Analyze Quality
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadQualityExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Quality</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small"><strong>B-factors:</strong> Thermal motion/disorder of atoms</p>
+                                <p class="small"><strong>Occupancy:</strong> Atom presence confidence</p>
+                                <p class="small"><strong>Completeness:</strong> Missing backbone atoms</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Quality Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="qualityResults">
+                                <p class="text-muted text-center small">Parse a structure first, then analyze quality</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div class="tab-pane fade" id="contacts">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-network-wired"></i> Contact Analysis</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="contactsForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Chain ID</label>
+                                        <input type="text" class="form-control form-control-sm" id="contactChainId" value="A" maxlength="1">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Distance Cutoff (Å)</label>
+                                        <input type="number" class="form-control form-control-sm" id="contactCutoff" value="8.0" step="0.5" min="3" max="15">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="contactsBtn">
+                                        <i class="fas fa-network-wired me-2"></i>Calculate Contacts
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadContactsExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Contacts</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Contact analysis identifies residue pairs within a specified distance cutoff.</p>
+                                <p class="small">Useful for understanding protein folding and interactions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Contact Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="contactsResults">
+                                <p class="text-muted text-center small">Parse a structure first, then calculate contacts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactions Tab -->
+            <div class="tab-pane fade" id="interactions">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-link"></i> Molecular Interactions</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="interactionsForm">
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="interactionsBtn">
+                                        <i class="fas fa-link me-2"></i>Detect Interactions
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadInteractionsExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Interactions</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small"><strong>H-bonds:</strong> N-O distances < 3.5Å</p>
+                                <p class="small"><strong>Salt Bridges:</strong> Charged residue pairs (ARG/LYS ↔ ASP/GLU) within 4Å</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-project-diagram"></i> Interaction Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="interactionsResults">
+                                <p class="text-muted text-center small">Parse a structure first, then detect interactions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DSSP Tab -->
+            <div class="tab-pane fade" id="dssp">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Secondary Structure Analysis (DSSP)</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="dsspForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Upload PDB File</label>
+                                        <input type="file" class="form-control form-control-sm" id="dsspFile" accept=".pdb" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="dsspBtn">
+                                        <i class="fas fa-dna me-2"></i>Analyze Secondary Structure
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadDsspExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About DSSP</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small"><strong>H</strong>: Alpha helix</p>
+                                <p class="small"><strong>E</strong>: Extended strand (beta)</p>
+                                <p class="small"><strong>T</strong>: Turn</p>
+                                <p class="small"><strong>-</strong>: Loop/coil</p>
+                                <p class="small">Also provides phi/psi angles and accessibility</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-pie"></i> DSSP Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="dsspResults">
+                                <p class="text-muted text-center small">Upload a PDB file to analyze secondary structure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ramachandran Tab -->
+            <div class="tab-pane fade" id="ramachandran">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-scatter"></i> Ramachandran Plot Analysis</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="ramachandranForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Upload PDB File</label>
+                                        <input type="file" class="form-control form-control-sm" id="ramaFile" accept=".pdb" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Chain ID</label>
+                                        <input type="text" class="form-control form-control-sm" id="ramaChainId" value="A" maxlength="1">
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="ramaBtn">
+                                        <i class="fas fa-chart-scatter me-2"></i>Calculate Phi/Psi Angles
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadRamaExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Ramachandran</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Ramachandran plots show allowed phi/psi angle combinations for protein backbone</p>
+                                <p class="small"><strong>Favored regions:</strong></p>
+                                <ul class="small">
+                                    <li>Alpha helix: φ ~-60°, ψ ~-45°</li>
+                                    <li>Beta sheet: φ ~-120°, ψ ~+120°</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Phi/Psi Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="ramaResults">
+                                <p class="text-muted text-center small">Upload a structure to calculate phi/psi angles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SASA Tab -->
+            <div class="tab-pane fade" id="sasa">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-water"></i> Solvent Accessible Surface Area</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="sasaForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Upload PDB File</label>
+                                        <input type="file" class="form-control form-control-sm" id="sasaFile" accept=".pdb" required>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="sasaBtn">
+                                        <i class="fas fa-water me-2"></i>Calculate SASA
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSasaExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About SASA</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">SASA measures the surface area of a protein accessible to solvent molecules</p>
+                                <p class="small"><strong>High SASA:</strong> Exposed, surface residues</p>
+                                <p class="small"><strong>Low SASA:</strong> Buried, core residues</p>
+                                <p class="small">Uses Shrake-Rupley algorithm or DSSP fallback</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> SASA Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="sasaResults">
+                                <p class="text-muted text-center small">Upload a structure to calculate solvent accessibility</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selection Tab -->
+            <div class="tab-pane fade" id="selection">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-crop"></i> Structure Selection & Extraction</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="selectionForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Upload PDB File</label>
+                                        <input type="file" class="form-control form-control-sm" id="selectionFile" accept=".pdb" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Selection Type</label>
+                                        <select class="form-select form-select-sm" id="selectionType">
+                                            <option value="chain">Single Chain</option>
+                                            <option value="residue_range">Residue Range</option>
+                                            <option value="atom_type">Atom Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Selection Value</label>
+                                        <input type="text" class="form-control form-control-sm" id="selectionValue" placeholder="e.g., A or A:1-50 or CA">
+                                        <div class="form-text small">
+                                            <strong>Chain:</strong> A, B, etc. |
+                                            <strong>Range:</strong> A:1-50 |
+                                            <strong>Atom:</strong> CA, CB, N, etc.
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="selectionBtn">
+                                        <i class="fas fa-crop me-2"></i>Extract Selection
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSelectionExample()">
+                                        <i class="fas fa-flask me-2"></i>Example
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Selection</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="small">Extract specific parts of protein structures:</p>
+                                <ul class="small">
+                                    <li><strong>Chain:</strong> Extract single chain (A, B)</li>
+                                    <li><strong>Range:</strong> Extract residue range (A:10-50)</li>
+                                    <li><strong>Atom:</strong> Extract specific atoms (CA, CB)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Selection Results</h6>
+                            </div>
+                            <div class="card-body py-2" id="selectionResults">
+                                <p class="text-muted text-center small">Upload a structure and specify selection criteria</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- End Tab Content -->
+    </div><!-- End Card Body -->
+</div><!-- End Card -->
+
+<button type="button" id="advancedAnalysisBtn" style="display:none;"></button>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/structure.js') }}"></script>
+{% endblock %}

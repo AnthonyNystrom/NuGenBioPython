@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}NuGenBioPython - Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .feature-card {
+        border: none;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .feature-btn {
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .feature-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .btn-gradient-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .btn-gradient-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .btn-gradient-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    .btn-gradient-4 {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+    .btn-gradient-5 {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+    .btn-gradient-6 {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #495057;
+    }
+</style>
+<div class="row mb-5 fade-in">
+    <div class="col-12">
+        <h1 class="display-4 mb-3">
+            <i class="fas fa-dna text-primary"></i> NuGenBioPython
+        </h1>
+        <p class="lead mb-3">A comprehensive web interface for all BioPython functionality for Bioinformatics research and analysis</p>
+        <p class="mb-4">
+            <a href="https://github.com/AnthonyNystrom/NuGenBioPython" target="_blank" class="gradient-btn-outline">
+                <i class="fab fa-github me-2"></i>Open Source
+            </a>
+        </p>
+    </div>
+</div>
+
+<!-- Core Tools -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="text-primary mb-3"><i class="fas fa-flask me-2"></i>Core Tools</h4>
+    </div>
+</div>
+<div class="row g-4 fade-in">
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-dna fa-3x mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Sequence Analysis</h6>
+                <p class="card-text small mb-4">Analyze DNA, RNA, and protein sequences. Calculate composition, GC content, molecular weight, and perform translations.</p>
+                <a href="{{ url_for('sequence_tools') }}" class="feature-btn btn-gradient-1 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Analyze Sequences
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-file-import fa-3x mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">File I/O (SeqIO)</h6>
+                <p class="card-text small mb-4">Parse and convert between sequence file formats including FASTA, GenBank, EMBL, and more.</p>
+                <a href="{{ url_for('seqio_tools') }}" class="feature-btn btn-gradient-2 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> File Operations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-align-center fa-3x mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Pairwise Alignment</h6>
+                <p class="card-text small mb-4">Perform pairwise and multiple sequence alignments with customizable scoring parameters.</p>
+                <a href="{{ url_for('alignment_tools') }}" class="feature-btn btn-gradient-3 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Align Sequences
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-cube fa-3x mb-3" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Structure Analysis</h6>
+                <p class="card-text small mb-4">Parse and analyze protein structures from PDB files, examine chains, residues, and atomic details.</p>
+                <a href="{{ url_for('structure_tools') }}" class="feature-btn btn-gradient-4 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Structure Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison & Evolution -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="text-success mb-3"><i class="fas fa-project-diagram me-2"></i>Comparison & Evolution</h4>
+    </div>
+</div>
+<div class="row g-4 fade-in">
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-tree fa-3x mb-3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Phylogenetics</h6>
+                <p class="card-text small mb-4">Work with phylogenetic trees in various formats, visualize relationships, and analyze evolutionary data.</p>
+                <a href="{{ url_for('phylo_tools') }}" class="feature-btn btn-gradient-5 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Tree Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-rocket fa-3x mb-3" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">BLAST Search</h6>
+                <p class="card-text small mb-4">Perform sequence similarity searches using BLAST against various databases.</p>
+                <a href="{{ url_for('blast_tools') }}" class="feature-btn btn-gradient-6 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> BLAST Search
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-search-plus fa-3x mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Motif Analysis</h6>
+                <p class="card-text small mb-4">Create and search for sequence motifs, generate position weight matrices and sequence logos.</p>
+                <a href="{{ url_for('motifs_tools') }}" class="feature-btn btn-gradient-1 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Analyze Motifs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Databases & Parsing -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="text-info mb-3"><i class="fas fa-database me-2"></i>Databases & Parsing</h4>
+    </div>
+</div>
+<div class="row g-4 fade-in">
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-server fa-3x mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Database & Search</h6>
+                <p class="card-text small mb-4">Search and retrieve data from NCBI databases including PubMed and GenBank.</p>
+                <a href="{{ url_for('database_tools') }}" class="feature-btn btn-gradient-2 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Database Search
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-route fa-3x mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">KEGG</h6>
+                <p class="card-text small mb-4">Access KEGG pathways, genes, and metabolic information.</p>
+                <a href="{{ url_for('kegg_tools') }}" class="feature-btn btn-gradient-3 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> KEGG Search
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-search fa-3x mb-3" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">SearchIO Parser</h6>
+                <p class="card-text small mb-4">Parse and analyze search results from BLAST, HMMER, and other bioinformatics tools.</p>
+                <a href="{{ url_for('searchio_tools') }}" class="feature-btn btn-gradient-4 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Parse Results
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-university fa-3x mb-3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">SwissProt/UniProt</h6>
+                <p class="card-text small mb-4">Parse SwissProt and UniProt protein database records.</p>
+                <a href="{{ url_for('swissprot_tools') }}" class="feature-btn btn-gradient-5 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Parse Proteins
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-sitemap fa-3x mb-3" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">UniGene Analysis</h6>
+                <p class="card-text small mb-4">Parse UniGene cluster data for gene expression analysis and tissue distribution.</p>
+                <a href="{{ url_for('unigene_tools') }}" class="feature-btn btn-gradient-6 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Gene Clusters
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-table fa-3x mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">BioData</h6>
+                <p class="card-text small mb-4">Access codon tables, IUPAC codes, and other biological reference data for analysis.</p>
+                <a href="{{ url_for('biodata_tools') }}" class="feature-btn btn-gradient-1 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Reference Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Genomic Features -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="text-warning mb-3"><i class="fas fa-tags me-2"></i>Genomic Features</h4>
+    </div>
+</div>
+<div class="row g-4 fade-in">
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-bookmark fa-3x mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Sequence Features</h6>
+                <p class="card-text small mb-4">Analyze sequence features, annotations, and genomic elements in sequences.</p>
+                <a href="{{ url_for('features_tools') }}" class="feature-btn btn-gradient-2 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Analyze Features
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-cut fa-3x mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Restriction Enzymes</h6>
+                <p class="card-text small mb-4">Analyze DNA sequences with restriction enzymes, find cut sites and calculate fragment lengths.</p>
+                <a href="{{ url_for('restriction_tools') }}" class="feature-btn btn-gradient-3 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Restriction Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-chart-area fa-3x mb-3" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Genome Diagrams</h6>
+                <p class="card-text small mb-4">Create visual representations of genomic features and annotations.</p>
+                <a href="{{ url_for('genomediagram_tools') }}" class="feature-btn btn-gradient-4 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Create Diagrams
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis & Statistics -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="text-danger mb-3"><i class="fas fa-chart-line me-2"></i>Analysis & Statistics</h4>
+    </div>
+</div>
+<div class="row g-4 fade-in">
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-project-diagram fa-3x mb-3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Clustering Analysis</h6>
+                <p class="card-text small mb-4">Perform clustering analysis on biological data using K-means, hierarchical, and DBSCAN algorithms.</p>
+                <a href="{{ url_for('clustering_tools') }}" class="feature-btn btn-gradient-5 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Cluster Data
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-users fa-3x mb-3" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Population Genetics</h6>
+                <p class="card-text small mb-4">Analyze population genetic data using GenePop format parsing and population statistics.</p>
+                <a href="{{ url_for('popgen_tools') }}" class="feature-btn btn-gradient-6 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> PopGen Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-share-alt fa-3x mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Pathway Analysis</h6>
+                <p class="card-text small mb-4">Build and analyze biochemical pathways, reactions, and metabolic networks.</p>
+                <a href="{{ url_for('pathway_tools') }}" class="feature-btn btn-gradient-1 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> Pathway Builder
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card feature-card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-brain fa-3x mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <h6 class="card-title mb-3 fw-bold">Advanced Tools (HMM)</h6>
+                <p class="card-text small mb-4">Build and analyze Hidden Markov Models for sequence pattern recognition.</p>
+                <a href="{{ url_for('hmm_tools') }}" class="feature-btn btn-gradient-2 w-100">
+                    <i class="fas fa-arrow-right me-2"></i> HMM Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="results-summary">
+            <div class="stat-card">
+                <span class="stat-value">19</span>
+                <div class="stat-label">BioPython Modules</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">60+</span>
+                <div class="stat-label">Analysis Functions</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">10+</span>
+                <div class="stat-label">File Formats</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">5+</span>
+                <div class="stat-label">Databases</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> About BioPython</h6>
+            </div>
+            <div class="card-body py-2">
+                <p class="card-text">
+                    BioPython is a set of freely available tools for biological computation written in Python. 
+                    This web interface provides easy access to all major BioPython modules through a clean, 
+                    user-friendly interface. Whether you're analyzing sequences, working with phylogenetic trees, 
+                    or accessing biological databases, this tool has you covered.
+                </p>
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-primary small">Sequence Tools</h6>
+                        <small class="text-muted">Bio.Seq, Bio.SeqUtils</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-secondary small">File I/O</h6>
+                        <small class="text-muted">Bio.SeqIO, Bio.AlignIO</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-info small">Analysis</h6>
+                        <small class="text-muted">Bio.Align, Bio.Phylo</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-warning small">Databases</h6>
+                        <small class="text-muted">Bio.Entrez, Bio.ExPASy</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

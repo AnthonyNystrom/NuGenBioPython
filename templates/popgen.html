@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Population Genetics - NuGenBioPython{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-success">
+            <i class="fas fa-users"></i> Population Genetics
+        </h2>
+        <p class="lead">Analyze population genetic data using Bio.PopGen</p>
+    </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <strong>Population Genetics Analysis:</strong> This interface supports GenePop file format parsing and population genetic statistics.
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-upload"></i> Upload GenePop File</h6>
+            </div>
+            <div class="card-body py-2">
+                <form id="popgenForm" enctype="multipart/form-data">
+                    <div class="mb-2">
+                        <label for="popgenFile" class="form-label small">GenePop Data File</label>
+                        <input type="file" class="form-control" id="popgenFile" name="file" 
+                               accept=".gen,.genepop,.txt">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Supported formats: GenePop (.gen, .genepop), text files (.txt)
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="gradient-btn-success w-100 mb-2 mt-3" id="parsePopgenBtn">
+                        <i class="fas fa-chart-bar"></i> Parse GenePop Data
+                    </button>
+                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadPopgenExample()">
+                        <i class="fas fa-flask"></i> Load Example
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> GenePop Format</h6>
+            </div>
+            <div class="card-body py-2">
+                <h6 class="text-success small">File Structure</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-file-alt"></i> Title line</li>
+                    <li><i class="fas fa-list"></i> Locus names</li>
+                    <li><i class="fas fa-users"></i> Population data</li>
+                    <li><i class="fas fa-dna"></i> Individual genotypes</li>
+                </ul>
+                
+                <h6 class="text-success mt-2 small">Analysis Features</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-chart-line"></i> Population statistics</li>
+                    <li><i class="fas fa-balance-scale"></i> Hardy-Weinberg equilibrium</li>
+                    <li><i class="fas fa-exchange-alt"></i> Allele frequencies</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-table"></i> Population Data</h6>
+                <span class="badge bg-success" id="popCount" style="display:none;"></span>
+            </div>
+            <div class="card-body py-2" id="popgenResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Upload GenePop data to see population analysis
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3" id="advancedAnalysisSection" style="display:none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-chart-line"></i> Advanced Population Analysis</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Pure Python Implementation</strong>
+                    <p class="mb-0 mt-2 small">These analyses use pure Python implementations and work without external tools.
+                    Results are calculated using numpy/scipy and standard population genetics formulas.</p>
+                </div>
+
+                <p class="text-muted small mb-3">Run additional analyses on the loaded GenePop data:</p>
+
+                <div class="row g-2">
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runAlleleFrequencies()">
+                            <i class="fas fa-chart-pie"></i> Allele Frequencies
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runHeterozygosityPython()">
+                            <i class="fas fa-percentage"></i> Heterozygosity
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runHardyWeinbergPython()">
+                            <i class="fas fa-balance-scale"></i> Hardy-Weinberg Test
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runFstPython()">
+                            <i class="fas fa-project-diagram"></i> Fst Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3" id="advancedResults" style="display:none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-table"></i> Advanced Analysis Results</h6>
+            </div>
+            <div class="card-body py-2" id="advancedResultsContent">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Population Genetics Background</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Key Concepts</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-dna text-primary"></i> <strong>Allele Frequency</strong> - Relative frequency of alleles</li>
+                            <li><i class="fas fa-balance-scale text-primary"></i> <strong>Hardy-Weinberg</strong> - Population equilibrium</li>
+                            <li><i class="fas fa-chart-line text-primary"></i> <strong>Genetic Diversity</strong> - Variation within populations</li>
+                            <li><i class="fas fa-exchange-alt text-primary"></i> <strong>Gene Flow</strong> - Migration between populations</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Statistical Measures</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-percentage text-warning"></i> <strong>FST</strong> - Population differentiation</li>
+                            <li><i class="fas fa-calculator text-warning"></i> <strong>Heterozygosity</strong> - Expected vs observed</li>
+                            <li><i class="fas fa-chart-bar text-warning"></i> <strong>Inbreeding</strong> - Coefficient of inbreeding</li>
+                            <li><i class="fas fa-link text-warning"></i> <strong>Linkage</strong> - Genetic linkage analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Applications</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-seedling text-info"></i> <strong>Conservation</strong> - Species preservation</li>
+                            <li><i class="fas fa-microscope text-info"></i> <strong>Disease</strong> - Genetic disease studies</li>
+                            <li><i class="fas fa-globe text-info"></i> <strong>Evolution</strong> - Evolutionary analysis</li>
+                            <li><i class="fas fa-leaf text-info"></i> <strong>Agriculture</strong> - Crop improvement</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('popgenForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('popgenFile');
+    
+    if (!fileInput.files[0]) {
+        if (window.popgenResults) {
+            displayPopgenResults(window.popgenResults);
+            return;
+        } else {
+            return;
+        }
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    showLoading('parsePopgenBtn');
+    
+    fetch('/api/popgen/parse', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        
+        if (data.success) {
+            displayPopgenResults(data.results);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        showAlert('Network error: ' + error.message, 'danger');
+    });
+});
+
+function displayPopgenResults(results) {
+    const resultsDiv = document.getElementById('popgenResults');
+    const countBadge = document.getElementById('popCount');
+
+    // Validate results structure
+    if (!results || !results.populations || !results.loci) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Invalid or incomplete data received</div>';
+        return;
+    }
+
+    countBadge.textContent = `${results.populations.length} populations`;
+    countBadge.style.display = 'inline-block';
+
+    let html = `
+        <div class="mb-3">
+            <h6><i class="fas fa-file-alt"></i> ${results.title}</h6>
+            <p class="text-muted">${results.loci.length} loci across ${results.populations.length} populations</p>
+        </div>
+    `;
+    
+    // Display statistical analysis if available
+    if (results.statistics && !results.statistics.error) {
+        html += `
+            <div class="alert alert-success">
+                <h6><i class="fas fa-chart-bar"></i> Population Genetics Statistics</h6>
+                
+                ${results.statistics.hardy_weinberg && results.statistics.hardy_weinberg.global ? `
+                    <div class="mb-2">
+                        <strong>Hardy-Weinberg Test:</strong> 
+                        <span class="badge bg-info">Global test completed</span>
+                    </div>
+                ` : ''}
+                
+                ${results.statistics.f_statistics && Object.keys(results.statistics.f_statistics).length > 0 ? `
+                    <div class="mb-2">
+                        <strong>F-Statistics:</strong>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            ${Object.entries(results.statistics.f_statistics).map(([key, value]) =>
+                                `<span class="badge bg-secondary">${key}: ${value}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${results.statistics.allele_frequencies && Object.keys(results.statistics.allele_frequencies).length > 0 ? `
+                    <div>
+                        <strong>Allele Frequencies:</strong> 
+                        <span class="badge bg-primary">Available for ${Object.keys(results.statistics.allele_frequencies).length} loci</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else if (results.statistics && results.statistics.error) {
+        html += `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Statistical analysis unavailable: ${results.statistics.error}
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <h6><i class="fas fa-list"></i> Loci</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light"><tr><th>Locus</th><th>Position</th></tr></thead>
+                        <tbody>
+    `;
+
+    results.loci.forEach((locus, index) => {
+        html += `<tr><td><code class="small">${locus}</code></td><td>${index + 1}</td></tr>`;
+    });
+
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h6><i class="fas fa-users"></i> Populations</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light"><tr><th>Population</th><th>Individuals</th></tr></thead>
+                        <tbody>
+    `;
+
+    results.populations.forEach(pop => {
+        html += `<tr><td><strong>${pop.name}</strong></td><td>${pop.individuals}</td></tr>`;
+    });
+
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    resultsDiv.innerHTML = html;
+
+    // Show advanced analysis section
+    document.getElementById('advancedAnalysisSection').style.display = 'block';
+}
+
+function loadPopgenExample() {
+    showLoading('parsePopgenBtn');
+
+    // Call the dedicated example endpoint - no file upload needed
+    fetch('/api/popgen/load_example', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+
+        if (data.success) {
+            displayPopgenResults(data.results);
+            window.popgenResults = data.results;
+            window.popgenExampleLoaded = true;
+        } else {
+            showAlert('Error loading example: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        showAlert('Error loading example: ' + error.message, 'danger');
+    });
+}
+
+// Advanced analysis functions
+function runAdvancedAnalysis(endpoint, title) {
+    const fileInput = document.getElementById('popgenFile');
+    const resultsDiv = document.getElementById('advancedResults');
+    const contentDiv = document.getElementById('advancedResultsContent');
+
+    resultsDiv.style.display = 'block';
+
+    // Check if user uploaded a file
+    if (fileInput.files[0]) {
+        contentDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Running analysis...</p></div>';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAdvancedResults(data.results, title);
+            } else {
+                contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+        });
+    } else if (window.popgenExampleLoaded) {
+        // Use example data - create temp file on server
+        contentDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Running analysis with example data...</p></div>';
+
+        fetch(endpoint + '?use_example=true', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAdvancedResults(data.results, title);
+            } else {
+                contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+        });
+    } else {
+        contentDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please upload a GenePop file first or click "Load Example"</div>';
+    }
+}
+
+function displayAdvancedResults(results, title) {
+    const contentDiv = document.getElementById('advancedResultsContent');
+
+    let html = `<h6 class="mb-3"><i class="fas fa-chart-bar"></i> ${title}</h6>`;
+    html += '<div class="table-responsive"><pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">';
+    html += JSON.stringify(results, null, 2);
+    html += '</pre></div>';
+
+    contentDiv.innerHTML = html;
+}
+
+// Pure Python analysis functions
+function runAlleleFrequencies() {
+    runAdvancedAnalysis('/api/popgen/allele_frequencies', 'Allele Frequencies (Pure Python)');
+}
+
+function runHeterozygosityPython() {
+    runAdvancedAnalysis('/api/popgen/heterozygosity_python', 'Heterozygosity Analysis (Pure Python)');
+}
+
+function runHardyWeinbergPython() {
+    runAdvancedAnalysis('/api/popgen/hardy_weinberg_python', 'Hardy-Weinberg Equilibrium Test (Pure Python)');
+}
+
+function runFstPython() {
+    runAdvancedAnalysis('/api/popgen/fst_python', 'Fst Analysis (Pure Python)');
+}
+</script>
+{% endblock %}

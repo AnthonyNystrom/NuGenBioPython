@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Pathway Analysis - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #pathwayTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #pathwayTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-project-diagram"></i> Pathway Analysis
+        </h2>
+        <p class="lead mb-2">Build and analyze biochemical pathways using Bio.Pathway</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="pathwayTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold"
+                    id="reactions-tab" data-bs-toggle="tab" data-bs-target="#reactions" type="button">
+                <i class="fas fa-flask d-block mb-1"></i>
+                <small>Reaction Builder</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button">
+                <i class="fas fa-cogs d-block mb-1"></i>
+                <small>System Analysis</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="network-tab" data-bs-toggle="tab" data-bs-target="#network" type="button">
+                <i class="fas fa-network-wired d-block mb-1"></i>
+                <small>Network Analysis</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button">
+                <i class="fas fa-eye d-block mb-1"></i>
+                <small>Visualization</small>
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body p-3">
+        <div class="tab-content">
+
+            <!-- ============================================================ -->
+            <!-- REACTION BUILDER TAB -->
+            <!-- ============================================================ -->
+            <div class="tab-pane fade show active" id="reactions">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-body p-3">
+                                <form id="reactionBuilderForm">
+                                    <div class="mb-3">
+                                        <label for="reactionName" class="form-label small mb-1">Reaction Name</label>
+                                        <input type="text" class="form-control form-control-sm" id="reactionName"
+                                               placeholder="e.g., Glucose Phosphorylation" required>
+                                    </div>
+
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label class="form-label small mb-0"><strong>Reactants</strong></label>
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        onclick="addReactant()">
+                                                    <i class="fas fa-plus"></i> Add
+                                                </button>
+                                            </div>
+                                            <div id="reactantsContainer" class="border rounded p-2 bg-light"
+                                                 style="min-height: 100px;">
+                                                <!-- Reactants added dynamically -->
+                                            </div>
+                                            <small class="form-text text-muted">Species + Stoichiometric coefficient</small>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label class="form-label small mb-0"><strong>Products</strong></label>
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        onclick="addProduct()">
+                                                    <i class="fas fa-plus"></i> Add
+                                                </button>
+                                            </div>
+                                            <div id="productsContainer" class="border rounded p-2 bg-light"
+                                                 style="min-height: 100px;">
+                                                <!-- Products added dynamically -->
+                                            </div>
+                                            <small class="form-text text-muted">Species + Stoichiometric coefficient</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label small mb-0"><strong>Catalysts (Optional)</strong></label>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    onclick="addCatalyst()">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <div id="catalystsContainer" class="border rounded p-2 bg-light"
+                                             style="min-height: 60px;">
+                                            <!-- Catalysts added dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="reversibleCheck">
+                                            <label class="form-check-label small" for="reversibleCheck">
+                                                <i class="fas fa-exchange-alt text-success"></i> Reversible Reaction
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-plus"></i> Add Reaction to System
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
+                                            onclick="loadReactionExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                    <button type="button" class="gradient-btn-small w-100"
+                                            onclick="clearReactions()">
+                                        <i class="fas fa-trash"></i> Clear All Reactions
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 small"><i class="fas fa-list"></i> Reactions</h6>
+                                    <span class="badge bg-primary" id="reactionsCount">0 reactions</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
+                                <div id="reactionsList">
+                                    <p class="text-muted text-center small">No reactions added yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- SYSTEM ANALYSIS TAB -->
+            <!-- ============================================================ -->
+            <div class="tab-pane fade" id="system">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            <div class="card-body p-3 text-center">
+                                <p class="mb-3">Analyze the complete reaction system using Bio.Pathway.System</p>
+                                <button type="button" class="gradient-btn-primary"
+                                        onclick="analyzeSystem()" id="analyzeSystemBtn">
+                                    <i class="fas fa-calculator"></i> Analyze System
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> System Analysis Results</h6>
+                            </div>
+                            <div class="card-body p-3" id="systemAnalysisResults">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-cogs fa-3x mb-3"></i><br>
+                                    Click "Analyze System" to see results
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- NETWORK ANALYSIS TAB -->
+            <!-- ============================================================ -->
+            <div class="tab-pane fade" id="network">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            <div class="card-body p-3 text-center">
+                                <p class="mb-3">Analyze network structure using Bio.Pathway.Network - identify sources, sinks, and interactions</p>
+                                <button type="button" class="gradient-btn-primary"
+                                        onclick="analyzeNetwork()" id="analyzeNetworkBtn">
+                                    <i class="fas fa-project-diagram"></i> Analyze Network
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="fas fa-network-wired"></i> Network Analysis Results</h6>
+                            </div>
+                            <div class="card-body p-3" id="networkAnalysisResults">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-network-wired fa-3x mb-3"></i><br>
+                                    Click "Analyze Network" to see results
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- VISUALIZATION TAB -->
+            <!-- ============================================================ -->
+            <div class="tab-pane fade" id="visualization">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-body p-3 text-center">
+                                <p class="mb-3">Generate pathway visualization using Bio.Pathway.MultiGraph</p>
+                                <button type="button" class="gradient-btn-primary"
+                                        onclick="generateVisualization()" id="generateVizBtn">
+                                    <i class="fas fa-eye"></i> Generate Visualization
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="fas fa-project-diagram"></i> Pathway Graph</h6>
+                            </div>
+                            <div class="card-body p-3" id="pathwayVisualization">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-project-diagram fa-3x mb-3"></i><br>
+                                    Generate visualization to see pathway graph
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="fas fa-download"></i> Export Options</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <p class="small mb-3">Export pathway in various formats:</p>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary btn-sm"
+                                            onclick="exportPathway('json')">
+                                        <i class="fas fa-file-code"></i> Export as JSON
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm"
+                                            onclick="exportPathway('graphml')">
+                                        <i class="fas fa-project-diagram"></i> Export as GraphML
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm"
+                                            onclick="exportPathway('dot')">
+                                        <i class="fas fa-circle-notch"></i> Export as DOT
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="exportPathway('txt')">
+                                        <i class="fas fa-file-alt"></i> Export as Text
+                                    </button>
+                                </div>
+
+                                <div class="alert alert-info mt-3 mb-0 small">
+                                    <i class="fas fa-info-circle"></i> <strong>Note:</strong> Add reactions first before exporting
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Bio.Pathway Features</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <ul class="small mb-0">
+                                    <li><strong>Reaction:</strong> Stoichiometry, catalysts, reversibility</li>
+                                    <li><strong>System:</strong> Reaction collection, species tracking</li>
+                                    <li><strong>Network:</strong> Source/sink analysis, interactions</li>
+                                    <li><strong>MultiGraph:</strong> Complex pathway graphs</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Pathway Analysis Background</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6 class="small"><strong>Reaction</strong></h6>
+                        <ul class="small">
+                            <li>Reactants with stoichiometry</li>
+                            <li>Products with coefficients</li>
+                            <li>Catalysts/enzymes</li>
+                            <li>Reversibility flag</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="small"><strong>System</strong></h6>
+                        <ul class="small">
+                            <li>Collection of reactions</li>
+                            <li>Species tracking</li>
+                            <li>Stoichiometric matrix</li>
+                            <li>System-level analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="small"><strong>Network</strong></h6>
+                        <ul class="small">
+                            <li>Source species</li>
+                            <li>Sink species</li>
+                            <li>Interactions</li>
+                            <li>Connectivity analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="small"><strong>MultiGraph</strong></h6>
+                        <ul class="small">
+                            <li>Node representation</li>
+                            <li>Edge connections</li>
+                            <li>Parent/child relationships</li>
+                            <li>Graph traversal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pathway.js') }}"></script>
+{% endblock %}

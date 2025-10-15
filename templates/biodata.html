@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}BioData - NuGenBioPython{% endblock %}
+{% block content %}
+<style>
+    #biodataTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #biodataTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-info mb-1"><i class="fas fa-database"></i> BioData</h2>
+        <p class="lead mb-2">Access codon tables, IUPAC codes, and biological reference data using Bio.Data</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;">
+        <div class="d-flex" id="biodataTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="codon-tab" data-bs-toggle="tab" data-bs-target="#codon" type="button">
+                <i class="fas fa-dna d-block mb-1"></i><small>Codon Tables</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="iupac-tab" data-bs-toggle="tab" data-bs-target="#iupac" type="button">
+                <i class="fas fa-atom d-block mb-1"></i><small>IUPAC Data</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="pdb-tab" data-bs-toggle="tab" data-bs-target="#pdb" type="button">
+                <i class="fas fa-cube d-block mb-1"></i><small>PDB Data</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="tab-content">
+            <!-- Codon Tables Tab -->
+            <div class="tab-pane fade show active" id="codon" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-exchange-alt"></i> DNA Translation</h6></div>
+                            <div class="card-body p-2">
+                                <form id="codonForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1">DNA Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="codonSeq" rows="3" placeholder="Enter DNA sequence..."></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1">Genetic Code Table</label>
+                                        <select class="form-select form-select-sm" id="codonTableId">
+                                            <option value="1">1 - Standard</option>
+                                            <option value="2">2 - Vertebrate Mitochondrial</option>
+                                            <option value="3">3 - Yeast Mitochondrial</option>
+                                            <option value="4">4 - Mold/Protozoan Mitochondrial</option>
+                                            <option value="5">5 - Invertebrate Mitochondrial</option>
+                                            <option value="6">6 - Ciliate Nuclear</option>
+                                            <option value="9">9 - Echinoderm Mitochondrial</option>
+                                            <option value="10">10 - Euplotid Nuclear</option>
+                                            <option value="11">11 - Bacterial/Archaeal</option>
+                                            <option value="12">12 - Alternative Yeast Nuclear</option>
+                                            <option value="13">13 - Ascidian Mitochondrial</option>
+                                            <option value="14">14 - Alternative Flatworm Mitochondrial</option>
+                                            <option value="16">16 - Chlorophycean Mitochondrial</option>
+                                            <option value="21">21 - Trematode Mitochondrial</option>
+                                            <option value="22">22 - Scenedesmus obliquus Mitochondrial</option>
+                                            <option value="23">23 - Thraustochytrium Mitochondrial</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="codonBtn"><i class="fas fa-exchange-alt me-2"></i>Translate</button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Available Codon Tables</h6>
+                                <button class="gradient-btn-info btn-sm py-0 px-2" onclick="loadCodonTables()"><i class="fas fa-sync me-1"></i>Load</button>
+                            </div>
+                            <div class="card-body p-2" id="codonTablesDiv"><p class="text-muted text-center small mb-0">Click "Load" to view</p></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-info text-white"><h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Help</h6></div>
+                            <div class="card-body p-2"><p class="small mb-1"><strong>Codon Tables</strong></p><p class="small mb-2">Genetic code translation tables for different organisms</p><p class="small mb-1"><strong>Features:</strong></p><ul class="small mb-0"><li>23 genetic codes</li><li>DNA translation</li><li>Start/stop codons</li></ul></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Results</h6></div>
+                            <div class="card-body p-2" id="codonResults"><p class="text-muted text-center small mb-0">Results appear here</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IUPAC Data Tab -->
+            <div class="tab-pane fade" id="iupac" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-search"></i> IUPAC Code Lookup</h6></div>
+                            <div class="card-body p-2">
+                                <form id="iupacLookupForm">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Code Type</label>
+                                            <select class="form-select form-select-sm" id="iupacCodeType">
+                                                <option value="dna">DNA</option>
+                                                <option value="rna">RNA</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">IUPAC Code</label>
+                                            <input type="text" class="form-control form-control-sm" id="iupacCode" placeholder="e.g., R, Y, N" maxlength="1">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="iupacBtn"><i class="fas fa-search me-2"></i>Lookup</button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="showAllIUPACCodes()"><i class="fas fa-table me-2"></i>Show All</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-exchange-alt"></i> Protein Letter Converter</h6></div>
+                            <div class="card-body p-2">
+                                <form id="proteinConvertForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1">Input</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="proteinInput" rows="2" placeholder="e.g., ALA-CYS-ASP or A C D"></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1">Conversion</label>
+                                        <select class="form-select form-select-sm" id="proteinConvType">
+                                            <option value="1to3">1-letter → 3-letter</option>
+                                            <option value="3to1">3-letter → 1-letter</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="proteinBtn"><i class="fas fa-exchange-alt me-2"></i>Convert</button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadProteinExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-weight"></i> Molecular Weight Calculator</h6></div>
+                            <div class="card-body p-2">
+                                <form id="weightForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1">Sequence</label>
+                                        <textarea class="form-control form-control-sm sequence-display" id="weightSeq" rows="2" placeholder="Enter sequence..."></textarea>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Type</label>
+                                            <select class="form-select form-select-sm" id="weightType">
+                                                <option value="protein">Protein</option>
+                                                <option value="dna">DNA</option>
+                                                <option value="rna">RNA</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small mb-1">Weight Type</label>
+                                            <select class="form-select form-select-sm" id="weightCalcType">
+                                                <option value="average">Average</option>
+                                                <option value="monoisotopic">Monoisotopic</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="weightBtn"><i class="fas fa-calculator me-2"></i>Calculate</button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadWeightExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-info text-white"><h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Help</h6></div>
+                            <div class="card-body p-2"><p class="small mb-1"><strong>IUPAC Data</strong></p><p class="small mb-2">Nomenclature codes and molecular weights</p><p class="small mb-1"><strong>Features:</strong></p><ul class="small mb-0"><li>DNA/RNA ambiguity codes</li><li>Protein 1↔3 letter codes</li><li>Molecular weights</li><li>Atom weights</li></ul></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Results</h6></div>
+                            <div class="card-body p-2" id="iupacResults"><p class="text-muted text-center small mb-0">Results appear here</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDB Data Tab -->
+            <div class="tab-pane fade" id="pdb" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-md-9">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-cube"></i> PDB Residue Conversions</h6></div>
+                            <div class="card-body p-2">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <button class="gradient-btn-info w-100 mb-2" onclick="loadPDBConversion('protein_1to3')"><i class="fas fa-arrow-right me-1"></i>Protein 1→3</button>
+                                        <button class="gradient-btn-info w-100 mb-2" onclick="loadPDBConversion('protein_3to1')"><i class="fas fa-arrow-left me-1"></i>Protein 3→1</button>
+                                        <button class="gradient-btn-info w-100" onclick="loadPDBConversion('nucleic_3to1')"><i class="fas fa-dna me-1"></i>Nucleic 3→1</button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button class="gradient-btn-secondary w-100 mb-2" onclick="loadAtomWeights()"><i class="fas fa-atom me-1"></i>Atom Weights</button>
+                                        <button class="gradient-btn-secondary w-100 mb-2" onclick="showPDBInfo()"><i class="fas fa-info-circle me-1"></i>PDB Info</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-table"></i> Conversion Table</h6></div>
+                            <div class="card-body p-2" id="pdbConversionTable"><p class="text-muted text-center small mb-0">Select a conversion type above</p></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-header p-2 bg-info text-white"><h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Help</h6></div>
+                            <div class="card-body p-2"><p class="small mb-1"><strong>PDB Data</strong></p><p class="small mb-2">Residue name conversions for PDB files</p><p class="small mb-1"><strong>Features:</strong></p><ul class="small mb-0"><li>Protein residue names</li><li>Nucleic acid codes</li><li>3-letter ↔ 1-letter</li><li>Atomic weights</li></ul></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header p-2 bg-light"><h6 class="mb-0 small"><i class="fas fa-info"></i> About</h6></div>
+                            <div class="card-body p-2"><p class="small mb-0">PDB (Protein Data Bank) uses 3-letter codes for residues. These conversions help translate between formats.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/biodata.js"></script>
+{% endblock %}

@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Tools - NuGenBioPython{% endblock %}
+
+{% block content %}
+<style>
+    #advancedTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
+    #advancedTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
+</style>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-dark mb-1"><i class="fas fa-toolbox"></i> Advanced Tools</h2>
+        <p class="lead mb-2">Hidden Markov Models, Literature Mining, and specialized BioPython modules</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-2">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="advancedTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold"
+                    id="hmm-tab" data-bs-toggle="tab" data-bs-target="#hmm" type="button">
+                <i class="fas fa-brain d-block mb-1"></i>
+                <small>HMM</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="literature-tab" data-bs-toggle="tab" data-bs-target="#literature" type="button">
+                <i class="fas fa-book-medical d-block mb-1"></i>
+                <small>Literature</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="nexus-tab" data-bs-toggle="tab" data-bs-target="#nexus" type="button">
+                <i class="fas fa-file-code d-block mb-1"></i>
+                <small>Nexus</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="scop-tab" data-bs-toggle="tab" data-bs-target="#scop" type="button">
+                <i class="fas fa-cubes d-block mb-1"></i>
+                <small>SCOP</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+                    id="codon-tab" data-bs-toggle="tab" data-bs-target="#codon" type="button">
+                <i class="fas fa-align-left d-block mb-1"></i>
+                <small>Codon Align</small>
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body p-2">
+        <div class="tab-content">
+
+            <!-- HMM Tab -->
+            <div class="tab-pane fade show active" id="hmm">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-cogs"></i> Build HMM Model</h6>
+                                <form id="hmmForm" onsubmit="event.preventDefault(); buildHMM();">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Model Type</label>
+                                            <select class="form-select form-select-sm" id="hmmType" onchange="updateHmmDescription()">
+                                                <option value="sequence">Sequence Pattern (DNA/RNA)</option>
+                                                <option value="emission">Emission Model (Weather/States)</option>
+                                                <option value="transition">Transition Model (Market/States)</option>
+                                                <option value="profile">Profile HMM (Protein Family)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Number of States</label>
+                                            <input type="number" class="form-control form-control-sm" id="states"
+                                                   value="3" min="2" max="20">
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Training Sequence</label>
+                                        <textarea class="form-control form-control-sm" id="sequence" rows="3"
+                                                  placeholder="Enter DNA/protein sequence..."></textarea>
+                                        <div class="form-text small">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span id="hmmDescription">Sequence used to build the HMM</span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="buildHmmBtn">
+                                        <i class="fas fa-cogs"></i> Build HMM
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadHmmExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                </form>
+
+                                <!-- Training Section (hidden until model built) -->
+                                <div id="hmmTraining" style="display:none;" class="mt-3 border-top pt-3">
+                                    <h6 class="mb-2"><i class="fas fa-graduation-cap"></i> Train Model</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Training Iterations</label>
+                                        <input type="number" class="form-control form-control-sm" id="trainIterations"
+                                               value="10" min="1" max="100">
+                                    </div>
+                                    <button type="button" class="gradient-btn-info w-100 mb-2" id="trainHmmBtn" onclick="trainHMM()">
+                                        <i class="fas fa-graduation-cap"></i> Train with Baum-Welch
+                                    </button>
+                                    <div id="trainingResults"></div>
+                                </div>
+
+                                <!-- Decoding Section (hidden until model built) -->
+                                <div id="hmmDecoding" style="display:none;" class="mt-3 border-top pt-3">
+                                    <h6 class="mb-2"><i class="fas fa-search"></i> Decode Sequence</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Test Sequence</label>
+                                        <textarea class="form-control form-control-sm" id="testSequence" rows="2"
+                                                  placeholder="Enter sequence to decode..."></textarea>
+                                    </div>
+                                    <button type="button" class="gradient-btn-success w-100 mb-2" id="decodeBtn" onclick="decodeSequence()">
+                                        <i class="fas fa-search"></i> Decode with Viterbi
+                                    </button>
+                                    <div id="decodingResults"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About HMMs</strong></p>
+                                <p class="small mb-2">Statistical models for sequence pattern recognition</p>
+                                <h6 class="small mb-1">Features:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-check text-success"></i> Model building</li>
+                                    <li><i class="fas fa-check text-success"></i> Baum-Welch training</li>
+                                    <li><i class="fas fa-check text-success"></i> Viterbi decoding</li>
+                                    <li><i class="fas fa-check text-success"></i> State prediction</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mt-2">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-project-diagram"></i> Model Visualization</h6>
+                                <div id="hmmViz">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-brain fa-2x mb-2"></i><br>
+                                        Build an HMM to see visualization
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-calculator"></i> Model Analysis</h6>
+                                <div id="hmmAnalysis">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-chart-bar fa-2x mb-2"></i><br>
+                                        Model parameters will appear here
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Literature Mining Tab -->
+            <div class="tab-pane fade" id="literature">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-search"></i> PubMed Literature Search</h6>
+                                <form id="literatureForm" onsubmit="event.preventDefault(); searchLiterature();">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Search Query</label>
+                                            <input type="text" class="form-control form-control-sm" id="pubmedQuery"
+                                                   placeholder="e.g., CRISPR gene editing">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Max Results</label>
+                                            <input type="number" class="form-control form-control-sm" id="maxResults"
+                                                   value="10" min="1" max="100">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small mb-0">Sort By</label>
+                                            <select class="form-select form-select-sm" id="sortBy">
+                                                <option value="relevance">Relevance</option>
+                                                <option value="pub_date">Date</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchLiteratureBtn">
+                                        <i class="fas fa-search"></i> Search Literature
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadLiteratureExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div id="literatureResults">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-book-medical fa-2x mb-2"></i><br>
+                                        Enter search query above
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About PubMed</strong></p>
+                                <p class="small mb-2">Search biomedical literature using NCBI Entrez</p>
+                                <h6 class="small mb-1">Features:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-database"></i> PubMed database</li>
+                                    <li><i class="fas fa-file-alt"></i> Article abstracts</li>
+                                    <li><i class="fas fa-users"></i> Author info</li>
+                                    <li><i class="fas fa-tags"></i> MeSH terms</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nexus Format Tab -->
+            <div class="tab-pane fade" id="nexus">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-upload"></i> Nexus File Parser</h6>
+                                <form id="nexusForm" onsubmit="event.preventDefault(); parseNexus();">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Upload File</label>
+                                        <input type="file" class="form-control form-control-sm" id="nexusFile"
+                                               accept=".nex,.nexus,.nxs">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Or Paste Data</label>
+                                        <textarea class="form-control form-control-sm" id="nexusData" rows="5"
+                                                  placeholder="#NEXUS&#10;BEGIN DATA;&#10;..."></textarea>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseNexusBtn">
+                                        <i class="fas fa-play"></i> Parse Nexus
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadNexusExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div id="nexusResults">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-file-code fa-2x mb-2"></i><br>
+                                        Upload or paste Nexus data
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About Nexus</strong></p>
+                                <p class="small mb-2">Phylogenetic data format</p>
+                                <h6 class="small mb-1">Features:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-dna"></i> Alignments</li>
+                                    <li><i class="fas fa-project-diagram"></i> Trees</li>
+                                    <li><i class="fas fa-code"></i> Character sets</li>
+                                    <li><i class="fas fa-table"></i> Data matrices</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCOP Tab -->
+            <div class="tab-pane fade" id="scop">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-search"></i> SCOP Classification Lookup</h6>
+                                <form id="scopForm" onsubmit="event.preventDefault(); lookupSCOP();">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-8">
+                                            <label class="form-label small mb-0">SCOP Identifier</label>
+                                            <input type="text" class="form-control form-control-sm" id="scopId"
+                                                   placeholder="e.g., d1dlwa_">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-0">Classification Level</label>
+                                            <select class="form-select form-select-sm" id="scopLevel">
+                                                <option value="domain">Domain</option>
+                                                <option value="family">Family</option>
+                                                <option value="superfamily">Superfamily</option>
+                                                <option value="fold">Fold</option>
+                                                <option value="class">Class</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="lookupScopBtn">
+                                        <i class="fas fa-search"></i> Lookup SCOP
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadScopExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div id="scopResults">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-cubes fa-2x mb-2"></i><br>
+                                        Enter SCOP ID above
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About SCOP</strong></p>
+                                <p class="small mb-2">Structural Classification of Proteins</p>
+                                <h6 class="small mb-1">Hierarchy:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-layer-group"></i> Class</li>
+                                    <li><i class="fas fa-folder"></i> Fold</li>
+                                    <li><i class="fas fa-sitemap"></i> Superfamily</li>
+                                    <li><i class="fas fa-users"></i> Family</li>
+                                    <li><i class="fas fa-cube"></i> Domain</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Codon Alignment Tab -->
+            <div class="tab-pane fade" id="codon">
+                <div class="row g-2 mt-2">
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="mb-2"><i class="fas fa-align-justify"></i> Codon-Aware Alignment</h6>
+                                <form id="codonForm" onsubmit="event.preventDefault(); alignCodons();">
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-0">Nucleotide Sequences (FASTA)</label>
+                                        <textarea class="form-control form-control-sm" id="codonSequences" rows="5"
+                                                  placeholder=">Sequence1&#10;ATGGCCATTGTA..."></textarea>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Genetic Code</label>
+                                            <select class="form-select form-select-sm" id="geneticCode">
+                                                <option value="1">Standard (1)</option>
+                                                <option value="2">Vertebrate Mito (2)</option>
+                                                <option value="11">Bacterial (11)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-0">Method</label>
+                                            <select class="form-select form-select-sm" id="alignMethod">
+                                                <option value="default">Default</option>
+                                                <option value="clustal">ClustalW</option>
+                                                <option value="muscle">MUSCLE</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="alignCodonBtn">
+                                        <i class="fas fa-play"></i> Align Codons
+                                    </button>
+                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonExample()">
+                                        <i class="fas fa-flask"></i> Load Example
+                                    </button>
+                                </form>
+                                <hr class="my-2">
+                                <div id="codonResults">
+                                    <p class="text-muted text-center small mb-0">
+                                        <i class="fas fa-align-left fa-2x mb-2"></i><br>
+                                        Enter sequences above
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <p class="small mb-1"><strong>About Codon Alignment</strong></p>
+                                <p class="small mb-2">Codon-aware sequence alignment</p>
+                                <h6 class="small mb-1">Features:</h6>
+                                <ul class="list-unstyled small">
+                                    <li><i class="fas fa-dna"></i> Codon-aware</li>
+                                    <li><i class="fas fa-language"></i> Translation-based</li>
+                                    <li><i class="fas fa-table"></i> Multiple codes</li>
+                                    <li><i class="fas fa-balance-scale"></i> Frame preservation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE BlastOutput PUBLIC "-//NCBI//NCBI BlastOutput/EN" "http://www.ncbi.nlm.nih.gov/dtd/NCBI_BlastOutput.dtd">
+<BlastOutput>
+  <BlastOutput_program>blastp</BlastOutput_program>
+  <BlastOutput_version>BLASTP 2.10.0+</BlastOutput_version>
+  <BlastOutput_query-ID>Query_1</BlastOutput_query-ID>
+  <BlastOutput_query-def>test protein</BlastOutput_query-def>
+  <BlastOutput_query-len>50</BlastOutput_query-len>
+  <BlastOutput_iterations>
+    <Iteration>
+      <Iteration_query-ID>Query_1</Iteration_query-ID>
+      <Iteration_query-def>test protein</Iteration_query-def>
+      <Iteration_query-len>50</Iteration_query-len>
+      <Iteration_hits>
+        <Hit>
+          <Hit_id>gi|123456|ref|NP_000001.1|</Hit_id>
+          <Hit_def>example protein [Homo sapiens]</Hit_def>
+          <Hit_len>200</Hit_len>
+          <Hit_hsps>
+            <Hsp>
+              <Hsp_bit-score>85.5</Hsp_bit-score>
+              <Hsp_evalue>2e-25</Hsp_evalue>
+              <Hsp_query-from>1</Hsp_query-from>
+              <Hsp_query-to>50</Hsp_query-to>
+              <Hsp_hit-from>10</Hsp_hit-from>
+              <Hsp_hit-to>59</Hsp_hit-to>
+            </Hsp>
+          </Hit_hsps>
+        </Hit>
+      </Iteration_hits>
+    </Iteration>
+  </BlastOutput_iterations>
+</BlastOutput>
