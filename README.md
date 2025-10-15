@@ -10,7 +10,7 @@ A comprehensive web interface for BioPython - providing easy access to all major
 
 ## Overview
 
-NuGenBioPython is a powerful web application that makes BioPython's extensive bioinformatics toolkit accessible through an intuitive web interface. Whether you're analyzing DNA sequences, working with protein structures, or exploring phylogenetic trees, this tool provides a seamless experience for researchers and students alike.
+NuGenBioPython is a web application that makes BioPython's extensive bioinformatics toolkit accessible through an intuitive web interface. Whether you're analyzing DNA sequences, working with protein structures, or exploring phylogenetic trees, this tool provides a seamless experience for researchers and students alike.
 
 ## 📋 Table of Contents
 - [Features](#features)
