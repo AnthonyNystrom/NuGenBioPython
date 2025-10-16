@@ -325,5 +325,4 @@ def generate_sequence_logo(m, use_information_content=True):
 
         return logo_base64
     except Exception as e:
-        print(f"Logo generation error: {e}")
         return None

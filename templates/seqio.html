@@ -1103,9 +1103,6 @@ function enableButtons() {
 }
 
 function useAlreadyParsedSequences() {
-    console.log('useAlreadyParsedSequences called');
-    console.log('parsedSequences:', parsedSequences);
-
     if (!parsedSequences || parsedSequences.length === 0) {
         showAlert('Please parse sequences first in the Parse & Convert tab', 'warning');
         return;
@@ -1113,7 +1110,6 @@ function useAlreadyParsedSequences() {
 
     // Check if parsed sequences have quality scores (FASTQ format)
     const hasQualityScores = parsedSequences.some(seq => seq.quality_scores && seq.quality_scores.length > 0);
-    console.log('hasQualityScores:', hasQualityScores);
 
     if (!hasQualityScores) {
         showAlert('Parsed sequences do not contain quality scores. Please load a FASTQ file in Parse & Convert tab first.', 'warning');

@@ -122,7 +122,6 @@ function loadBasicEnzymeList() {
         }
     })
     .catch(error => {
-        console.error('Error loading enzymes:', error);
         showAlert('Error loading restriction enzymes: ' + error.message, 'danger');
         loadFallbackEnzymes();
     });

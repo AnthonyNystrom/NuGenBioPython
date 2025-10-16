@@ -32,7 +32,7 @@ def save_uploaded_file(file):
             if os.path.exists(filepath):
                 os.remove(filepath)
         except Exception as cleanup_error:
-            print(f"Warning: Could not delete file {filepath}: {cleanup_error}")
+            pass
 
 
 def get_popgen_filepath():
@@ -223,7 +223,7 @@ def popgen_allele_frequencies_python():
                     try:
                         os.remove(filepath)
                     except Exception as e:
-                        print(f"Warning: Could not delete {filepath}: {e}")
+                        pass
 
         results = popgen_stats.calculate_allele_frequencies(record)
 
@@ -260,7 +260,7 @@ def popgen_heterozygosity_python():
                     try:
                         os.remove(filepath)
                     except Exception as e:
-                        print(f"Warning: Could not delete {filepath}: {e}")
+                        pass
 
         results = popgen_stats.calculate_heterozygosity(record)
 
@@ -297,7 +297,7 @@ def popgen_hardy_weinberg_python():
                     try:
                         os.remove(filepath)
                     except Exception as e:
-                        print(f"Warning: Could not delete {filepath}: {e}")
+                        pass
 
         results = popgen_stats.hardy_weinberg_test(record)
 
@@ -334,7 +334,7 @@ def popgen_fst_python():
                     try:
                         os.remove(filepath)
                     except Exception as e:
-                        print(f"Warning: Could not delete {filepath}: {e}")
+                        pass
 
         results = popgen_stats.calculate_fst(record)
 
@@ -387,7 +387,7 @@ def popgen_linkage_disequilibrium():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -422,7 +422,7 @@ def popgen_multilocus_fstats():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -480,7 +480,7 @@ def popgen_heterozygosity():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -515,7 +515,7 @@ def popgen_fst_pairwise():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -572,7 +572,7 @@ def popgen_fis_analysis():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -607,7 +607,7 @@ def popgen_nm_estimation():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary
@@ -652,7 +652,7 @@ def popgen_hw_per_population():
                 try:
                     os.remove(filepath)
                 except Exception as e:
-                    print(f"Warning: Could not delete {filepath}: {e}")
+                    pass
     except Exception as e:
         error_msg = str(e)
         # Check if error is due to missing GenePop binary

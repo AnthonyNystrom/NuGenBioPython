@@ -1,5 +1,7 @@
 # NuGenBioPython
 
+![NuGenBio](nugenbio.png)
+
 A comprehensive web interface for BioPython - providing easy access to all major BioPython modules through a modern, user-friendly interface.
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)

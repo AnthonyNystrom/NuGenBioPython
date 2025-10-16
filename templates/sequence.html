@@ -603,17 +603,13 @@ function displayProteinAnalysis(analysis) {
 
 // Transcription functions
 function transcribe(operation) {
-    console.log('transcribe() called with operation:', operation);
     const sequence = document.getElementById('sequenceInput').value.trim();
-    console.log('Sequence:', sequence);
 
     if (!sequence) {
-        console.warn('No sequence entered');
         showAlert('Please enter a sequence first', 'warning');
         return;
     }
 
-    console.log('Sending transcribe request...');
     fetch('/api/sequence/transcribe', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -624,7 +620,6 @@ function transcribe(operation) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Transcribe response:', data);
         if (data.success) {
             displaySimpleResult(data.operation, data.original, data.result);
         } else {
@@ -632,23 +627,19 @@ function transcribe(operation) {
         }
     })
     .catch(error => {
-        console.error('Transcribe error:', error);
         showAlert('Error performing transcription', 'danger');
     });
 }
 
 // Advanced GC Analysis
 function advancedGCAnalysis() {
-    console.log('advancedGCAnalysis() called');
     const sequence = document.getElementById('sequenceInput').value.trim();
 
     if (!sequence) {
-        console.warn('No sequence entered');
         showAlert('Please enter a sequence first', 'warning');
         return;
     }
 
-    console.log('Sending GC analysis request...');
     fetch('/api/sequence/gc_analysis', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -656,7 +647,6 @@ function advancedGCAnalysis() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('GC analysis response:', data);
         if (data.success) {
             displayGCAnalysisResults(data);
         } else {
@@ -664,26 +654,21 @@ function advancedGCAnalysis() {
         }
     })
     .catch(error => {
-        console.error('GC analysis error:', error);
         showAlert('Error performing GC analysis', 'danger');
     });
 }
 
 // Sequence Search
 function searchSequence() {
-    console.log('searchSequence() called');
     const sequence = document.getElementById('sequenceInput').value.trim();
     const pattern = document.getElementById('searchPattern').value.trim();
     const searchType = document.getElementById('searchType').value;
-    console.log('Sequence:', sequence, 'Pattern:', pattern, 'Type:', searchType);
 
     if (!sequence || !pattern) {
-        console.warn('Missing sequence or pattern');
         showAlert('Please enter both sequence and search pattern', 'warning');
         return;
     }
 
-    console.log('Sending search request...');
     fetch('/api/sequence/search', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -695,7 +680,6 @@ function searchSequence() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Search response:', data);
         if (data.success) {
             displaySearchResults(data.result);
         } else {
@@ -703,23 +687,19 @@ function searchSequence() {
         }
     })
     .catch(error => {
-        console.error('Search error:', error);
         showAlert('Error searching sequence', 'danger');
     });
 }
 
 // Protein Conversion
 function proteinConvert(conversion) {
-    console.log('proteinConvert() called with:', conversion);
     const sequence = document.getElementById('sequenceInput').value.trim();
 
     if (!sequence) {
-        console.warn('No sequence entered');
         showAlert('Please enter a sequence first', 'warning');
         return;
     }
 
-    console.log('Sending protein convert request...');
     fetch('/api/sequence/protein_convert', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -730,7 +710,6 @@ function proteinConvert(conversion) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Protein convert response:', data);
         if (data.success) {
             displaySimpleResult(data.conversion, data.original, data.result);
         } else {
@@ -738,23 +717,19 @@ function proteinConvert(conversion) {
         }
     })
     .catch(error => {
-        console.error('Protein convert error:', error);
         showAlert('Error converting protein sequence', 'danger');
     });
 }
 
 // Sequence Manipulation
 function manipulateSequence(operation) {
-    console.log('manipulateSequence() called with:', operation);
     const sequence = document.getElementById('sequenceInput').value.trim();
 
     if (!sequence) {
-        console.warn('No sequence entered');
         showAlert('Please enter a sequence first', 'warning');
         return;
     }
 
-    console.log('Sending manipulate request...');
     fetch('/api/sequence/manipulate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -765,7 +740,6 @@ function manipulateSequence(operation) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Manipulate response:', data);
         if (data.success) {
             displayManipulationResult(data);
         } else {
@@ -773,7 +747,6 @@ function manipulateSequence(operation) {
         }
     })
     .catch(error => {
-        console.error('Manipulate error:', error);
         showAlert('Error manipulating sequence', 'danger');
     });
 }
