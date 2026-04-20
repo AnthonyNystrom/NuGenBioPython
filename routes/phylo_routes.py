@@ -12,6 +12,7 @@ from utils.phylo_helpers import (
     get_path_to_root, get_common_ancestor, prune_tree, collapse_branch,
     ladderize_tree, root_tree, calculate_tree_distance
 )
+from utils.upload_helpers import saved_upload
 
 bp = Blueprint('phylo', __name__, url_prefix='/api')
 
@@ -23,20 +24,13 @@ def parse_tree():
         tree_format = request.form.get('format', 'newick')
         show_confidence = request.form.get('show_confidence', 'false').lower() == 'true'
 
-        if file:
-            # Handle file upload
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
-            tree = parse_tree_from_file(filepath, tree_format)
+        if file and file.filename:
+            with saved_upload(file) as filepath:
+                tree = parse_tree_from_file(filepath, tree_format)
 
             # Store tree in session
             session['current_tree'] = tree_to_string(tree, 'newick')
             session['current_tree_format'] = tree_format
-
-            # Clean up file
-            os.remove(filepath)
         else:
             # Handle tree string
             tree_string = request.form.get('tree_string', '').strip()

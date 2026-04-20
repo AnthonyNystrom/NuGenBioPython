@@ -15,7 +15,7 @@ bp = Blueprint('database', __name__, url_prefix='/api')
 def search():
     """Search NCBI database with advanced options"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', 'pubmed')
         term = data.get('term', '')
         email = data.get('email', 'user@example.com')
@@ -49,7 +49,7 @@ def search():
 def global_search():
     """Search across all NCBI databases"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         term = data.get('term', '')
         email = data.get('email', 'user@example.com')
 
@@ -68,7 +68,7 @@ def global_search():
 def fetch():
     """Fetch full records from NCBI"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', 'nucleotide')
         ids_input = data.get('ids', '')
 
@@ -111,7 +111,7 @@ def fetch():
 def link():
     """Find related records using ELink"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         record_id = data.get('id', '')
         from_db = data.get('from_db', 'nucleotide')
         to_db = data.get('to_db', 'protein')
@@ -142,7 +142,7 @@ def link():
 def info():
     """Get database information using EInfo"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', '')
         email = data.get('email', 'user@example.com')
 

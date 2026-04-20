@@ -227,7 +227,7 @@ def searchio_filter(file_path, format_name, evalue_threshold=None, bitscore_thre
                         try:
                             if float(hsp.evalue) > float(evalue_threshold):
                                 passes_filter = False
-                        except:
+                        except Exception:
                             pass
 
                     # Bit score filter
@@ -235,7 +235,7 @@ def searchio_filter(file_path, format_name, evalue_threshold=None, bitscore_thre
                         try:
                             if float(hsp.bitscore) < float(bitscore_threshold):
                                 passes_filter = False
-                        except:
+                        except Exception:
                             pass
 
                     # Identity filter
@@ -243,7 +243,7 @@ def searchio_filter(file_path, format_name, evalue_threshold=None, bitscore_thre
                         try:
                             if float(hsp.ident_pct) < float(min_identity):
                                 passes_filter = False
-                        except:
+                        except Exception:
                             pass
 
                     if passes_filter:

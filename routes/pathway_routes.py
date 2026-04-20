@@ -22,7 +22,7 @@ def analyze_system():
     try:
         from Bio.Pathway import System, Reaction
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions_data = data.get('reactions', [])
 
         if not reactions_data:
@@ -85,7 +85,7 @@ def analyze_network():
     try:
         from Bio.Pathway import Network
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions_data = data.get('reactions', [])
 
         if not reactions_data:
@@ -166,7 +166,7 @@ def analyze_network():
 def visualize_pathway():
     """Generate pathway visualization using MultiGraph"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions_data = data.get('reactions', [])
 
         if not reactions_data:
@@ -249,7 +249,7 @@ def visualize_pathway():
 def export_pathway():
     """Export pathway in various formats"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions_data = data.get('reactions', [])
         export_format = data.get('format', 'json')
 

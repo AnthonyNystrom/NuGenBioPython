@@ -1,6 +1,8 @@
 """
 Routes for restriction enzyme analysis
 """
+import logging
+
 from flask import Blueprint, request, jsonify, send_file
 from io import StringIO, BytesIO
 import csv
@@ -8,6 +10,7 @@ import json
 
 from dependencies import Seq, Restriction, SeqIO
 
+log = logging.getLogger(__name__)
 bp = Blueprint('restriction', __name__, url_prefix='/api')
 
 
@@ -15,7 +18,7 @@ bp = Blueprint('restriction', __name__, url_prefix='/api')
 def restriction_analyze():
     """Basic restriction enzyme analysis"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = Seq.Seq(data.get('sequence', ''))
         enzymes = data.get('enzymes', ['EcoRI', 'BamHI', 'HindIII'])
         include_sequences = data.get('include_sequences', False)
@@ -70,7 +73,7 @@ def restriction_analyze():
                         try:
                             fragment_seqs = enzyme.catalyze(sequence)
                             results[enzyme_name]['fragment_sequences'] = [str(s) for s in fragment_seqs]
-                        except:
+                        except Exception:
                             results[enzyme_name]['fragment_sequences'] = []
                 else:
                     # No cuts means one fragment of the entire sequence
@@ -92,7 +95,7 @@ def advanced_analysis():
     try:
         from Bio.Restriction import Analysis, RestrictionBatch, AllEnzymes
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = Seq.Seq(data.get('sequence', ''))
         filter_type = data.get('filter', 'all')  # all, unique, non_cutters, blunt, 5overhang, 3overhang
         min_cuts = data.get('min_cuts', 0)
@@ -171,8 +174,8 @@ def advanced_analysis():
         return jsonify({'success': True, 'result': result})
 
     except Exception as e:
-        import traceback
-        return jsonify({'success': False, 'error': str(e), 'traceback': traceback.format_exc()})
+        log.exception('restriction/advanced_analysis failed')
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @bp.route('/restriction/list_enzymes', methods=['GET'])
@@ -234,7 +237,7 @@ def list_restriction_enzymes():
                         suppliers = enzyme.supplier_list()
                     elif hasattr(enzyme, 'suppl'):
                         suppliers = list(enzyme.suppl)
-                except:
+                except Exception:
                     pass
 
                 enzyme_info.append({
@@ -276,7 +279,7 @@ def enzyme_details(enzyme_name):
                 suppliers = enzyme.supplier_list()
             elif hasattr(enzyme, 'suppl'):
                 suppliers = list(enzyme.suppl)
-        except:
+        except Exception:
             pass
 
         # Get isoschizomers (enzymes with same recognition site)
@@ -284,7 +287,7 @@ def enzyme_details(enzyme_name):
         try:
             if hasattr(enzyme, 'isoschizomers'):
                 isoschizomers = [str(e) for e in enzyme.isoschizomers()]
-        except:
+        except Exception:
             pass
 
         details = {
@@ -315,7 +318,7 @@ def enzyme_details(enzyme_name):
 def export_results():
     """Export restriction analysis results"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         results = data.get('results', {})
         format_type = data.get('format', 'csv')  # csv, json, tsv
 
@@ -368,7 +371,7 @@ def export_results():
 def compatible_ends():
     """Find enzymes with compatible cohesive ends"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         enzyme_names = data.get('enzymes', [])
 
         if len(enzyme_names) < 2:
@@ -513,5 +516,5 @@ def upload_sequence():
         })
 
     except Exception as e:
-        import traceback
-        return jsonify({'success': False, 'error': str(e), 'traceback': traceback.format_exc()})
+        log.exception('restriction/upload_sequence failed')
+        return jsonify({'success': False, 'error': str(e)})

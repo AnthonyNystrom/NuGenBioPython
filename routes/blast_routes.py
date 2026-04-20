@@ -1,6 +1,9 @@
 """
 Routes for BLAST operations
 """
+import os
+from collections import OrderedDict
+
 from flask import Blueprint, request, jsonify, session
 import json
 import uuid
@@ -10,12 +13,22 @@ from utils.blast_helpers import (
     filter_results_by_evalue, filter_results_by_identity,
     get_result_statistics, extract_sequence_from_file
 )
+from utils.request_helpers import clamp_int, clamp_float
 
 bp = Blueprint('blast', __name__, url_prefix='/api')
 
-# In-memory storage for BLAST results (keyed by session-based ID)
-# In production, use Redis or database
-blast_results_cache = {}
+# Bounded in-memory BLAST result cache. Evicts oldest entries at the cap.
+# For multi-worker deployments, replace with Redis or shared storage.
+_BLAST_CACHE_MAX = int(os.environ.get('BLAST_CACHE_MAX', '64'))
+blast_results_cache = OrderedDict()
+
+
+def _store_blast_result(result_id, payload):
+    if result_id in blast_results_cache:
+        blast_results_cache.move_to_end(result_id)
+    blast_results_cache[result_id] = payload
+    while len(blast_results_cache) > _BLAST_CACHE_MAX:
+        blast_results_cache.popitem(last=False)
 
 
 @bp.route('/blast/search', methods=['POST'])
@@ -46,8 +59,8 @@ def blast_search():
 
         program = request.form.get('program', 'blastn')
         database = request.form.get('database', 'nt')
-        expect = float(request.form.get('expect', 10))
-        hitlist_size = int(request.form.get('hitlist_size', 50))
+        expect = clamp_float(request.form.get('expect'), 10.0, lo=0.0, hi=1e6)
+        hitlist_size = clamp_int(request.form.get('hitlist_size'), 50, lo=1, hi=500)
         word_size = request.form.get('word_size')
         matrix_name = request.form.get('matrix_name')
         gap_costs = request.form.get('gap_costs')
@@ -98,15 +111,15 @@ def blast_search():
 
         result_id = session['blast_result_id']
 
-        # Store results in memory cache (not in session cookie)
-        blast_results_cache[result_id] = {
+        # Store results in bounded memory cache (not in session cookie)
+        _store_blast_result(result_id, {
             'xml': blast_xml,
             'params': {
                 'program': program,
                 'database': database,
                 'sequence_length': len(sequence.replace(' ', '').replace('\n', ''))
             }
-        }
+        })
 
         # Parse and format results
         blast_records = parse_blast_xml(blast_xml)

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_file, current_app
+from flask import Blueprint, request, jsonify, send_file, current_app, after_this_request
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -10,6 +10,9 @@ import re
 import gzip
 import tempfile
 
+from utils.upload_helpers import saved_upload, UploadError
+from utils.request_helpers import clamp_int, clamp_float
+
 bp = Blueprint('seqio', __name__, url_prefix='/api')
 
 # ============================================================================
@@ -20,50 +23,34 @@ bp = Blueprint('seqio', __name__, url_prefix='/api')
 def parse_sequence_file():
     """Parse sequence files in multiple formats with compression support"""
     try:
-        file = request.files['file']
         file_format = request.form.get('format', 'fasta')
-
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
-        # Check if file is gzipped
-        is_gzipped = filename.endswith('.gz')
-
-        sequences = []
-        try:
-            if is_gzipped:
-                with gzip.open(filepath, 'rt') as handle:
-                    for record in SeqIO.parse(handle, file_format):
-                        sequences.append({
-                            'id': record.id,
-                            'description': record.description,
-                            'sequence': str(record.seq),
-                            'length': len(record.seq)
-                        })
-            else:
-                for record in SeqIO.parse(filepath, file_format):
+        with saved_upload(request.files.get('file')) as filepath:
+            is_gzipped = filepath.endswith('.gz') or (request.files['file'].filename or '').endswith('.gz')
+            sequences = []
+            try:
+                if is_gzipped:
+                    with gzip.open(filepath, 'rt') as handle:
+                        records = list(SeqIO.parse(handle, file_format))
+                else:
+                    records = list(SeqIO.parse(filepath, file_format))
+                for record in records:
                     sequences.append({
                         'id': record.id,
                         'description': record.description,
                         'sequence': str(record.seq),
                         'length': len(record.seq)
                     })
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Failed to parse file: {str(e)}'})
 
-            os.remove(filepath)
-            return jsonify({
-                'success': True,
-                'sequences': sequences,
-                'format': file_format,
-                'compressed': is_gzipped
-            })
-        except Exception as e:
-            os.remove(filepath)
-            return jsonify({'success': False, 'error': f'Failed to parse file: {str(e)}'})
-
+        return jsonify({
+            'success': True,
+            'sequences': sequences,
+            'format': file_format,
+            'compressed': is_gzipped
+        })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -72,7 +59,7 @@ def parse_sequence_file():
 def convert_sequence_format():
     """Convert sequences between different formats"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         output_format = data.get('output_format', 'fasta')
 
@@ -108,7 +95,7 @@ def convert_sequence_format():
 def write_sequences():
     """Write sequences to downloadable file"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         output_format = data.get('output_format', 'fasta')
         filename = data.get('filename', f'sequences.{output_format}')
@@ -127,12 +114,28 @@ def write_sequences():
                 record.annotations['molecule_type'] = 'DNA'
             seq_records.append(record)
 
-        # Create temporary file
+        # Create temporary file (cleaned up after the response is sent)
         temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=f'.{output_format}')
-        SeqIO.write(seq_records, temp_file.name, output_format)
+        temp_path = temp_file.name
+        try:
+            SeqIO.write(seq_records, temp_path, output_format)
+        except Exception:
+            temp_file.close()
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise
         temp_file.close()
 
-        return send_file(temp_file.name, as_attachment=True, download_name=filename)
+        @after_this_request
+        def _cleanup_temp(response):
+            try:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            except OSError:
+                pass
+            return response
+
+        return send_file(temp_path, as_attachment=True, download_name=filename)
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -142,7 +145,7 @@ def write_sequences():
 def sequences_to_dict():
     """Convert sequences to dictionary indexed by ID"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         seq_dict = {}
@@ -168,42 +171,31 @@ def sequences_to_dict():
 def parse_fastq():
     """Parse FASTQ files with quality scores"""
     try:
-        file = request.files['file']
         file_format = request.form.get('format', 'fastq')
-
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
-        # Check if gzipped
-        is_gzipped = filename.endswith('.gz')
+        fs = request.files.get('file')
+        is_gzipped = bool(fs and fs.filename and fs.filename.endswith('.gz'))
 
         sequences = []
-        try:
-            if is_gzipped:
-                with gzip.open(filepath, 'rt') as handle:
-                    for record in SeqIO.parse(handle, file_format):
-                        seq_dict = _extract_fastq_record(record)
-                        sequences.append(seq_dict)
-            else:
-                for record in SeqIO.parse(filepath, file_format):
-                    seq_dict = _extract_fastq_record(record)
-                    sequences.append(seq_dict)
+        with saved_upload(fs) as filepath:
+            try:
+                if is_gzipped:
+                    with gzip.open(filepath, 'rt') as handle:
+                        for record in SeqIO.parse(handle, file_format):
+                            sequences.append(_extract_fastq_record(record))
+                else:
+                    for record in SeqIO.parse(filepath, file_format):
+                        sequences.append(_extract_fastq_record(record))
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Failed to parse FASTQ: {str(e)}'})
 
-            os.remove(filepath)
-            return jsonify({
-                'success': True,
-                'sequences': sequences,
-                'format': file_format,
-                'compressed': is_gzipped
-            })
-        except Exception as e:
-            os.remove(filepath)
-            return jsonify({'success': False, 'error': f'Failed to parse FASTQ: {str(e)}'})
-
+        return jsonify({
+            'success': True,
+            'sequences': sequences,
+            'format': file_format,
+            'compressed': is_gzipped
+        })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -219,8 +211,9 @@ def _extract_fastq_record(record):
 
     # Add quality scores if available
     if hasattr(record, 'letter_annotations') and 'phred_quality' in record.letter_annotations:
-        seq_dict['quality_scores'] = record.letter_annotations['phred_quality']
-        seq_dict['avg_quality'] = round(sum(record.letter_annotations['phred_quality']) / len(record.letter_annotations['phred_quality']), 2)
+        quality = record.letter_annotations['phred_quality']
+        seq_dict['quality_scores'] = quality
+        seq_dict['avg_quality'] = round(sum(quality) / len(quality), 2) if quality else 0
 
     return seq_dict
 
@@ -231,19 +224,13 @@ def fastq_filter_quality():
     try:
         # Check if file upload or JSON data
         if 'file' in request.files:
-            file = request.files['file']
             file_format = request.form.get('format', 'fastq')
-            min_quality = int(request.form.get('min_quality', 20))
-            min_percent = float(request.form.get('min_percent', 90))
+            min_quality = clamp_int(request.form.get('min_quality'), 20, lo=0, hi=60)
+            min_percent = clamp_float(request.form.get('min_percent'), 90, lo=0, hi=100)
 
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
-            # Parse FASTQ and filter
             filtered = []
             total = 0
-            try:
+            with saved_upload(request.files.get('file')) as filepath:
                 for record in SeqIO.parse(filepath, file_format):
                     total += 1
                     quality_scores = record.letter_annotations.get('phred_quality', [])
@@ -252,14 +239,9 @@ def fastq_filter_quality():
                         percent_high_quality = (high_quality_bases / len(quality_scores) * 100)
                         if percent_high_quality >= min_percent:
                             filtered.append(_extract_fastq_record(record))
-                os.remove(filepath)
-            except:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                raise
         else:
             # JSON data
-            data = request.json
+            data = request.get_json(silent=True) or {}
             sequences = data.get('sequences', [])
             min_quality = data.get('min_quality', 20)
             min_percent = data.get('min_percent', 90)
@@ -294,17 +276,12 @@ def fastq_trim_quality():
     try:
         # Check if file upload or JSON data
         if 'file' in request.files:
-            file = request.files['file']
             file_format = request.form.get('format', 'fastq')
-            quality_cutoff = int(request.form.get('quality_cutoff', 20))
+            quality_cutoff = clamp_int(request.form.get('quality_cutoff'), 20, lo=0, hi=60)
             trim_from = request.form.get('trim_from', 'both')
 
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
             trimmed = []
-            try:
+            with saved_upload(request.files.get('file')) as filepath:
                 for record in SeqIO.parse(filepath, file_format):
                     quality_scores = record.letter_annotations.get('phred_quality', [])
                     sequence = str(record.seq)
@@ -342,14 +319,9 @@ def fastq_trim_quality():
                             'quality_scores': trimmed_qual,
                             'avg_quality': round(sum(trimmed_qual) / len(trimmed_qual), 2) if trimmed_qual else 0
                         })
-                os.remove(filepath)
-            except:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                raise
         else:
             # JSON data
-            data = request.json
+            data = request.get_json(silent=True) or {}
             sequences = data.get('sequences', [])
             quality_cutoff = data.get('quality_cutoff', 20)
             trim_from = data.get('trim_from', 'both')
@@ -412,50 +384,39 @@ def fastq_trim_quality():
 def extract_features():
     """Extract features from GenBank/EMBL files"""
     try:
-        file = request.files['file']
         file_format = request.form.get('format', 'genbank')
-        feature_type = request.form.get('feature_type', 'all')  # 'all', 'CDS', 'gene', etc.
-
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        feature_type = request.form.get('feature_type', 'all')
 
         extracted_features = []
-        try:
-            for record in SeqIO.parse(filepath, file_format):
-                for feature in record.features:
-                    if feature_type == 'all' or feature.type == feature_type:
-                        feature_data = {
-                            'type': feature.type,
-                            'location': str(feature.location),
-                            'strand': feature.location.strand,
-                            'qualifiers': dict(feature.qualifiers)
-                        }
+        with saved_upload(request.files.get('file')) as filepath:
+            try:
+                for record in SeqIO.parse(filepath, file_format):
+                    for feature in record.features:
+                        if feature_type == 'all' or feature.type == feature_type:
+                            feature_data = {
+                                'type': feature.type,
+                                'location': str(feature.location),
+                                'strand': feature.location.strand,
+                                'qualifiers': dict(feature.qualifiers)
+                            }
+                            try:
+                                feature_seq = feature.extract(record.seq)
+                                feature_data['sequence'] = str(feature_seq)
+                                feature_data['length'] = len(feature_seq)
+                            except Exception:
+                                feature_data['sequence'] = None
+                            extracted_features.append(feature_data)
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Failed to extract features: {str(e)}'})
 
-                        # Extract sequence if possible
-                        try:
-                            feature_seq = feature.extract(record.seq)
-                            feature_data['sequence'] = str(feature_seq)
-                            feature_data['length'] = len(feature_seq)
-                        except:
-                            feature_data['sequence'] = None
-
-                        extracted_features.append(feature_data)
-
-            os.remove(filepath)
-            return jsonify({
-                'success': True,
-                'features': extracted_features,
-                'count': len(extracted_features),
-                'format': file_format
-            })
-        except Exception as e:
-            os.remove(filepath)
-            return jsonify({'success': False, 'error': f'Failed to extract features: {str(e)}'})
-
+        return jsonify({
+            'success': True,
+            'features': extracted_features,
+            'count': len(extracted_features),
+            'format': file_format
+        })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -468,7 +429,7 @@ def extract_features():
 def filter_sequences():
     """Filter sequences by length, ID pattern, or GC content"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         filter_type = data.get('filter_type', 'length')
         filter_params = data.get('filter_params', {})
@@ -520,7 +481,7 @@ def filter_sequences():
 def sort_sequences():
     """Sort sequences by length, ID, or GC content"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         sort_by = data.get('sort_by', 'length')
         reverse = data.get('reverse', False)
@@ -558,7 +519,7 @@ def sort_sequences():
 def slice_sequences():
     """Extract subsequences or slice sequence collection"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         start = data.get('start', 0)
         end = data.get('end', None)
@@ -607,7 +568,7 @@ def slice_sequences():
 def sequence_statistics():
     """Calculate comprehensive statistics for sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         stats = {
@@ -671,36 +632,24 @@ def batch_convert():
 
         results = []
         for file in files:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
+            display_name = secure_filename(file.filename or '') or 'upload.bin'
             try:
-                # Read sequences
-                records = list(SeqIO.parse(filepath, input_format))
-
-                # Add annotations if needed
-                for record in records:
-                    if output_format.lower() in ['genbank', 'gb', 'embl']:
-                        record.annotations['molecule_type'] = 'DNA'
-
-                # Convert
-                output = StringIO()
-                SeqIO.write(records, output, output_format)
-
-                results.append({
-                    'filename': filename,
-                    'success': True,
-                    'record_count': len(records),
-                    'converted': output.getvalue()
-                })
-
-                os.remove(filepath)
-
+                with saved_upload(file) as filepath:
+                    records = list(SeqIO.parse(filepath, input_format))
+                    for record in records:
+                        if output_format.lower() in ['genbank', 'gb', 'embl']:
+                            record.annotations['molecule_type'] = 'DNA'
+                    output = StringIO()
+                    SeqIO.write(records, output, output_format)
+                    results.append({
+                        'filename': display_name,
+                        'success': True,
+                        'record_count': len(records),
+                        'converted': output.getvalue()
+                    })
             except Exception as e:
-                os.remove(filepath)
                 results.append({
-                    'filename': filename,
+                    'filename': display_name,
                     'success': False,
                     'error': str(e)
                 })

@@ -1,30 +1,5 @@
 // KEGG Database JavaScript - All 5 operations
-
-// Utility Functions
-function showLoading(btnId) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
-}
-
-function hideLoading(btnId, originalHtml) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-}
-
-function showAlert(message, type = 'danger') {
-    const alertHtml = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>`;
-    const container = document.querySelector('.card-body.p-4');
-    container.insertAdjacentHTML('afterbegin', alertHtml);
-    setTimeout(() => {
-        const alert = container.querySelector('.alert');
-        if (alert) alert.remove();
-    }, 5000);
-}
+// showLoading, hideLoading, showAlert are provided globally by static/js/utils.js
 
 // Tab 1: Search (kegg_find)
 document.getElementById('searchForm').addEventListener('submit', function(e) {

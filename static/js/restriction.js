@@ -877,38 +877,4 @@ function exportResults(results, format) {
     });
 }
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-function showLoading(buttonId) {
-    const btn = document.getElementById(buttonId);
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-    }
-}
-
-function hideLoading(buttonId, originalText) {
-    const btn = document.getElementById(buttonId);
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-}
-
-function showAlert(message, type) {
-    // Create and show Bootstrap alert
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
-    alertDiv.style.zIndex = '9999';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
-}
+// showLoading, hideLoading, showAlert are provided globally by static/js/utils.js

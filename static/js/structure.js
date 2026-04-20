@@ -375,29 +375,7 @@ function displayInteractions(data) {
     resultsDiv.innerHTML = html;
 }
 
-// Helper Functions
-function showLoading(btnId) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-}
-
-function hideLoading(btnId, originalText) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-}
-
-function showAlert(message, type = 'danger') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.querySelector('.card-body').prepend(alertDiv);
-    setTimeout(() => alertDiv.remove(), 5000);
-}
+// Helper Functions: showLoading, hideLoading, showAlert are provided globally by static/js/utils.js
 
 // DSSP Tab
 document.getElementById('dsspForm').addEventListener('submit', function(e) {

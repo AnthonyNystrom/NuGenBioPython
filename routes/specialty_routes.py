@@ -6,64 +6,69 @@ import os
 import base64
 import tempfile
 import time
+import uuid
 from werkzeug.utils import secure_filename
 from contextlib import contextmanager
 
 from dependencies import PopGen, Pathway, UniGene, HMM, BasicChromosome, ColorSpiral, plt, np
 from utils import popgen_stats
+from utils.upload_helpers import saved_upload
 
 bp = Blueprint('specialty', __name__, url_prefix='/api')
 
 
-@contextmanager
-def save_uploaded_file(file):
-    """Context manager to save uploaded file with unique name and ensure cleanup"""
-    timestamp = str(int(time.time() * 1000))
-    base_filename = secure_filename(file.filename)
-    filename = f"{timestamp}_{base_filename}"
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
+# Backwards-compatible alias: existing call sites use `save_uploaded_file(file)`.
+save_uploaded_file = saved_upload
 
-    try:
-        yield filepath
-    finally:
-        # Clean up uploaded file
+
+@contextmanager
+def popgen_filepath():
+    """Yield a readable PopGen filepath from the current request, handling
+    cleanup afterwards. Source is either an uploaded file or a temp file
+    populated from the built-in example data (via ?use_example=true)."""
+    use_example = request.args.get('use_example')
+    if use_example == 'true':
+        fd, filepath = tempfile.mkstemp(suffix='.gen', prefix='popgen_',
+                                         dir=current_app.config['UPLOAD_FOLDER'])
         try:
+            with os.fdopen(fd, 'w') as f:
+                f.write(get_example_data())
+            yield filepath
+        finally:
             if os.path.exists(filepath):
-                os.remove(filepath)
-        except Exception as cleanup_error:
-            pass
+                try:
+                    os.remove(filepath)
+                except OSError:
+                    pass
+        return
+
+    with saved_upload(request.files.get('file')) as fp:
+        yield fp
 
 
 def get_popgen_filepath():
-    """Get filepath for PopGen data - either from upload or example data"""
+    """Legacy shim: returns (filepath, should_cleanup=True). Callers must still
+    os.remove(filepath) themselves. Prefer the popgen_filepath() context
+    manager for new code."""
     use_example = request.args.get('use_example')
     if use_example == 'true':
-        # Create temp file with example data
-        timestamp = str(int(time.time() * 1000))
-        filename = f"{timestamp}_example.gen"
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-
-        # Write example data to temp file
-        with open(filepath, 'w') as f:
+        fd, filepath = tempfile.mkstemp(suffix='.gen', prefix='popgen_',
+                                         dir=current_app.config['UPLOAD_FOLDER'])
+        with os.fdopen(fd, 'w') as f:
             f.write(get_example_data())
-
-        return filepath, True  # filepath, should_cleanup (delete after use)
+        return filepath, True
 
     if 'file' not in request.files:
         raise ValueError('No file uploaded')
-
     file = request.files['file']
-    if file.filename == '':
+    if not file.filename:
         raise ValueError('No file selected')
 
-    # Save with unique name
-    timestamp = str(int(time.time() * 1000))
-    base_filename = secure_filename(file.filename)
-    filename = f"{timestamp}_{base_filename}"
+    base_filename = secure_filename(file.filename) or 'upload.bin'
+    filename = f"{uuid.uuid4().hex}_{base_filename}"
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
-    return filepath, True  # filepath, should_cleanup
+    return filepath, True
 
 
 # PopGen API Routes
@@ -640,7 +645,7 @@ def popgen_hw_per_population():
                 try:
                     hw_pop = ctrl.test_hw_pop(pop_idx)
                     hw_results[f'population_{pop_idx + 1}'] = hw_pop
-                except:
+                except Exception:
                     hw_results[f'population_{pop_idx + 1}'] = None
 
             return jsonify({
@@ -669,7 +674,7 @@ def analyze_pathway():
         if not Pathway:
             return jsonify({'success': False, 'error': 'Pathway module not available'})
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions = data.get('reactions', [])
 
         if not reactions:
@@ -756,7 +761,7 @@ def pathway_network():
         if not Pathway:
             return jsonify({'success': False, 'error': 'Pathway module not available'})
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         reactions = data.get('reactions', [])
 
         if not reactions:
@@ -829,7 +834,7 @@ def build_hmm():
         if not HMM:
             return jsonify({'success': False, 'error': 'HMM module not available'})
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         hmm_type = data.get('type', 'sequence')
         states = data.get('states', 3)
         sequence = data.get('sequence', '').strip()
@@ -937,7 +942,7 @@ def build_hmm():
 @bp.route('/graphics/chromosome', methods=['POST'])
 def create_chromosome_visualization():
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         chr_data = data.get('chromosomes', [])
 
         if not chr_data:
@@ -971,13 +976,18 @@ def create_chromosome_visualization():
 
         # Generate visualization
         temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-        organism.draw(temp_file.name, format='PNG')
-
-        # Convert to base64
-        with open(temp_file.name, 'rb') as f:
-            img_data = base64.b64encode(f.read()).decode()
-
-        os.unlink(temp_file.name)
+        temp_path = temp_file.name
+        temp_file.close()
+        try:
+            organism.draw(temp_path, format='PNG')
+            with open(temp_path, 'rb') as f:
+                img_data = base64.b64encode(f.read()).decode()
+        finally:
+            try:
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+            except OSError:
+                pass
 
         return jsonify({
             'success': True,

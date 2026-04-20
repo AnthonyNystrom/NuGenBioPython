@@ -660,23 +660,23 @@ function displayAlignment(alignment, score, statistics) {
     scoreBadge.style.display = 'inline-block';
     exportBtn.style.display = 'inline-block';
 
-    // Format the alignment for better display
-    const alignmentLines = alignment.split('\n');
-
+    // Tabbed view: Formatted (color-coded) + Raw BioPython text
+    const tabId = 'align-' + Date.now();
+    const F = window.NuGenFormatters;
+    const formattedHtml = F && F.formatPairwiseAlignment ? F.formatPairwiseAlignment(alignment) : '';
     let html = '<div class="alignment-display">';
     html += '<h6 class="mb-3"><i class="fas fa-eye"></i> Pairwise Alignment</h6>';
-
-    // Create a formatted alignment display
-    html += '<div class="border rounded p-3 bg-light">';
-    html += '<pre class="mb-0" style="font-family: monospace; font-size: 14px; line-height: 1.4;">';
-
-    alignmentLines.forEach(line => {
-        if (line.trim()) {
-            html += line + '\n';
-        }
-    });
-
-    html += '</pre></div>';
+    html += '<ul class="nav nav-tabs mb-2" role="tablist">';
+    html += '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#' + tabId + '-fmt">Formatted</button></li>';
+    html += '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#' + tabId + '-raw">Raw</button></li>';
+    html += '</ul>';
+    html += '<div class="tab-content">';
+    html += '<div class="tab-pane fade show active" id="' + tabId + '-fmt">' + formattedHtml + '</div>';
+    html += '<div class="tab-pane fade" id="' + tabId + '-raw">';
+    const escAlign = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
+    html += '<pre class="mb-0 p-3 border rounded bg-light" style="font-family: monospace; font-size: 14px; line-height: 1.4; max-height: 500px; overflow:auto;">';
+    html += escAlign(alignment.split('\n').filter(l => l.trim()).join('\n'));
+    html += '</pre></div></div>';
 
     // Add alignment statistics
     html += '<div class="row mt-3 g-3">';

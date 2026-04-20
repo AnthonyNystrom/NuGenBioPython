@@ -973,16 +973,30 @@ function exportTree() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            let html = `
-                <div class="mb-2">
-                    <label class="form-label small">Exported Tree (${data.format}):</label>
-                    <textarea class="form-control form-control-sm" rows="10" readonly>${data.tree_string}</textarea>
-                </div>
-                <button class="gradient-btn-small w-100" onclick="copyExportedTree()">
-                    <i class="fas fa-copy"></i> Copy to Clipboard
-                </button>
-            `;
-            document.getElementById('exportedTree').innerHTML = html;
+            const F = window.NuGenFormatters || {};
+            const esc = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
+            const showOutline = /newick|nwk/i.test(data.format || '') && F.formatNewickOutline;
+            const outlineHtml = showOutline ? F.formatNewickOutline(data.tree_string) : '';
+            const tabId = 'tree-' + Date.now();
+            let html = '<label class="form-label small mb-2">Exported Tree (' + esc(data.format) + '):</label>';
+            if (showOutline) {
+                html += '<ul class="nav nav-tabs mb-2" role="tablist">' +
+                    '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#' + tabId + '-fmt">Formatted</button></li>' +
+                    '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#' + tabId + '-raw">Raw</button></li>' +
+                    '</ul>' +
+                    '<div class="tab-content">' +
+                    '<div class="tab-pane fade show active" id="' + tabId + '-fmt">' + outlineHtml + '</div>' +
+                    '<div class="tab-pane fade" id="' + tabId + '-raw">' +
+                    '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>' +
+                    '</div></div>';
+            } else {
+                html += '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>';
+            }
+            html += '<button class="gradient-btn-small w-100 mt-2" onclick="copyExportedTree()"><i class="fas fa-copy"></i> Copy to Clipboard</button>';
+            const target = document.getElementById('exportedTree');
+            target.innerHTML = html;
+            // Safely populate every textarea in this block with the raw tree string
+            target.querySelectorAll('textarea').forEach(function (ta) { ta.value = data.tree_string || ''; });
             showAlert('Tree exported successfully', 'success');
         } else {
             showAlert('Error: ' + data.error, 'danger');

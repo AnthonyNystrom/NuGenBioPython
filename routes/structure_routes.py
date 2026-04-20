@@ -9,6 +9,7 @@ from io import StringIO
 
 from dependencies import PDBParser, DSSP, PPBuilder, is_aa, NeighborSearch
 from Bio.PDB import PDBIO, Superimposer, Select, Vector, calc_dihedral, calc_angle
+from utils.upload_helpers import saved_upload, stage_upload, cleanup_upload, UploadError
 
 bp = Blueprint('structure', __name__, url_prefix='/api')
 
@@ -29,13 +30,7 @@ def download_sample_pdb():
 @bp.route('/structure/parse', methods=['POST'])
 def parse_structure():
     try:
-        file = request.files['file']
-
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
+        with saved_upload(request.files.get('file')) as filepath:
             parser = PDBParser(QUIET=True)
             structure = parser.get_structure('structure', filepath)
 
@@ -122,26 +117,21 @@ def parse_structure():
                 except Exception as e:
                     structure_info['secondary_structure'] = {'error': str(e)}
 
-            os.remove(filepath)
-
-            return jsonify({
-                'success': True,
-                'structure_info': structure_info
-            })
+        return jsonify({
+            'success': True,
+            'structure_info': structure_info
+        })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
 
 @bp.route('/structure/advanced_analysis', methods=['POST'])
 def advanced_structure_analysis():
+    filepath = None
     try:
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'error': 'No file uploaded'})
-
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        filepath = stage_upload(request.files.get('file'))
 
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
@@ -232,24 +222,24 @@ def advanced_structure_analysis():
             except Exception as e:
                 analysis_results['secondary_structure'] = {'error': str(e)}
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'analysis': analysis_results
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/export', methods=['POST'])
 def export_structure():
     """Export structure in PDB format using PDBIO"""
+    filepath = None
     try:
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        filepath = stage_upload(request.files.get('file'))
 
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
@@ -262,33 +252,26 @@ def export_structure():
         io.save(output)
         pdb_content = output.getvalue()
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'pdb_data': pdb_content
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/superimpose', methods=['POST'])
 def superimpose_structures():
     """Superimpose two structures and calculate RMSD"""
+    filepath1 = None
+    filepath2 = None
     try:
-        if 'file1' not in request.files or 'file2' not in request.files:
-            return jsonify({'success': False, 'error': 'Two structure files required'})
-
-        file1 = request.files['file1']
-        file2 = request.files['file2']
-
-        filename1 = secure_filename(file1.filename)
-        filename2 = secure_filename(file2.filename)
-        filepath1 = os.path.join(current_app.config['UPLOAD_FOLDER'], filename1)
-        filepath2 = os.path.join(current_app.config['UPLOAD_FOLDER'], filename2)
-
-        file1.save(filepath1)
-        file2.save(filepath2)
+        filepath1 = stage_upload(request.files.get('file1'))
+        filepath2 = stage_upload(request.files.get('file2'))
 
         parser = PDBParser(QUIET=True)
         structure1 = parser.get_structure('structure1', filepath1)
@@ -328,9 +311,6 @@ def superimpose_structures():
         rotation_matrix = super_imposer.rotran[0].tolist()
         translation_vector = super_imposer.rotran[1].tolist()
 
-        os.remove(filepath1)
-        os.remove(filepath2)
-
         return jsonify({
             'success': True,
             'rmsd': float(rmsd),
@@ -338,21 +318,23 @@ def superimpose_structures():
             'rotation_matrix': rotation_matrix,
             'translation_vector': translation_vector
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath1)
+        cleanup_upload(filepath2)
 
 
 @bp.route('/structure/geometry', methods=['POST'])
 def geometric_analysis():
     """Calculate distances, angles, and dihedrals"""
+    filepath = None
     try:
-        file = request.files['file']
         chain_id = request.form.get('chain_id', 'A')
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -406,27 +388,26 @@ def geometric_analysis():
                     'dihedral_degrees': round(float(np.degrees(dihedral)), 2)
                 })
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'geometry': geometry_data,
             'chain': chain_id,
             'residue_count': len(residues)
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/quality', methods=['POST'])
 def quality_metrics():
     """Analyze structure quality metrics"""
+    filepath = None
     try:
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -481,28 +462,27 @@ def quality_metrics():
                             'missing_atoms': missing
                         })
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'quality': quality_data
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/contacts', methods=['POST'])
 def contact_analysis():
     """Calculate residue-residue contacts and distance matrix"""
+    filepath = None
     try:
-        file = request.files['file']
         chain_id = request.form.get('chain_id', 'A')
         cutoff = float(request.form.get('cutoff', 8.0))
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -536,8 +516,6 @@ def contact_analysis():
                     row.append(None)
             distance_matrix.append(row)
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'distance_matrix': distance_matrix,
@@ -546,19 +524,20 @@ def contact_analysis():
             'cutoff': cutoff,
             'residues_analyzed': min(n, 20)
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/hbonds', methods=['POST'])
 def hydrogen_bonds():
     """Detect potential hydrogen bonds and salt bridges"""
+    filepath = None
     try:
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -605,8 +584,6 @@ def hydrogen_bonds():
                                     'distance': round(float(distance), 2)
                                 })
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'hbonds': hbonds[:50],  # Limit to 50
@@ -614,19 +591,20 @@ def hydrogen_bonds():
             'salt_bridges': salt_bridges[:20],  # Limit to 20
             'salt_bridge_count': len(salt_bridges)
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/secondary_structure', methods=['POST'])
 def secondary_structure_analysis():
     """Enhanced DSSP secondary structure analysis"""
+    filepath = None
     try:
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -682,27 +660,26 @@ def secondary_structure_analysis():
             except Exception as e:
                 result['dssp_error'] = str(e)
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'result': result
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/ramachandran', methods=['POST'])
 def ramachandran_analysis():
     """Calculate phi/psi angles for Ramachandran plot"""
+    filepath = None
     try:
-        file = request.files['file']
         chain_id = request.form.get('chain_id', 'A')
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -743,8 +720,6 @@ def ramachandran_analysis():
             else:
                 outliers += 1
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'phi_psi_data': phi_psi_data[:100],  # Limit to 100 for display
@@ -755,19 +730,20 @@ def ramachandran_analysis():
                 'outliers': outliers
             }
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/sasa', methods=['POST'])
 def sasa_analysis():
     """Calculate Solvent Accessible Surface Area"""
+    filepath = None
     try:
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -797,8 +773,6 @@ def sasa_analysis():
                                 'sasa': round(residue.sasa, 2)
                             })
 
-            os.remove(filepath)
-
             return jsonify({
                 'success': True,
                 'total_sasa': round(total_sasa, 2),
@@ -825,8 +799,6 @@ def sasa_analysis():
                                 'relative_accessibility': round(acc, 2)
                             })
 
-                    os.remove(filepath)
-
                     return jsonify({
                         'success': True,
                         'method': 'DSSP (relative accessibility)',
@@ -834,26 +806,25 @@ def sasa_analysis():
                         'residue_accessibility': accessibility_data
                     })
                 except Exception as e:
-                    os.remove(filepath)
                     return jsonify({'success': False, 'error': f'DSSP failed: {str(e)}'})
             else:
-                os.remove(filepath)
                 return jsonify({'success': False, 'error': 'SASA module not available, DSSP not installed'})
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/residue_depth', methods=['POST'])
 def residue_depth_analysis():
     """Calculate residue depth (burial)"""
+    filepath = None
     try:
-        file = request.files['file']
         chain_id = request.form.get('chain_id', 'A')
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -887,8 +858,6 @@ def residue_depth_analysis():
                     'max': round(np.max(depths), 2)
                 }
 
-            os.remove(filepath)
-
             return jsonify({
                 'success': True,
                 'depth_data': depth_data[:50],
@@ -896,23 +865,23 @@ def residue_depth_analysis():
                 'statistics': stats
             })
         except ImportError:
-            os.remove(filepath)
             return jsonify({'success': False, 'error': 'ResidueDepth module requires MSMS (not available)'})
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/hse', methods=['POST'])
 def hse_analysis():
     """Calculate Half Sphere Exposure"""
+    filepath = None
     try:
-        file = request.files['file']
         chain_id = request.form.get('chain_id', 'A')
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -948,8 +917,6 @@ def hse_analysis():
                     'median_cn': round(np.median(cn_values), 2)
                 }
 
-            os.remove(filepath)
-
             return jsonify({
                 'success': True,
                 'hse_data': hse_data[:50],
@@ -957,24 +924,24 @@ def hse_analysis():
                 'statistics': stats
             })
         except ImportError:
-            os.remove(filepath)
             return jsonify({'success': False, 'error': 'HSExposure module not available'})
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)
 
 
 @bp.route('/structure/extract', methods=['POST'])
 def extract_structure():
     """Extract specific chains, residues, or atoms"""
+    filepath = None
     try:
-        file = request.files['file']
         selection_type = request.form.get('selection_type', 'chain')
         selection_value = request.form.get('selection_value', 'A')
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
+        filepath = stage_upload(request.files.get('file'))
         parser = PDBParser(QUIET=True)
         structure = parser.get_structure('structure', filepath)
         model = structure[0]
@@ -1039,11 +1006,13 @@ def extract_structure():
                             })
             extraction_info['extracted_count'] = atom_count
 
-        os.remove(filepath)
-
         return jsonify({
             'success': True,
             'extraction': extraction_info
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cleanup_upload(filepath)

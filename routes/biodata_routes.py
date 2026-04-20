@@ -26,7 +26,7 @@ def codon_tables():
 def translate():
     """Translate DNA sequence using specified codon table"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         table_id = int(data.get('table_id', 1))
 
@@ -55,7 +55,7 @@ def iupac_codes():
 def iupac_lookup():
     """Look up what a specific IUPAC code represents"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         code = data.get('code', '')
         code_type = data.get('type', 'dna')
 
@@ -72,7 +72,7 @@ def iupac_lookup():
 def convert_protein():
     """Convert protein letters between 1-letter and 3-letter codes"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         input_str = data.get('input', '')
         conversion_type = data.get('conversion_type', '1to3')
 
@@ -89,7 +89,7 @@ def convert_protein():
 def molecular_weight():
     """Calculate molecular weight of a sequence"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '')
         seq_type = data.get('seq_type', 'protein')
         weight_type = data.get('weight_type', 'average')

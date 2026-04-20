@@ -9,6 +9,7 @@ import re
 from dependencies import Seq, SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation, ExactPosition, BeforePosition, AfterPosition
+from utils.upload_helpers import saved_upload, UploadError
 
 bp = Blueprint('features', __name__, url_prefix='/api')
 
@@ -17,7 +18,7 @@ bp = Blueprint('features', __name__, url_prefix='/api')
 def find_orfs():
     """Find Open Reading Frames in a sequence"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         min_length = int(data.get('min_length', 100))  # Minimum ORF length in nucleotides
         strand = data.get('strand', 'both')  # 'forward', 'reverse', 'both'
@@ -116,7 +117,7 @@ def find_orfs():
 def create_feature():
     """Create a SeqFeature and add it to a sequence"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         feature_type = data.get('feature_type', 'CDS')
         start = int(data.get('start', 0))
@@ -166,62 +167,49 @@ def create_feature():
 def parse_genbank_features():
     """Parse features from GenBank or EMBL file"""
     try:
-        file = request.files.get('file')
         file_format = request.form.get('format', 'genbank')
+        with saved_upload(request.files.get('file')) as filepath:
+            record = SeqIO.read(filepath, file_format)
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
+            features_list = []
+            for feature in record.features:
+                feature_data = {
+                    'type': feature.type,
+                    'start': int(feature.location.start),
+                    'end': int(feature.location.end),
+                    'strand': feature.location.strand,
+                    'strand_symbol': '+' if feature.location.strand == 1 else '-' if feature.location.strand == -1 else '?',
+                    'length': len(feature),
+                    'qualifiers': {}
+                }
+                for key, value in feature.qualifiers.items():
+                    if isinstance(value, list):
+                        feature_data['qualifiers'][key] = value[0] if len(value) == 1 else value
+                    else:
+                        feature_data['qualifiers'][key] = value
+                try:
+                    feature_seq = str(feature.extract(record.seq))
+                    feature_data['sequence'] = feature_seq[:100] + ('...' if len(feature_seq) > 100 else '')
+                    feature_data['full_length'] = len(feature_seq)
+                except Exception:
+                    feature_data['sequence'] = None
+                features_list.append(feature_data)
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-
-        # Parse file
-        record = SeqIO.read(filepath, file_format)
-
-        # Extract features
-        features_list = []
-        for feature in record.features:
-            feature_data = {
-                'type': feature.type,
-                'start': int(feature.location.start),
-                'end': int(feature.location.end),
-                'strand': feature.location.strand,
-                'strand_symbol': '+' if feature.location.strand == 1 else '-' if feature.location.strand == -1 else '?',
-                'length': len(feature),
-                'qualifiers': {}
-            }
-
-            # Extract qualifiers
-            for key, value in feature.qualifiers.items():
-                if isinstance(value, list):
-                    feature_data['qualifiers'][key] = value[0] if len(value) == 1 else value
-                else:
-                    feature_data['qualifiers'][key] = value
-
-            # Extract feature sequence if possible
-            try:
-                feature_seq = str(feature.extract(record.seq))
-                feature_data['sequence'] = feature_seq[:100] + ('...' if len(feature_seq) > 100 else '')
-                feature_data['full_length'] = len(feature_seq)
-            except:
-                feature_data['sequence'] = None
-
-            features_list.append(feature_data)
-
-        os.remove(filepath)
+            record_id = record.id
+            record_description = record.description
+            sequence_length = len(record.seq)
 
         return jsonify({
             'success': True,
-            'record_id': record.id,
-            'record_description': record.description,
-            'sequence_length': len(record.seq),
+            'record_id': record_id,
+            'record_description': record_description,
+            'sequence_length': sequence_length,
             'feature_count': len(features_list),
             'features': features_list
         })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        if os.path.exists(filepath):
-            os.remove(filepath)
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -229,7 +217,7 @@ def parse_genbank_features():
 def extract_feature():
     """Extract and optionally translate a feature from a sequence"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         start = int(data.get('start', 0))
         end = int(data.get('end', 0))
@@ -281,7 +269,7 @@ def extract_feature():
 def create_compound_location():
     """Create a compound location (for split features like introns/exons)"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         locations = data.get('locations', [])  # List of [start, end, strand]
 
@@ -326,7 +314,7 @@ def create_compound_location():
 def annotate_sequence():
     """Add annotations to a sequence and export as GenBank"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
         seq_id = data.get('seq_id', 'sequence')
         description = data.get('description', 'Annotated sequence')

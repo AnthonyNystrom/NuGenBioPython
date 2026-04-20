@@ -5,16 +5,30 @@ Note: SwissProt routes moved to routes/swissprot_routes.py
 """
 from flask import Blueprint, request, jsonify, current_app
 import os
+from collections import OrderedDict
 from werkzeug.utils import secure_filename
 
 from dependencies import SearchIO, SwissProt, ProtParam, CodonTable, Seq
+from utils.upload_helpers import saved_upload, UploadError
 import time
 import uuid
 
 bp = Blueprint('advanced', __name__, url_prefix='/api')
 
-# Global dictionary to store HMM models (in production, use Redis or database)
-_hmm_models = {}
+# In-memory HMM model cache. Bounded to prevent unbounded growth in long-running
+# processes; oldest entries are evicted once the cap is reached. For multi-worker
+# deployments, replace with Redis or a shared store.
+_HMM_CACHE_MAX = int(os.environ.get('HMM_CACHE_MAX', '64'))
+_hmm_models = OrderedDict()
+
+
+def _store_hmm_model(model_id, model_data):
+    """Insert/update an HMM model, evicting the oldest if over capacity."""
+    if model_id in _hmm_models:
+        _hmm_models.move_to_end(model_id)
+    _hmm_models[model_id] = model_data
+    while len(_hmm_models) > _HMM_CACHE_MAX:
+        _hmm_models.popitem(last=False)
 
 # Enhanced Sequence Utils
 @bp.route('/sequence/protparam', methods=['POST'])
@@ -23,7 +37,7 @@ def api_sequence_protparam():
         if ProtParam is None:
             return jsonify({'success': False, 'error': 'Bio.SeqUtils.ProtParam not available'})
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').upper().strip()
 
         if not sequence:
@@ -62,7 +76,7 @@ def api_hmm_build():
 
         from Bio.HMM.MarkovModel import MarkovModelBuilder
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         hmm_type = data.get('type', 'sequence')
         states = data.get('states', 3)
         sequence = data.get('sequence', '').strip()
@@ -104,14 +118,14 @@ def api_hmm_build():
         # Generate unique model ID
         model_id = str(uuid.uuid4())
 
-        # Store model in global dictionary
-        _hmm_models[model_id] = {
+        # Store model in bounded cache
+        _store_hmm_model(model_id, {
             'model': hmm_model,
             'state_alphabet': state_alphabet,
             'emission_alphabet': emission_alphabet,
             'sequence': sequence,
             'type': hmm_type
-        }
+        })
 
         model_info = {
             'model_id': model_id,
@@ -141,7 +155,7 @@ def api_hmm_train():
 
         from Bio.HMM.Trainer import BaumWelchTrainer, TrainingSequence
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         model_id = data.get('model_id', '')
         sequence = data.get('sequence', '').strip()
         iterations = data.get('iterations', 10)
@@ -182,7 +196,7 @@ def api_hmm_train():
             # Calculate log likelihood before training
             try:
                 log_likelihood = trainer.log_likelihood(training_seq)
-            except:
+            except Exception:
                 log_likelihood = -float('inf')
 
             # Train one iteration
@@ -240,7 +254,7 @@ def api_hmm_decode():
         import warnings
         warnings.filterwarnings('ignore', category=DeprecationWarning)
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         model_id = data.get('model_id', '')
         sequence = data.get('sequence', '').strip()
 
@@ -307,7 +321,7 @@ def api_blast_search_real():
     try:
         from Bio.Blast import NCBIWWW, NCBIXML
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip()
         program = data.get('program', 'blastn')
         database = data.get('database', 'nt')
@@ -376,57 +390,50 @@ def api_nexus_parse():
     """Parse Nexus phylogenetic files"""
     try:
         from Bio.Nexus.Nexus import Nexus
+        import tempfile
 
-        filepath = None
-
-        # Check if data was pasted in textarea
+        # Two supported entry modes: pasted text or uploaded file.
         if 'data' in request.form and request.form['data'].strip():
-            # Create temporary file from pasted data
-            timestamp = str(int(__import__('time').time() * 1000))
-            filename = f"{timestamp}_nexus.nex"
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            fd, filepath = tempfile.mkstemp(suffix='.nex', prefix='nexus_',
+                                            dir=current_app.config['UPLOAD_FOLDER'])
+            try:
+                with os.fdopen(fd, 'w') as f:
+                    f.write(request.form['data'])
+                results = _parse_nexus_file(filepath)
+                return jsonify({'success': True, 'results': results, 'parsed': results})
+            finally:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
 
-            with open(filepath, 'w') as f:
-                f.write(request.form['data'])
-                f.flush()
-                os.fsync(f.fileno())
-
-        # Check if file was uploaded
-        elif 'file' in request.files and request.files['file'].filename:
-            file = request.files['file']
-            timestamp = str(int(__import__('time').time() * 1000))
-            filename = f"{timestamp}_{secure_filename(file.filename)}"
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-        else:
-            return jsonify({'success': False, 'error': 'No file uploaded or data provided'})
-
-        try:
-            nex = Nexus(filepath)
-
-            # Get matrix data if available
-            matrix = {}
-            if hasattr(nex, 'matrix') and nex.matrix:
-                for taxon, seq in nex.matrix.items():
-                    matrix[taxon] = str(seq)
-
-            results = {
-                'ntax': getattr(nex, 'ntax', 0),
-                'nchar': getattr(nex, 'nchar', 0),
-                'datatype': getattr(nex, 'datatype', 'unknown'),
-                'taxlabels': getattr(nex, 'taxlabels', [])[:20],
-                'has_trees': hasattr(nex, 'trees') and len(nex.trees) > 0,
-                'has_matrix': len(matrix) > 0,
-                'matrix': matrix
-            }
-
+        if 'file' in request.files and request.files['file'].filename:
+            with saved_upload(request.files['file']) as filepath:
+                results = _parse_nexus_file(filepath)
             return jsonify({'success': True, 'results': results, 'parsed': results})
-        finally:
-            if filepath and os.path.exists(filepath):
-                os.remove(filepath)
 
+        return jsonify({'success': False, 'error': 'No file uploaded or data provided'})
+
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+
+def _parse_nexus_file(filepath):
+    from Bio.Nexus.Nexus import Nexus
+    nex = Nexus(filepath)
+    matrix = {}
+    if hasattr(nex, 'matrix') and nex.matrix:
+        for taxon, seq in nex.matrix.items():
+            matrix[taxon] = str(seq)
+    return {
+        'ntax': getattr(nex, 'ntax', 0),
+        'nchar': getattr(nex, 'nchar', 0),
+        'datatype': getattr(nex, 'datatype', 'unknown'),
+        'taxlabels': getattr(nex, 'taxlabels', [])[:20],
+        'has_trees': hasattr(nex, 'trees') and len(nex.trees) > 0,
+        'has_matrix': len(matrix) > 0,
+        'matrix': matrix
+    }
 
 
 # SCOP Classification
@@ -482,7 +489,7 @@ def api_literature_search():
         from Bio import Entrez
         import os
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         query = data.get('query', '')
         max_results = data.get('max_results', 10)
 
@@ -562,7 +569,7 @@ def api_scop_lookup():
     try:
         from Bio.SCOP import Scop
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         scop_id = data.get('scop_id', '')
         level = data.get('level', 'domain')
 
@@ -595,7 +602,7 @@ def api_codon_align():
         from Bio import SeqIO
         from io import StringIO
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         sequences_str = data.get('sequences', '')
         genetic_code = data.get('genetic_code', '1')
         method = data.get('method', 'default')

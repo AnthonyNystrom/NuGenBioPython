@@ -15,7 +15,7 @@ bp = Blueprint('sequence', __name__, url_prefix='/api')
 @bp.route('/sequence/analyze', methods=['POST'])
 def analyze_sequence():
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence_str = data.get('sequence', '').upper()
         seq_type = data.get('type', 'dna')
 
@@ -85,7 +85,7 @@ def analyze_sequence():
 def melting_temp():
     """Calculate melting temperature of DNA sequence"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
 
         if not sequence:
@@ -122,7 +122,7 @@ def melting_temp():
 def find_orfs():
     """Find Open Reading Frames in sequence"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         min_length = data.get('min_length', 75)
 
@@ -175,7 +175,7 @@ def find_orfs():
 def codon_usage():
     """Analyze codon usage in sequence"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
 
         if not sequence:
@@ -215,7 +215,7 @@ def codon_usage():
 def checksums():
     """Calculate sequence checksums"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
 
         if not sequence:
@@ -239,7 +239,7 @@ def checksums():
 def protparam_advanced():
     """Advanced ProtParam analysis"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
 
         if not sequence:
@@ -265,7 +265,7 @@ def protparam_advanced():
 def molecular_weight_advanced():
     """Calculate molecular weight with variations"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         seq_type = data.get('type', 'dna')
 
@@ -326,7 +326,7 @@ def reference_data():
 def transcribe():
     """Transcribe DNA to RNA or back-transcribe RNA to DNA"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         operation = data.get('operation', 'transcribe')
 
@@ -361,7 +361,7 @@ def transcribe():
 def gc_analysis():
     """Perform advanced GC analysis including GC skew and GC123"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         window = data.get('window', 100)
 
@@ -380,7 +380,7 @@ def gc_analysis():
         if len(sequence) >= 3:
             try:
                 gc123 = GC123(seq)
-            except:
+            except Exception:
                 pass
 
         # GC Skew
@@ -388,7 +388,7 @@ def gc_analysis():
         if len(sequence) >= window:
             try:
                 gc_skew_values = GC_skew(seq, window=window)
-            except:
+            except Exception:
                 pass
 
         return jsonify({
@@ -405,7 +405,7 @@ def gc_analysis():
 def protein_convert():
     """Convert protein sequences between 1-letter and 3-letter codes"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         conversion = data.get('conversion', 'to_three')
 
@@ -436,7 +436,7 @@ def protein_convert():
 def manipulate():
     """Manipulate sequences (ungap, uppercase, lowercase)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip()
         operation = data.get('operation', 'ungap')
 
@@ -475,7 +475,7 @@ def manipulate():
 def search():
     """Search for patterns in sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '').strip().upper()
         pattern = data.get('pattern', '').strip().upper()
         search_type = data.get('search_type', 'find')

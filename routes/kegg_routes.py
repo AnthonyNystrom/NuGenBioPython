@@ -14,7 +14,7 @@ bp = Blueprint('kegg', __name__, url_prefix='/api')
 def search():
     """Search KEGG database using kegg_find"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', 'pathway')
         query = data.get('query', '')
         organism = data.get('organism', None)
@@ -38,7 +38,7 @@ def search():
 def list_database():
     """List entries in KEGG database using kegg_list"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', 'pathway')
         organism = data.get('organism', None)
         limit = data.get('limit', 100)
@@ -60,7 +60,7 @@ def list_database():
 def link():
     """Find related entries using kegg_link"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         target_db = data.get('target_db', 'pathway')
         source_db = data.get('source_db', 'genes')
         source_id = data.get('source_id', None)
@@ -84,7 +84,7 @@ def link():
 def convert():
     """Convert identifiers using kegg_conv"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         target_db = data.get('target_db', 'ncbi-geneid')
         source_db = data.get('source_db', 'hsa')
         ids = data.get('ids', None)
@@ -112,7 +112,7 @@ def convert():
 def info():
     """Get database information using kegg_info"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         database = data.get('database', None)
 
         info_data = kegg_get_info(database)

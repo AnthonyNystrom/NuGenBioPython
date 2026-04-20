@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from collections import Counter
 
 from dependencies import Seq
+from utils.upload_helpers import saved_upload, UploadError
 
 bp = Blueprint('alignment', __name__, url_prefix='/api')
 
@@ -17,7 +18,7 @@ bp = Blueprint('alignment', __name__, url_prefix='/api')
 @bp.route('/alignment/pairwise', methods=['POST'])
 def pairwise_alignment():
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         seq1 = Seq.Seq(data.get('sequence1', ''))
         seq2 = Seq.Seq(data.get('sequence2', ''))
 
@@ -42,7 +43,7 @@ def pairwise_alignment():
             try:
                 matrix = substitution_matrices.load(matrix_name)
                 aligner.substitution_matrix = matrix
-            except:
+            except Exception:
                 # If matrix loading fails, use manual scoring
                 aligner.match_score = float(data.get('match_score', 2))
                 aligner.mismatch_score = float(data.get('mismatch_score', -1))
@@ -144,7 +145,7 @@ def get_substitution_matrices():
 def multiple_sequence_alignment():
     """Perform multiple sequence alignment using progressive alignment"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         if len(sequences) < 2:
@@ -211,7 +212,7 @@ def multiple_sequence_alignment():
 def generate_consensus():
     """Generate consensus sequence from alignment"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         if len(sequences) < 2:
@@ -257,7 +258,7 @@ def generate_consensus():
 def analyze_conservation():
     """Analyze conservation across aligned sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         if len(sequences) < 2:
@@ -318,33 +319,25 @@ def analyze_conservation():
 def parse_alignment_file():
     """Parse alignment file in various formats"""
     try:
-        file = request.files['file']
         file_format = request.form.get('format', 'fasta')
-
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
+        with saved_upload(request.files.get('file')) as filepath:
             alignment = AlignIO.read(filepath, file_format)
+            sequences = [{
+                'id': record.id,
+                'description': record.description,
+                'sequence': str(record.seq),
+                'length': len(record.seq)
+            } for record in alignment]
+            alignment_length = len(alignment[0]) if len(alignment) > 0 else 0
 
-            sequences = []
-            for record in alignment:
-                sequences.append({
-                    'id': record.id,
-                    'description': record.description,
-                    'sequence': str(record.seq),
-                    'length': len(record.seq)
-                })
-
-            os.remove(filepath)
-
-            return jsonify({
-                'success': True,
-                'sequences': sequences,
-                'num_sequences': len(sequences),
-                'alignment_length': len(alignment[0]) if len(alignment) > 0 else 0
-            })
+        return jsonify({
+            'success': True,
+            'sequences': sequences,
+            'num_sequences': len(sequences),
+            'alignment_length': alignment_length
+        })
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -353,7 +346,7 @@ def parse_alignment_file():
 def export_alignment():
     """Export alignment in various formats"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         output_format = data.get('format', 'fasta')
 
@@ -393,7 +386,7 @@ def export_alignment():
 def trim_alignment():
     """Trim alignment by removing poorly aligned regions"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
         min_conservation = data.get('min_conservation', 50)
 
@@ -441,7 +434,7 @@ def trim_alignment():
 def get_all_alignments():
     """Generate all possible alignments (not just top 1)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         seq1 = Seq.Seq(data.get('sequence1', ''))
         seq2 = Seq.Seq(data.get('sequence2', ''))
         max_alignments = data.get('max_alignments', 10)
@@ -482,7 +475,7 @@ def get_all_alignments():
 def pairwise_identity_matrix():
     """Calculate pairwise identity matrix for multiple sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         if len(sequences) < 2:
@@ -539,7 +532,7 @@ def pairwise_identity_matrix():
 def alignment_coordinates():
     """Get alignment coordinates and path information"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         seq1 = Seq.Seq(data.get('sequence1', ''))
         seq2 = Seq.Seq(data.get('sequence2', ''))
 
@@ -594,7 +587,7 @@ def alignment_coordinates():
 def codon_aware_alignment():
     """Perform codon-aware alignment for coding sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         seq1_str = data.get('sequence1', '')
         seq2_str = data.get('sequence2', '')
 
@@ -673,7 +666,7 @@ def codon_aware_alignment():
 def detailed_alignment_stats():
     """Get detailed statistics for an alignment"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         seq1 = Seq.Seq(data.get('sequence1', ''))
         seq2 = Seq.Seq(data.get('sequence2', ''))
 

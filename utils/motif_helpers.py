@@ -104,14 +104,14 @@ def get_motif_info(m, pseudocounts=0.5):
                 row[base] = float(pssm[base][i])
             pssm_data.append(row)
         info['pssm'] = pssm_data
-    except:
+    except Exception:
         info['pssm'] = None
 
     # Information content
     try:
         ic = pwm.information_content()
         info['information_content'] = float(ic)
-    except:
+    except Exception:
         info['information_content'] = None
 
     # Relative entropy at each position
@@ -125,7 +125,7 @@ def get_motif_info(m, pseudocounts=0.5):
                     re += p * np.log2(p / 0.25)  # Assuming uniform background
             re_per_pos.append({'position': i + 1, 'entropy': float(re)})
         info['relative_entropy'] = re_per_pos
-    except:
+    except Exception:
         info['relative_entropy'] = None
 
     return info
@@ -150,7 +150,7 @@ def search_motif_advanced(m, sequence, threshold_type='abs', threshold_value=0, 
 
     try:
         pssm = pwm.log_odds()
-    except:
+    except Exception:
         # Fallback to PWM if PSSM fails
         pssm = pwm
 
@@ -316,7 +316,7 @@ def calculate_motif_statistics(m, sequence, pseudocounts=0.5):
             try:
                 score = pssm.calculate(subseq)
                 scores.append(score)
-            except:
+            except Exception:
                 continue
 
         if not scores:
@@ -330,5 +330,5 @@ def calculate_motif_statistics(m, sequence, pseudocounts=0.5):
             'median_score': float(np.median(scores)),
             'num_positions': len(scores)
         }
-    except:
+    except Exception:
         return None

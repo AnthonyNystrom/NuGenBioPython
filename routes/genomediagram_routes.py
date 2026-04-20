@@ -143,7 +143,7 @@ def upload_file():
 def create_genome_diagram():
     """Create basic genome diagram (linear or circular)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         genome_length = int(data.get('genome_length', 10000))
         features = data.get('features', [])
         diagram_type = data.get('diagram_type', 'linear')
@@ -273,7 +273,7 @@ def create_genome_diagram():
 def create_multitrack_diagram():
     """Create multi-track genome diagram with multiple feature tracks"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         genome_length = int(data.get('genome_length', 10000))
         tracks_data = data.get('tracks', [])
         diagram_type = data.get('diagram_type', 'linear')
@@ -348,7 +348,7 @@ def create_multitrack_diagram():
 def create_data_tracks():
     """Create genome diagram with data visualization tracks (GC content, GC skew, etc)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         genome_length = int(data.get('genome_length', 10000))
         sequence = data.get('sequence', '')
         graphs = data.get('graphs', [])
@@ -463,7 +463,7 @@ def create_data_tracks():
 def create_advanced_diagram():
     """Create advanced genome diagram with sigils, strands, labels, and CrossLinks"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         genome_length = int(data.get('genome_length', 10000))
         features = data.get('features', [])
         cross_links = data.get('cross_links', [])
@@ -565,7 +565,7 @@ def create_advanced_diagram():
 def export_diagram():
     """Export diagram in different formats (PNG, SVG, PDF, EPS)"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         diagram_data = data.get('diagram_data', '')
         export_format = data.get('format', 'png').upper()
 

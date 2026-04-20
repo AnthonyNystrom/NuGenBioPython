@@ -1,6 +1,9 @@
 """
 Routes for comprehensive motif analysis
 """
+import os
+from collections import OrderedDict
+
 from flask import Blueprint, request, jsonify, session
 import base64
 from io import BytesIO
@@ -20,15 +23,24 @@ from utils.motif_helpers import (
 
 bp = Blueprint('motifs', __name__, url_prefix='/api')
 
-# In-memory storage for motifs (keyed by session-based ID)
-motif_cache = {}
+# Bounded in-memory motif cache. Evicts oldest entries at the cap.
+_MOTIF_CACHE_MAX = int(os.environ.get('MOTIF_CACHE_MAX', '64'))
+motif_cache = OrderedDict()
+
+
+def _store_motif(motif_id, motif):
+    if motif_id in motif_cache:
+        motif_cache.move_to_end(motif_id)
+    motif_cache[motif_id] = motif
+    while len(motif_cache) > _MOTIF_CACHE_MAX:
+        motif_cache.popitem(last=False)
 
 
 @bp.route('/motifs/create', methods=['POST'])
 def create_motif():
     """Create motif from sequences"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
 
         if not sequences or len(sequences) < 2:
@@ -42,7 +54,7 @@ def create_motif():
             session['motif_id'] = str(uuid.uuid4())
 
         motif_id = session['motif_id']
-        motif_cache[motif_id] = m
+        _store_motif(motif_id, m)
 
         # Get motif info
         info = get_motif_info(m)
@@ -90,7 +102,7 @@ def upload_motif():
             session['motif_id'] = str(uuid.uuid4())
 
         motif_id = session['motif_id']
-        motif_cache[motif_id] = m
+        _store_motif(motif_id, m)
 
         # Get motif info
         info = get_motif_info(m)
@@ -113,7 +125,7 @@ def upload_motif():
 def search_motif():
     """Search for motif in sequence using PSSM scoring"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequence = data.get('sequence', '')
         threshold_type = data.get('threshold_type', 'rel')  # 'abs' or 'rel'
         threshold_value = float(data.get('threshold', 0.7))
@@ -149,7 +161,7 @@ def search_motif():
 def compare_motifs_route():
     """Compare current motif with another"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         sequences2 = data.get('sequences', [])
 
         if not sequences2 or len(sequences2) < 2:

@@ -13,7 +13,7 @@ bp = Blueprint('clustering', __name__, url_prefix='/api')
 @bp.route('/clustering/analyze', methods=['POST'])
 def clustering_analyze():
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []))
         method = data.get('method', 'kmeans')
         n_clusters = int(data.get('n_clusters', 3))
@@ -79,7 +79,7 @@ def clustering_analyze():
 def biocluster_kmeans():
     """Bio.Cluster k-means clustering"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
         n_clusters = int(data.get('n_clusters', 3))
         n_pass = int(data.get('n_pass', 10))
@@ -113,7 +113,7 @@ def biocluster_kmeans():
 def biocluster_kmedoids():
     """Bio.Cluster k-medoids clustering"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
         n_clusters = int(data.get('n_clusters', 3))
         n_pass = int(data.get('n_pass', 10))
@@ -146,7 +146,7 @@ def biocluster_kmedoids():
 def biocluster_hierarchical():
     """Bio.Cluster hierarchical clustering"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
         method = data.get('linkage', 's')  # s=single, m=complete, a=average, c=centroid
         dist = data.get('distance', 'e')  # e=Euclidean, c=correlation
@@ -183,7 +183,7 @@ def biocluster_hierarchical():
 def biocluster_som():
     """Bio.Cluster Self-Organizing Map clustering"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
         xdim = int(data.get('xdim', 3))
         ydim = int(data.get('ydim', 3))
@@ -212,7 +212,7 @@ def biocluster_som():
 def biocluster_pca():
     """Bio.Cluster Principal Component Analysis"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
 
         if matrix.size == 0:
@@ -240,7 +240,7 @@ def biocluster_pca():
 def biocluster_distance():
     """Bio.Cluster distance matrix calculation"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         matrix = np.array(data.get('matrix', []), dtype=float)
         dist = data.get('distance', 'e')  # e=Euclidean, c=correlation, a=absolute correlation, etc.
 

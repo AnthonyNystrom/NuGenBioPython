@@ -1051,33 +1051,70 @@ function displaySlicedSequences(sequences) {
 }
 
 function displayConvertedResult(converted, format) {
+    const F = window.NuGenFormatters || {};
+    const esc = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
+
+    // Build formatted view based on output format
+    let formattedHtml = '';
+    const fmt = (format || '').toLowerCase();
+    if (fmt === 'fasta' || fmt === 'fa') {
+        formattedHtml = F.formatFasta ? F.formatFasta(converted) : '';
+    } else if (fmt === 'genbank' || fmt === 'gb' || fmt === 'embl' || fmt === 'genpept' || fmt === 'gp') {
+        formattedHtml = F.formatGenBankText ? F.formatGenBankText(converted) : '';
+    } else if (fmt === 'xml') {
+        formattedHtml = F.formatXMLPretty ? F.formatXMLPretty(converted) : '';
+    }
+    if (!formattedHtml) {
+        formattedHtml = '<div class="alert alert-secondary mb-0">No formatted view available for <code>' + esc(fmt) + '</code>. Use Raw tab.</div>';
+    }
+
+    const tabId = 'conv-' + Date.now();
     const modal = document.createElement('div');
     modal.className = 'modal fade';
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Converted ${format.toUpperCase()} File</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <textarea class="form-control sequence-display" rows="20" readonly>${converted}</textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="gradient-btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="gradient-btn-primary" onclick="downloadConverted('${format}')">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+    modal.innerHTML =
+        '<div class="modal-dialog modal-xl modal-dialog-scrollable">' +
+        '<div class="modal-content">' +
+        '<div class="modal-header">' +
+        '<h5 class="modal-title">Converted ' + esc(format.toUpperCase()) + ' File</h5>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<ul class="nav nav-tabs mb-3" role="tablist">' +
+        '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#' + tabId + '-fmt">Formatted</button></li>' +
+        '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#' + tabId + '-raw">Raw</button></li>' +
+        '</ul>' +
+        '<div class="tab-content">' +
+        '<div class="tab-pane fade show active" id="' + tabId + '-fmt">' + formattedHtml + '</div>' +
+        '<div class="tab-pane fade" id="' + tabId + '-raw">' +
+        '<textarea class="form-control sequence-display" rows="20" readonly></textarea>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="gradient-btn-secondary" data-bs-dismiss="modal">Close</button>' +
+        '<button type="button" class="gradient-btn-primary" data-download-format>' +
+        '<i class="fas fa-download"></i> Download' +
+        '</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
 
     document.body.appendChild(modal);
+    // Populate textarea safely (no HTML escaping concerns in textarea value)
+    modal.querySelector('textarea').value = converted;
+    modal.querySelector('[data-download-format]').addEventListener('click', function () {
+        const blob = new Blob([converted], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'converted_sequences.' + format;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
     const modalInstance = new bootstrap.Modal(modal);
     modalInstance.show();
-
-    modal.addEventListener('hidden.bs.modal', function() {
+    modal.addEventListener('hidden.bs.modal', function () {
         document.body.removeChild(modal);
     });
 }

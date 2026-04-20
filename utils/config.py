@@ -2,18 +2,33 @@
 Flask application configuration
 """
 import os
+import logging
+import secrets
+
+
+log = logging.getLogger(__name__)
+
+
+def _resolve_secret_key():
+    key = os.environ.get('SECRET_KEY')
+    if key:
+        return key
+    log.warning(
+        "SECRET_KEY environment variable is not set. "
+        "Generating an ephemeral random key for this process. "
+        "Sessions will not survive restarts. Set SECRET_KEY in production."
+    )
+    return secrets.token_hex(32)
 
 
 def configure_app(app):
     """Configure Flask application with settings"""
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nugenbiopython-secret-key-change-in-production')
-    app.config['UPLOAD_FOLDER'] = 'uploads'
-    app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB max file size
+    app.config['SECRET_KEY'] = _resolve_secret_key()
+    app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', 'uploads')
+    app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
 
-    # Create upload folder
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-    # Create example GenePop file for demonstrations
     example_file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'example_popgen.gen')
     if not os.path.exists(example_file_path):
         example_content = """Example Population Genetics Study - Three Populations

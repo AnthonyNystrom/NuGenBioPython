@@ -56,7 +56,7 @@ def extract_pubmed_record(root):
             record['pmid'] = pmid_elem.text if pmid_elem is not None else 'Unknown'
 
         return record
-    except:
+    except Exception:
         return {'error': 'Failed to parse PubMed record'}
 
 

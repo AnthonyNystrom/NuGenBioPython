@@ -558,49 +558,7 @@ function exportPathway(format) {
     });
 }
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-function showLoading(btnId) {
-    const btn = document.getElementById(btnId);
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-    }
-}
-
-function hideLoading(btnId, originalHtml) {
-    const btn = document.getElementById(btnId);
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-    }
-}
-
-function showAlert(message, type) {
-    let alertDiv = document.getElementById('pathwayAlert');
-    if (!alertDiv) {
-        alertDiv = document.createElement('div');
-        alertDiv.id = 'pathwayAlert';
-        alertDiv.style.position = 'fixed';
-        alertDiv.style.top = '20px';
-        alertDiv.style.right = '20px';
-        alertDiv.style.zIndex = '9999';
-        document.body.appendChild(alertDiv);
-    }
-
-    alertDiv.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-
-    setTimeout(() => {
-        alertDiv.innerHTML = '';
-    }, 5000);
-}
+// showLoading, hideLoading, showAlert are provided globally by static/js/utils.js
 
 // Initialize
 window.addEventListener('load', function() {

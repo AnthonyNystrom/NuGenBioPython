@@ -440,34 +440,24 @@ function displayRecordInModal(recordData, database, recordId) {
 }
 
 function formatRecordData(data, database) {
-    // Extract key information from the record
-    const lines = data.split('\n');
-    let html = '<div class="p-3">';
+    const F = window.NuGenFormatters || {};
+    const looksXml = typeof data === 'string' && data.trim().startsWith('<');
+    const looksGenBank = typeof data === 'string' && /^LOCUS\b/m.test(data);
+    const looksFasta = typeof data === 'string' && data.trim().startsWith('>');
 
-    if (database === 'pubmed') {
-        html += '<h6>PubMed Record</h6>';
-        html += '<div class="small">';
-        lines.slice(0, 30).forEach(line => {
-            if (line.trim()) {
-                html += `<p class="mb-1">${escapeHtml(line)}</p>`;
-            }
-        });
-        html += '</div>';
-    } else if (database === 'nucleotide' || database === 'protein') {
-        html += `<h6>${database === 'nucleotide' ? 'Nucleotide' : 'Protein'} Record</h6>`;
-        html += '<div class="small">';
-        lines.slice(0, 50).forEach(line => {
-            if (line.trim()) {
-                html += `<p class="mb-1 font-monospace">${escapeHtml(line)}</p>`;
-            }
-        });
-        html += '</div>';
-    } else {
-        html += '<div class="small"><pre>' + escapeHtml(data) + '</pre></div>';
+    if ((database === 'pubmed' || database === 'pmc') && looksXml && F.formatPubMedXML) {
+        return '<div class="p-2">' + F.formatPubMedXML(data) + '</div>';
     }
-
-    html += '</div>';
-    return html;
+    if ((database === 'nucleotide' || database === 'protein' || database === 'gene') && looksGenBank && F.formatGenBankText) {
+        return '<div class="p-2">' + F.formatGenBankText(data) + '</div>';
+    }
+    if (looksFasta && F.formatFasta) {
+        return '<div class="p-2">' + F.formatFasta(data) + '</div>';
+    }
+    if (looksXml && F.formatXMLPretty) {
+        return '<div class="p-2">' + F.formatXMLPretty(data) + '</div>';
+    }
+    return '<div class="p-3 small font-monospace" style="white-space:pre-wrap;">' + escapeHtml(data) + '</div>';
 }
 
 function escapeHtml(text) {
