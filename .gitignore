@@ -3,3 +3,27 @@ __pycache__/
 *$py.class
 .DS_Store
 .vscode/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# User uploads (runtime data)
+uploads/*
+!uploads/.gitkeep
+
+# Claude
+.claude/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Editor scratch
+*.swp
+*.swo
