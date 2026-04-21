@@ -2,7 +2,7 @@
 
 {% block title %}Pairwise Alignment - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #alignmentTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -80,9 +80,7 @@
                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="alignBtn">
                         <i class="fas fa-align-center me-2"></i>Align Sequences
                     </button>
-                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleAlignment()">
-                        <i class="fas fa-flask me-2"></i>Example
-                    </button>
+                    {{ load_example_btn("loadExampleAlignment") }}
                 </form>
             </div>
         </div>
@@ -244,9 +242,7 @@
                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="msaAlignBtn">
                         <i class="fas fa-align-justify me-2"></i>Align Multiple Sequences
                     </button>
-                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleMSA()">
-                        <i class="fas fa-flask me-2"></i>Example
-                    </button>
+                    {{ load_example_btn("loadExampleMSA") }}
                 </form>
             </div>
         </div>
@@ -326,9 +322,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-chart-line me-2"></i>Analyze Conservation
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConservationExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadConservationExample") }}
                                 </form>
                             </div>
                         </div>
@@ -396,9 +390,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-file-import me-2"></i>Load Alignment
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadFileIOExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                            </button>
+                                    {{ load_example_btn("loadFileIOExample") }}
                                         </div>
                                     </div>
                                 </form>
@@ -476,9 +468,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2">
                                         <i class="fas fa-list me-1"></i>Generate
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadAllAlignmentsExample()">
-                                        <i class="fas fa-flask me-1"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadAllAlignmentsExample", extra="btn-sm", icon_spacing="me-1") }}
                                 </form>
                             </div>
                         </div>
@@ -498,9 +488,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
                                         <i class="fas fa-map-marker-alt me-1"></i>Extract
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadCoordinatesExample()">
-                                        <i class="fas fa-flask me-1"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadCoordinatesExample", extra="btn-sm", icon_spacing="me-1") }}
                                 </form>
                             </div>
                         </div>
@@ -520,9 +508,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
                                         <i class="fas fa-chart-pie me-1"></i>Calculate
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 btn-sm" onclick="loadDetailedStatsExample()">
-                                        <i class="fas fa-flask me-1"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadDetailedStatsExample", extra="btn-sm", icon_spacing="me-1") }}
                                 </form>
                             </div>
                         </div>
@@ -562,9 +548,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-table me-2"></i>Calculate Matrix
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadIdentityMatrixExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadIdentityMatrixExample") }}
                                 </form>
                                 <div id="identityMatrixResults" class="mt-3"></div>
                             </div>
@@ -586,9 +570,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2">
                                         <i class="fas fa-dna me-2"></i>Align Codons
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonAwareExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadCodonAwareExample") }}
                                 </form>
                                 <div id="codonAwareResults" class="mt-3"></div>
                             </div>

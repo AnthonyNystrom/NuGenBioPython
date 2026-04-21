@@ -2,7 +2,7 @@
 
 {% block title %}Sequence Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #toolsTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -33,9 +33,7 @@
                         <option value="rna">RNA</option>
                         <option value="protein">Protein</option>
                     </select>
-                    <button type="button" class="gradient-btn-small w-100 mb-3" onclick="loadExample()">
-                        <i class="fas fa-flask me-2"></i>Example
-                    </button>
+                    {{ load_example_btn("loadExample", size="small", extra="mb-3") }}
                     <textarea class="form-control sequence-display mb-3" id="sequenceInput" rows="5"
                             placeholder="Enter sequence..." ></textarea>
                     <button type="submit" class="gradient-btn-primary w-100" id="analyzeBtn">

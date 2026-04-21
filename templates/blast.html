@@ -2,7 +2,7 @@
 
 {% block title %}BLAST Search - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #blastTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -146,9 +146,7 @@
                                     <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="blastBtn">
                                         <i class="fas fa-rocket me-2"></i> Run BLAST Search
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadBlastExample()">
-                                        <i class="fas fa-flask me-2"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadBlastExample", label="Load Example") }}
                                 </form>
                             </div>
                         </div>

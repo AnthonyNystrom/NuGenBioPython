@@ -2,7 +2,7 @@
 
 {% block title %}Sequence Features - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #featuresTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -80,9 +80,7 @@
                             <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="orfBtn">
                                 <i class="fas fa-search me-2"></i>Find ORFs
                             </button>
-                            <button type="button" class="gradient-btn-small w-100" onclick="loadORFExample()">
-                                <i class="fas fa-flask me-2"></i>Example
-                            </button>
+                            {{ load_example_btn("loadORFExample", size="small") }}
                         </form>
                     </div>
                 </div>
@@ -132,9 +130,7 @@
                             <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="createBtn">
                                 <i class="fas fa-plus me-2"></i>Create Feature
                             </button>
-                            <button type="button" class="gradient-btn-small w-100" onclick="loadCreateExample()">
-                                <i class="fas fa-flask me-2"></i>Example
-                            </button>
+                            {{ load_example_btn("loadCreateExample", size="small") }}
                         </form>
                     </div>
                 </div>
@@ -207,9 +203,7 @@
                             <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="extractBtn">
                                 <i class="fas fa-cut me-2"></i>Extract Feature
                             </button>
-                            <button type="button" class="gradient-btn-small w-100" onclick="loadExtractExample()">
-                                <i class="fas fa-flask me-2"></i>Example
-                            </button>
+                            {{ load_example_btn("loadExtractExample", size="small") }}
                         </form>
                     </div>
                 </div>
@@ -236,9 +230,7 @@
                             <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="compoundBtn">
                                 <i class="fas fa-layer-group me-2"></i>Create Compound Feature
                             </button>
-                            <button type="button" class="gradient-btn-small w-100" onclick="loadCompoundExample()">
-                                <i class="fas fa-flask me-2"></i>Example
-                            </button>
+                            {{ load_example_btn("loadCompoundExample", size="small") }}
                         </form>
                     </div>
                 </div>
@@ -298,9 +290,7 @@
                             <button type="submit" class="gradient-btn-primary w-100 mb-2" id="annotateSubmitBtn">
                                 <i class="fas fa-file-export me-2"></i>Generate GenBank File
                             </button>
-                            <button type="button" class="gradient-btn-small w-100" onclick="loadAnnotateExample()">
-                                <i class="fas fa-flask me-2"></i>Example
-                            </button>
+                            {{ load_example_btn("loadAnnotateExample", size="small") }}
                         </form>
                     </div>
                 </div>

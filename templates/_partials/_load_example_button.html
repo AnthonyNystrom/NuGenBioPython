@@ -1,0 +1,23 @@
+{#
+  Load Example button macro.
+
+  Knobs:
+    onclick_fn     — JS function name, rendered as onclick="{fn}()"
+    size           — "secondary" (default) or "small"
+    label          — button text; default "Example"
+    extra          — extra class names appended (e.g. "mb-2", "btn-sm")
+    icon           — Font Awesome class; default "fa-flask"
+    icon_spacing   — margin util on the <i>; default "me-2", sometimes "me-1" or ""
+#}
+{%- macro load_example_btn(onclick_fn, size="secondary", label="Example", extra="", icon="fa-flask", icon_spacing="me-2") -%}
+{%- if size == "small" -%}
+  {%- set base_class = "gradient-btn-small w-100" -%}
+{%- else -%}
+  {%- set base_class = "gradient-btn-secondary w-100" -%}
+{%- endif -%}
+{%- set full_class = (base_class + " " + extra).strip() -%}
+{%- set icon_class = ("fas " + icon + " " + icon_spacing).strip() -%}
+<button type="button" class="{{ full_class }}" onclick="{{ onclick_fn }}()">
+                        <i class="{{ icon_class }}"></i>{{ label }}
+                    </button>
+{%- endmacro -%}

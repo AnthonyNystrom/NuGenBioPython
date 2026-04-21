@@ -2,7 +2,7 @@
 
 {% block title %}SearchIO Parser - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #searchioTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #searchioTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -68,9 +68,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseBtn">
                                         <i class="fas fa-file-import me-2"></i>Parse Results
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadParseExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadParseExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -119,9 +117,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="readBtn">
                                         <i class="fas fa-book-open me-2"></i>Read Result
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadReadExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadReadExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <strong class="small">Query Details</strong>
@@ -175,9 +171,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="indexBtn">
                                         <i class="fas fa-database me-2"></i>Create Index
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadIndexExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadIndexExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -234,9 +228,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
                                         <i class="fas fa-exchange-alt me-2"></i>Convert Format
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConvertExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadConvertExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <strong class="small">Converted Output</strong>
@@ -294,9 +286,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="filterBtn">
                                         <i class="fas fa-filter me-2"></i>Apply Filters
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadFilterExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadFilterExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -355,9 +345,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="writeBtn">
                                         <i class="fas fa-file-export me-2"></i>Write Output
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadWriteExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadWriteExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <strong class="small">Written Output</strong>

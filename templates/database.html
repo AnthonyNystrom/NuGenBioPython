@@ -2,7 +2,7 @@
 
 {% block title %}Database & Search - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #databaseTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -121,9 +121,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
                                         <i class="fas fa-search me-2"></i>Search Database
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadExampleSearch()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadExampleSearch") }}
                                 </form>
                             </div>
                         </div>

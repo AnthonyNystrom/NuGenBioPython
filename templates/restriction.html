@@ -2,7 +2,7 @@
 
 {% block title %}Restriction Enzymes - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #restrictionTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -123,9 +123,7 @@
                                     <button type="submit" class="gradient-btn-success w-100 mb-2" id="basicAnalyzeBtn">
                                         <i class="fas fa-cut me-2"></i>Analyze Restriction Sites
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadBasicExample()">
-                                        <i class="fas fa-flask me-2"></i>Load Example
-                                    </button>
+                                    {{ load_example_btn("loadBasicExample", label="Load Example") }}
                                 </form>
                             </div>
                         </div>
@@ -234,9 +232,7 @@
                                     <button type="submit" class="gradient-btn-success w-100 mb-2" id="advancedAnalyzeBtn">
                                         <i class="fas fa-filter me-2"></i>Run Advanced Analysis
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadAdvancedExample()">
-                                        <i class="fas fa-flask me-2"></i>Load Example
-                                    </button>
+                                    {{ load_example_btn("loadAdvancedExample", label="Load Example") }}
                                 </form>
                             </div>
                         </div>
@@ -372,9 +368,7 @@
                                     <button type="submit" class="gradient-btn-success w-100 mb-2" id="generateMapBtn">
                                         <i class="fas fa-map me-2"></i>Generate Restriction Map
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadMapExample()">
-                                        <i class="fas fa-flask me-2"></i>Load Example
-                                    </button>
+                                    {{ load_example_btn("loadMapExample", label="Load Example") }}
                                 </form>
                             </div>
                         </div>
@@ -429,9 +423,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2">
                                         <i class="fas fa-search me-2"></i>Find Compatible Pairs
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCompatibleExample()">
-                                        <i class="fas fa-flask me-2"></i>Load Example
-                                    </button>
+                                    {{ load_example_btn("loadCompatibleExample", label="Load Example") }}
                                 </form>
                                 <div id="compatibleResults" class="mt-2"></div>
                             </div>

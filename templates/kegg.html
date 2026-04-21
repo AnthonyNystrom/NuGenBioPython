@@ -2,7 +2,7 @@
 
 {% block title %}KEGG Database - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #keggTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #keggTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -70,9 +70,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
                                         <i class="fas fa-search me-2"></i>Search
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSearchExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadSearchExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -131,9 +129,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="listBtn">
                                         <i class="fas fa-list me-2"></i>List Entries
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadListExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadListExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -191,9 +187,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="linkBtn">
                                         <i class="fas fa-link me-2"></i>Find Links
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadLinkExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadLinkExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -251,9 +245,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
                                         <i class="fas fa-exchange-alt me-2"></i>Convert
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadConvertExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadConvertExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">

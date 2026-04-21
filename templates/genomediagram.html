@@ -2,7 +2,7 @@
 
 {% block title %}Genome Diagrams - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #genomeDiagramTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #genomeDiagramTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -120,10 +120,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createBasicDiagramBtn">
                                         <i class="fas fa-chart-area"></i> Create Diagram
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
-                                            onclick="loadBasicExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadBasicExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
                                             onclick="clearFeatures()">
                                         <i class="fas fa-trash"></i> Clear Features
@@ -228,10 +225,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createMultiTrackBtn">
                                         <i class="fas fa-layer-group"></i> Create Multi-Track Diagram
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
-                                            onclick="loadMultiTrackExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadMultiTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
                                             onclick="clearTracks()">
                                         <i class="fas fa-trash"></i> Clear Tracks
@@ -315,10 +309,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createDataTracksBtn">
                                         <i class="fas fa-chart-line"></i> Create Data Tracks
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
-                                            onclick="loadDataTrackExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadDataTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
                                             onclick="clearDataGraphs()">
                                         <i class="fas fa-trash"></i> Clear Graphs
@@ -416,10 +407,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createAdvancedBtn">
                                         <i class="fas fa-magic"></i> Create Advanced Diagram
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
-                                            onclick="loadAdvancedExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadAdvancedExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
                                             onclick="clearAdvancedFeatures(); clearCrossLinks()">
                                         <i class="fas fa-trash"></i> Clear All

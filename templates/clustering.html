@@ -2,7 +2,7 @@
 
 {% block title %}Clustering Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <div class="row mb-3">
     <div class="col-12">
         <h2 class="text-info">
@@ -151,9 +151,7 @@
                     <button type="submit" class="gradient-btn-info w-100 mb-2 mt-3" id="clusterBtn">
                         <i class="fas fa-project-diagram"></i> Perform Clustering
                     </button>
-                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadClusteringExample()">
-                        <i class="fas fa-flask"></i> Load Example
-                    </button>
+                    {{ load_example_btn("loadClusteringExample", label="Load Example", icon_spacing="") }}
                 </form>
             </div>
         </div>

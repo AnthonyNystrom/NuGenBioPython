@@ -2,7 +2,7 @@
 
 {% block title %}Advanced Tools - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #advancedTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #advancedTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -85,9 +85,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="buildHmmBtn">
                                         <i class="fas fa-cogs"></i> Build HMM
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadHmmExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadHmmExample", label="Load Example", icon_spacing="") }}
                                 </form>
 
                                 <!-- Training Section (hidden until model built) -->
@@ -198,9 +196,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchLiteratureBtn">
                                         <i class="fas fa-search"></i> Search Literature
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadLiteratureExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadLiteratureExample", label="Load Example", icon_spacing="") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="literatureResults">
@@ -252,9 +248,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseNexusBtn">
                                         <i class="fas fa-play"></i> Parse Nexus
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadNexusExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadNexusExample", label="Load Example", icon_spacing="") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="nexusResults">
@@ -313,9 +307,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="lookupScopBtn">
                                         <i class="fas fa-search"></i> Lookup SCOP
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadScopExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadScopExample", label="Load Example", icon_spacing="") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="scopResults">
@@ -381,9 +373,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="alignCodonBtn">
                                         <i class="fas fa-play"></i> Align Codons
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadCodonExample", label="Load Example", icon_spacing="") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="codonResults">

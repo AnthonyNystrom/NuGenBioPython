@@ -2,7 +2,7 @@
 
 {% block title %}Structure Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #structureTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -91,9 +91,7 @@
                                     <button type="button" class="gradient-btn-secondary w-100 mb-2" onclick="fetchFromPDB()">
                                         <i class="fas fa-download me-2"></i>Fetch
                                     </button>
-                                    <button type="button" class="gradient-btn-small w-100" onclick="loadExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadExample", size="small") }}
                                 </form>
                             </div>
                         </div>
@@ -149,9 +147,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="superimposeBtn">
                                         <i class="fas fa-project-diagram me-2"></i>Align Structures
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSuperimposeExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadSuperimposeExample") }}
                                 </form>
                             </div>
                         </div>
@@ -200,9 +196,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="geometryBtn">
                                         <i class="fas fa-ruler me-2"></i>Calculate Geometry
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadGeometryExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadGeometryExample") }}
                                 </form>
                             </div>
                         </div>
@@ -247,9 +241,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="qualityBtn">
                                         <i class="fas fa-check-circle me-2"></i>Analyze Quality
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadQualityExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadQualityExample") }}
                                 </form>
                             </div>
                         </div>
@@ -302,9 +294,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="contactsBtn">
                                         <i class="fas fa-network-wired me-2"></i>Calculate Contacts
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadContactsExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadContactsExample") }}
                                 </form>
                             </div>
                         </div>
@@ -348,9 +338,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="interactionsBtn">
                                         <i class="fas fa-link me-2"></i>Detect Interactions
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadInteractionsExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadInteractionsExample") }}
                                 </form>
                             </div>
                         </div>
@@ -398,9 +386,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="dsspBtn">
                                         <i class="fas fa-dna me-2"></i>Analyze Secondary Structure
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadDsspExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadDsspExample") }}
                                 </form>
                             </div>
                         </div>
@@ -455,9 +441,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="ramaBtn">
                                         <i class="fas fa-chart-scatter me-2"></i>Calculate Phi/Psi Angles
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadRamaExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadRamaExample") }}
                                 </form>
                             </div>
                         </div>
@@ -509,9 +493,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="sasaBtn">
                                         <i class="fas fa-water me-2"></i>Calculate SASA
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSasaExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadSasaExample") }}
                                 </form>
                             </div>
                         </div>
@@ -578,9 +560,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="selectionBtn">
                                         <i class="fas fa-crop me-2"></i>Extract Selection
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadSelectionExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadSelectionExample") }}
                                 </form>
                             </div>
                         </div>

@@ -1,0 +1,176 @@
+/* ---------------------------------------------------------------------------
+   Component overrides built on tokens.css.
+   Phase 1: additive, no template changes. Loaded AFTER custom.css /
+   gradient-buttons.css / performance-fix.css so these rules win.
+--------------------------------------------------------------------------- */
+
+
+/* ---- Sidebar-scoped navigation --------------------------------------------
+   Root cause of the invisible-tabs-in-modal bug: custom.css sets
+   `.nav-link { color: rgba(255,255,255,0.8) }` globally. The sidebar is the
+   ONLY place that color is intended. We re-scope it here so nothing leaks
+   into modals/inline tabs. Bootstrap's own .nav-link default (slate-500)
+   applies everywhere else by the time this file loads.
+
+   The performance-fix.css .nav-tabs fix stays as a belt-and-braces guard.
+   The .sidebar-nav .nav-link white-on-dark colors are defined in custom.css
+   (now scoped there); we only add the fallback for non-sidebar .nav-link. */
+
+/* Outside the sidebar, .nav-link should use a visible dark color so tabs,
+   breadcrumbs, pagination etc. stay readable on white backgrounds. :where()
+   (specificity 0) means any more-specific rule — .sidebar-nav .nav-link in
+   custom.css, .nav-tabs .nav-link in performance-fix.css — wins. */
+:where(body) .nav-link {
+    color: var(--slate-600);
+}
+:where(body) .nav-link:hover {
+    color: var(--slate-900);
+}
+:where(body) .nav-link.active {
+    color: var(--slate-900);
+}
+
+
+/* ---- Focus ring (accessibility) ------------------------------------------
+   Many gradient buttons lose the focus outline to a :focus { outline: none }.
+   Restore a visible ring for keyboard users across buttons, inputs, and
+   interactive controls. */
+:focus-visible {
+    outline: var(--ring-width) solid var(--ring-color);
+    outline-offset: var(--ring-offset);
+    border-radius: var(--radius-sm);
+}
+.gradient-btn-primary:focus-visible,
+.gradient-btn-secondary:focus-visible,
+.gradient-btn-info:focus-visible,
+.gradient-btn-warning:focus-visible,
+.gradient-btn-success:focus-visible,
+.gradient-btn-outline:focus-visible,
+.gradient-btn-small:focus-visible,
+.btn:focus-visible {
+    outline: var(--ring-width) solid var(--ring-color);
+    outline-offset: var(--ring-offset);
+}
+
+
+/* ---- Button hierarchy (token-driven, same visual system) -----------------
+   Phase 1 does NOT change button colors — we keep the existing gradients to
+   avoid visual shock. What we DO change: consistent radius, shadow, and
+   focus, all via tokens so Phase 2's palette change is a one-line edit. */
+.gradient-btn-primary,
+.gradient-btn-secondary,
+.gradient-btn-info,
+.gradient-btn-warning,
+.gradient-btn-success,
+.gradient-btn-outline {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast),
+                filter var(--transition-fast);
+    font-family: var(--font-sans);
+}
+.gradient-btn-small {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast);
+    font-family: var(--font-sans);
+}
+.gradient-btn-primary:hover,
+.gradient-btn-secondary:hover,
+.gradient-btn-info:hover,
+.gradient-btn-warning:hover,
+.gradient-btn-success:hover,
+.gradient-btn-outline:hover {
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.05);
+}
+
+
+/* ---- Forms --------------------------------------------------------------- */
+.form-control,
+.form-select {
+    font-family: var(--font-sans);
+    border-color: var(--color-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast),
+                box-shadow var(--transition-fast);
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 var(--ring-width) var(--ring-color);
+}
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+
+/* ---- Cards --------------------------------------------------------------- */
+.card {
+    border-color: var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+.card-header {
+    background: var(--color-surface);
+    border-bottom-color: var(--color-border);
+    font-weight: 600;
+}
+
+
+/* ---- Alerts -------------------------------------------------------------- */
+.alert {
+    border-radius: var(--radius-md);
+    border-width: 1px;
+    font-family: var(--font-sans);
+}
+
+
+/* ---- Badges -------------------------------------------------------------- */
+.badge {
+    font-weight: 500;
+    border-radius: var(--radius-md);
+}
+
+
+/* ---- Modals -------------------------------------------------------------- */
+.modal-content {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+.modal-header,
+.modal-footer {
+    border-color: var(--color-border);
+}
+.modal-title {
+    font-weight: 600;
+}
+
+
+/* ---- Code / pre --------------------------------------------------------- */
+code,
+kbd,
+samp,
+pre {
+    font-family: var(--font-mono);
+}
+
+
+/* ---- Typography --------------------------------------------------------- */
+body {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-normal);
+    color: var(--color-text);
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: var(--line-height-tight);
+}

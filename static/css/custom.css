@@ -170,7 +170,10 @@ body {
   margin-bottom: var(--space-2);
 }
 
-.nav-link {
+/* Sidebar navigation styles. Scoped under .sidebar so these white-on-dark
+   colors don't leak into modal/inline tabs (root cause of the previous
+   invisible-Formatted-tab bug). */
+.sidebar-nav .nav-link {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -185,7 +188,7 @@ body {
   overflow: hidden;
 }
 
-.nav-link::before {
+.sidebar-nav .nav-link::before {
   content: '';
   position: absolute;
   top: 0;
@@ -197,23 +200,23 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.nav-link:hover::before {
+.sidebar-nav .nav-link:hover::before {
   opacity: 1;
 }
 
-.nav-link:hover {
+.sidebar-nav .nav-link:hover {
   color: white;
   text-decoration: none;
   transform: translateX(2px);
 }
 
-.nav-link.active {
+.sidebar-nav .nav-link.active {
   background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
   color: white;
   box-shadow: var(--shadow-md);
 }
 
-.nav-link i {
+.sidebar-nav .nav-link i {
   width: 20px;
   text-align: center;
   font-size: 16px;

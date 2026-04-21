@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}BioData - NuGenBioPython{% endblock %}
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #biodataTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #biodataTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -62,7 +62,7 @@
                                         </select>
                                     </div>
                                     <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="codonBtn"><i class="fas fa-exchange-alt me-2"></i>Translate</button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadCodonExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                    {{ load_example_btn("loadCodonExample") }}
                                 </form>
                             </div>
                         </div>
@@ -129,7 +129,7 @@
                                         </select>
                                     </div>
                                     <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="proteinBtn"><i class="fas fa-exchange-alt me-2"></i>Convert</button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadProteinExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                    {{ load_example_btn("loadProteinExample") }}
                                 </form>
                             </div>
                         </div>
@@ -159,7 +159,7 @@
                                         </div>
                                     </div>
                                     <button type="submit" class="gradient-btn-info w-100 mb-2 mt-2" id="weightBtn"><i class="fas fa-calculator me-2"></i>Calculate</button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadWeightExample()"><i class="fas fa-flask me-2"></i>Example</button>
+                                    {{ load_example_btn("loadWeightExample") }}
                                 </form>
                             </div>
                         </div>

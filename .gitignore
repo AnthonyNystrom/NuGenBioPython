@@ -27,3 +27,7 @@ env/
 # Editor scratch
 *.swp
 *.swo
+
+# Local-only docs (only README.md is committed)
+*.md
+!README.md

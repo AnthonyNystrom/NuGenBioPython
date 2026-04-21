@@ -2,7 +2,7 @@
 
 {% block title %}Pathway Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #pathwayTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #pathwayTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -119,10 +119,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-plus"></i> Add Reaction to System
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2"
-                                            onclick="loadReactionExample()">
-                                        <i class="fas fa-flask"></i> Load Example
-                                    </button>
+                                    {{ load_example_btn("loadReactionExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
                                             onclick="clearReactions()">
                                         <i class="fas fa-trash"></i> Clear All Reactions

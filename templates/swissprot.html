@@ -2,7 +2,7 @@
 
 {% block title %}SwissProt/UniProt Parser - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #swissprotTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #swissprotTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -52,9 +52,7 @@
                                     <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="parseBtn">
                                         <i class="fas fa-list me-2"></i>Parse Records
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadParseExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadParseExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -93,9 +91,7 @@
                                     <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="readBtn">
                                         <i class="fas fa-book-open me-2"></i>Read Record
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadReadExample()">
-                                        <i class="fas fa-flask me-2"></i>Example
-                                    </button>
+                                    {{ load_example_btn("loadReadExample") }}
                                 </form>
                                 <hr class="my-2">
                                 <strong class="small">Record Details</strong>

@@ -2,7 +2,7 @@
 
 {% block title %}Population Genetics - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <div class="row mb-4">
     <div class="col-12">
         <h2 class="text-success">
@@ -38,9 +38,7 @@
                     <button type="submit" class="gradient-btn-success w-100 mb-2 mt-3" id="parsePopgenBtn">
                         <i class="fas fa-chart-bar"></i> Parse GenePop Data
                     </button>
-                    <button type="button" class="gradient-btn-secondary w-100" onclick="loadPopgenExample()">
-                        <i class="fas fa-flask"></i> Load Example
-                    </button>
+                    {{ load_example_btn("loadPopgenExample", label="Load Example", icon_spacing="") }}
                 </form>
             </div>
         </div>
