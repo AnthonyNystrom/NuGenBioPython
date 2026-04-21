@@ -1,0 +1,776 @@
+
+<script>
+document.getElementById('alignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const seq1 = document.getElementById('sequence1').value.trim();
+    const seq2 = document.getElementById('sequence2').value.trim();
+    
+    if (!seq1 || !seq2) {
+        return;
+    }
+    
+    const parameters = {
+        sequence1: seq1,
+        sequence2: seq2,
+        mode: document.getElementById('alignmentMode').value,
+        substitution_matrix: document.getElementById('substitutionMatrix').value,
+        match_score: document.getElementById('matchScore').value,
+        mismatch_score: document.getElementById('mismatchScore').value,
+        gap_open: document.getElementById('gapOpen').value,
+        gap_extend: document.getElementById('gapExtend').value
+    };
+    
+    showLoading('alignBtn');
+    
+    fetch('/api/alignment/pairwise', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parameters)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('alignBtn', '<i class="fas fa-align-center me-2"></i>Align Sequences');
+
+        if (data.success) {
+            displayAlignment(data.alignment, data.score, data.statistics);
+            window.alignmentResults = { alignment: data.alignment, score: data.score, statistics: data.statistics };
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('alignBtn', '<i class="fas fa-align-center"></i> Align Sequences');
+    });
+});
+
+function displayAlignment(alignment, score, statistics) {
+    const resultsDiv = document.getElementById('alignmentResults');
+    const scoreBadge = document.getElementById('alignmentScore');
+    const exportBtn = document.getElementById('exportBtn');
+
+    scoreBadge.textContent = `Score: ${score.toFixed(2)}`;
+    scoreBadge.style.display = 'inline-block';
+    exportBtn.style.display = 'inline-block';
+
+    // Tabbed view: Formatted (color-coded) + Raw BioPython text
+    const F = window.NuGenFormatters;
+    const escAlign = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
+    const formattedHtml = F && F.formatPairwiseAlignment ? F.formatPairwiseAlignment(alignment) : '';
+    const rawHtml =
+        '<pre class="mb-0 p-3 border rounded bg-light" style="font-family: monospace; font-size: 14px; line-height: 1.4; max-height: 500px; overflow:auto;">' +
+        escAlign(alignment.split('\n').filter(l => l.trim()).join('\n')) +
+        '</pre>';
+    let html = '<div class="alignment-display">';
+    html += '<h6 class="mb-3"><i class="fas fa-eye"></i> Pairwise Alignment</h6>';
+    html += ResultsPanel.tabs([
+        { id: 'fmt', title: 'Formatted', content: formattedHtml, active: true },
+        { id: 'raw', title: 'Raw', content: rawHtml },
+    ], { prefix: 'align' });
+
+    // Add alignment statistics
+    html += '<div class="row mt-3 g-3">';
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-primary mb-1 small">Alignment Score</h6>`;
+    html += `<h4 class="mb-0">${score.toFixed(2)}</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-success mb-1 small">Identity</h6>`;
+    html += `<h4 class="mb-0">${statistics.identity_percent.toFixed(1)}%</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-warning mb-1 small">Gaps</h6>`;
+    html += `<h4 class="mb-0">${statistics.gap_percent.toFixed(1)}%</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="col-md-3">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-info mb-1 small">Alignment Length</h6>`;
+    html += `<h4 class="mb-0">${statistics.alignment_length}</h4>`;
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    html += '</div>';
+
+    resultsDiv.innerHTML = html;
+}
+
+function loadSequenceFile(seqNum) {
+    const fileInput = document.getElementById('file' + seqNum);
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let content = e.target.result;
+
+        // Parse FASTA format if needed
+        if (file.name.endsWith('.fasta') || file.name.endsWith('.fa')) {
+            // Remove header lines starting with >
+            const lines = content.split('\n');
+            content = lines.filter(line => !line.startsWith('>')).join('').trim();
+        } else {
+            // For plain text, just clean up
+            content = content.replace(/\s+/g, '').toUpperCase();
+        }
+
+        document.getElementById('sequence' + seqNum).value = content;
+    };
+    reader.readAsText(file);
+}
+
+function loadExampleAlignment() {
+    document.getElementById('sequence1').value = 'ACGTACGTACGT';
+    document.getElementById('sequence2').value = 'ACGTACCGTACGT';
+}
+
+function exportAlignment() {
+    if (!window.alignmentResults) {
+        alert('No alignment results to export');
+        return;
+    }
+
+    const results = window.alignmentResults;
+    let content = '# Sequence Alignment Results\n\n';
+    content += '## Alignment\n';
+    content += results.alignment + '\n\n';
+    content += '## Statistics\n';
+    content += `Score: ${results.score.toFixed(2)}\n`;
+    content += `Identity: ${results.statistics.identity_percent.toFixed(1)}%\n`;
+    content += `Gaps: ${results.statistics.gap_percent.toFixed(1)}%\n`;
+    content += `Alignment Length: ${results.statistics.alignment_length}\n`;
+    content += `Matches: ${results.statistics.matches}\n`;
+    content += `Gap Count: ${results.statistics.gaps}\n`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'alignment_results.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function toggleManualScoring() {
+    const matrixSelect = document.getElementById('substitutionMatrix');
+    const manualDiv = document.getElementById('manualScoringDiv');
+
+    if (matrixSelect.value === 'none') {
+        manualDiv.style.display = 'block';
+    } else {
+        manualDiv.style.display = 'none';
+    }
+}
+
+function resetDefaults() {
+    document.getElementById('alignmentMode').value = 'global';
+    document.getElementById('substitutionMatrix').value = 'none';
+    document.getElementById('matchScore').value = '2';
+    document.getElementById('mismatchScore').value = '-1';
+    document.getElementById('gapOpen').value = '-2';
+    document.getElementById('gapExtend').value = '-0.5';
+    toggleManualScoring();
+}
+
+// MSA Functions
+document.getElementById('msaForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequencesText = document.getElementById('msaSequences').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        alert('Please enter at least 2 sequences');
+        return;
+    }
+
+    const parameters = {
+        sequences: sequences,
+        mode: 'global',
+        match_score: 2,
+        mismatch_score: -1,
+        gap_open: -2,
+        gap_extend: -0.5
+    };
+
+    showLoading('msaAlignBtn');
+
+    fetch('/api/alignment/multiple', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parameters)
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('msaAlignBtn', '<i class="fas fa-align-justify me-2"></i>Align Multiple Sequences');
+
+        if (data.success) {
+            displayMSA(data);
+            window.msaResults = data;
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('msaAlignBtn', '<i class="fas fa-align-justify me-2"></i>Align Multiple Sequences');
+        showAlert('Error performing MSA', 'danger');
+    });
+});
+
+function displayMSA(data) {
+    const resultsDiv = document.getElementById('msaResults');
+    const scoreBadge = document.getElementById('msaScore');
+    const exportBtn = document.getElementById('msaExportBtn');
+
+    scoreBadge.textContent = `Avg Score: ${data.average_score.toFixed(2)}`;
+    scoreBadge.style.display = 'inline-block';
+    exportBtn.style.display = 'inline-block';
+
+    let html = '<div class="msa-display">';
+    html += '<h6 class="mb-3"><i class="fas fa-align-justify"></i> Multiple Sequence Alignment Results</h6>';
+
+    // Display each pairwise alignment
+    html += '<div class="accordion" id="msaAccordion">';
+
+    data.alignments.forEach((alignment, idx) => {
+        html += `<div class="accordion-item">`;
+        html += `<h2 class="accordion-header" id="heading${idx}">`;
+        html += `<button class="accordion-button ${idx === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">`;
+        html += `Sequence ${alignment.index + 1} vs Reference (Score: ${alignment.score.toFixed(2)})`;
+        html += `</button></h2>`;
+        html += `<div id="collapse${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" data-bs-parent="#msaAccordion">`;
+        html += `<div class="accordion-body">`;
+        html += `<pre class="mb-0" style="font-family: monospace; font-size: 14px; line-height: 1.4;">${alignment.alignment}</pre>`;
+        html += `</div></div></div>`;
+    });
+
+    html += '</div>';
+
+    // Add summary statistics
+    html += '<div class="row mt-3 g-3">';
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-primary mb-1 small">Number of Sequences</h6>`;
+    html += `<h4 class="mb-0">${data.num_sequences}</h4>`;
+    html += '</div></div>';
+
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-success mb-1 small">Average Score</h6>`;
+    html += `<h4 class="mb-0">${data.average_score.toFixed(2)}</h4>`;
+    html += '</div></div>';
+
+    html += '<div class="col-md-4">';
+    html += '<div class="text-center p-3 border rounded bg-white">';
+    html += `<h6 class="text-info mb-1 small">Total Score</h6>`;
+    html += `<h4 class="mb-0">${data.total_score.toFixed(2)}</h4>`;
+    html += '</div></div>';
+
+    html += '</div></div>';
+
+    resultsDiv.innerHTML = html;
+}
+
+function loadExampleMSA() {
+    const example = `ACGTACGTACGT
+ACGTACCGTACGT
+ACGTACGACGT
+ACGTACGTAC`;
+    document.getElementById('msaSequences').value = example;
+}
+
+function exportMSA() {
+    if (!window.msaResults) {
+        alert('No MSA results to export');
+        return;
+    }
+
+    const results = window.msaResults;
+    let content = '# Multiple Sequence Alignment Results\n\n';
+    content += `Number of Sequences: ${results.num_sequences}\n`;
+    content += `Average Score: ${results.average_score.toFixed(2)}\n`;
+    content += `Total Score: ${results.total_score.toFixed(2)}\n\n`;
+
+    results.alignments.forEach((alignment, idx) => {
+        content += `\n## Alignment ${idx + 1} (Sequence ${alignment.index + 1} vs Reference)\n`;
+        content += `Score: ${alignment.score.toFixed(2)}\n\n`;
+        content += alignment.alignment + '\n';
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'msa_results.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Semi-global alignment toggle
+function toggleSemiGlobalOptions() {
+    const mode = document.getElementById('alignmentMode').value;
+    const semiDiv = document.getElementById('semiGlobalDiv');
+    semiDiv.style.display = mode === 'semi-global' ? 'block' : 'none';
+}
+
+// Conservation Analysis
+let conservationData = null;
+
+document.getElementById('conservationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        showAlert('Please enter at least 2 sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/conservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            conservationData = data;
+            displayConservationResults(data);
+            document.getElementById('consensusBtn').disabled = false;
+            document.getElementById('trimBtn').disabled = false;
+            showAlert('Conservation analyzed', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    });
+});
+
+function displayConservationResults(data) {
+    const resultsDiv = document.getElementById('conservationResults');
+    let html = '<div class="conservation-display">';
+    html += '<h6 class="mb-3">Average Conservation: ' + data.average_conservation + '%</h6>';
+    html += '<div class="border rounded p-3 bg-light"><div style="font-family: monospace; font-size: 11px;">';
+    html += '<strong>Position | Conservation % | Entropy</strong><br>';
+    data.conservation_data.forEach(pos => {
+        const bar = '█'.repeat(Math.round(pos.conservation / 5));
+        const color = pos.conservation >= 70 ? 'text-success' : 'text-warning';
+        html += '<span class="' + color + '">' + pos.position + ' | ' + pos.conservation + '% | ' + pos.entropy.toFixed(2) + ' ' + bar + '</span><br>';
+    });
+    html += '</div></div></div>';
+    resultsDiv.innerHTML = html;
+}
+
+function generateConsensus() {
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+    fetch('/api/alignment/consensus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Consensus: ' + data.consensus + '\nAvg Conservation: ' + data.average_conservation + '%');
+        }
+    });
+}
+
+function trimAlignment() {
+    const sequencesText = document.getElementById('conservationSeqs').value.trim();
+    const sequences = sequencesText.split('\n').filter(s => s.trim()).map(s => s.trim());
+    const minCons = document.getElementById('minConservation').value;
+    fetch('/api/alignment/trim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences, min_conservation: parseInt(minCons) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('conservationSeqs').value = data.trimmed_sequences.join('\n');
+            showAlert('Trimmed ' + data.positions_removed + ' positions', 'success');
+        }
+    });
+}
+
+function loadConservationExample() {
+    document.getElementById('conservationSeqs').value = 'ACGTACGTACGT\nACGTACCGTACGT\nACGTACGACGT';
+}
+
+// File I/O Functions
+let loadedAlignment = null;
+
+document.getElementById('loadAlignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const fileInput = document.getElementById('alignmentFile');
+    formData.append('file', fileInput.files[0]);
+    formData.append('format', document.getElementById('alignmentFileFormat').value);
+    fetch('/api/alignment/parse_file', { method: 'POST', body: formData })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadedAlignment = data.sequences;
+            displayLoadedAlignment(data);
+            document.getElementById('exportAlignBtn').disabled = false;
+            showAlert('Loaded ' + data.num_sequences + ' sequences', 'success');
+        }
+    });
+});
+
+function displayLoadedAlignment(data) {
+    const resultsDiv = document.getElementById('loadedAlignmentResults');
+    document.getElementById('loadedCount').textContent = data.num_sequences + ' sequences';
+    let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID</th><th>Length</th><th>Preview</th></tr></thead><tbody>';
+    data.sequences.forEach(seq => {
+        const preview = seq.sequence.substring(0, 60) + '...';
+        html += '<tr><td><code>' + seq.id + '</code></td><td>' + seq.length + '</td><td><small>' + preview + '</small></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    resultsDiv.innerHTML = html;
+}
+
+document.getElementById('exportAlignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!loadedAlignment) { showAlert('Load alignment first', 'warning'); return; }
+    const format = document.getElementById('exportFormat').value;
+    fetch('/api/alignment/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: loadedAlignment, format: format })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const blob = new Blob([data.exported], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'alignment.' + format;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    });
+});
+
+// Advanced Tab Functions
+
+// 1. All Alignments
+document.getElementById('allAlignmentsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('allAlignSeq1').value.trim();
+    const seq2 = document.getElementById('allAlignSeq2').value.trim();
+    const maxAlignments = document.getElementById('maxAlignments').value;
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/all_alignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sequence1: seq1,
+            sequence2: seq2,
+            max_alignments: parseInt(maxAlignments)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Found ' + data.total_found + ' Alignment(s)</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+            data.alignments.forEach((aln, idx) => {
+                if (idx > 0) html += '<hr class="my-2">';
+                html += '<div><strong style="font-size: 11px;">Alignment ' + (idx+1) + ' (Score: ' + aln.score.toFixed(2) + ')</strong>';
+                html += '<pre class="mb-0 mt-1" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + aln.alignment + '</pre></div>';
+            });
+            html += '</div></div>';
+            document.getElementById('allAlignmentsResults').innerHTML = html;
+            showAlert('Generated ' + data.total_found + ' alignments', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 2. Identity Matrix
+document.getElementById('identityMatrixForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seqsText = document.getElementById('matrixSeqs').value.trim();
+    const sequences = seqsText.split('\n').filter(s => s.trim()).map(s => s.trim());
+
+    if (sequences.length < 2) {
+        showAlert('Please enter at least 2 sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/identity_matrix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequences: sequences })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Identity Matrix Results</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+
+            // Use a compact, responsive layout
+            const numSeqs = data.labels.length;
+            if (numSeqs <= 4) {
+                // Show full table for 4 or fewer sequences - fits without scrolling
+                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 10px; table-layout: fixed; width: 100%;">';
+                html += '<thead class="table-light"><tr><th style="width: 20%;"></th>';
+                data.labels.forEach(label => {
+                    html += '<th class="text-center p-1" style="width: ' + (80/numSeqs) + '%;">' + label + '</th>';
+                });
+                html += '</tr></thead><tbody>';
+                data.matrix.forEach((row, i) => {
+                    html += '<tr><th class="table-light p-1">' + data.labels[i] + '</th>';
+                    row.forEach(val => {
+                        const color = val >= 80 ? 'table-success' : val >= 60 ? 'table-warning' : val >= 40 ? 'table-info' : '';
+                        html += '<td class="text-center p-1 ' + color + '">' + val.toFixed(0) + '%</td>';
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            } else {
+                // For more than 4, show a compact badge list view
+                html += '<div style="font-size: 11px;">';
+                html += '<p class="mb-2 text-muted small"><i class="fas fa-info-circle"></i> Pairwise identities (' + numSeqs + ' sequences):</p>';
+                for (let i = 0; i < data.matrix.length; i++) {
+                    for (let j = i + 1; j < data.matrix[i].length; j++) {
+                        const val = data.matrix[i][j];
+                        const color = val >= 80 ? 'success' : val >= 60 ? 'warning' : 'secondary';
+                        html += '<span class="badge bg-' + color + ' me-1 mb-1" style="font-size: 10px;">' + data.labels[i] + '-' + data.labels[j] + ': ' + val.toFixed(0) + '%</span>';
+                    }
+                }
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+            document.getElementById('identityMatrixResults').innerHTML = html;
+            showAlert('Identity matrix calculated', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 3. Alignment Coordinates
+document.getElementById('coordinatesForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('coordSeq1').value.trim();
+    const seq2 = document.getElementById('coordSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/coordinates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Coordinates</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="row g-1">';
+            html += '<div class="col-6"><strong>Target Start:</strong> ' + data.coordinates.target_start + '</div>';
+            html += '<div class="col-6"><strong>Target End:</strong> ' + data.coordinates.target_end + '</div>';
+            html += '<div class="col-6"><strong>Query Start:</strong> ' + data.coordinates.query_start + '</div>';
+            html += '<div class="col-6"><strong>Query End:</strong> ' + data.coordinates.query_end + '</div>';
+            html += '<div class="col-6"><strong>Score:</strong> ' + data.coordinates.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Mode:</strong> ' + data.coordinates.mode + '</div>';
+            html += '</div></div></div>';
+            document.getElementById('coordinatesResults').innerHTML = html;
+            showAlert('Coordinates extracted', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 4. Codon-Aware Alignment
+document.getElementById('codonAwareForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('codonSeq1').value.trim();
+    const seq2 = document.getElementById('codonSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    if (seq1.length % 3 !== 0 || seq2.length % 3 !== 0) {
+        showAlert('Sequences must be multiples of 3 for codon-aware alignment', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/codon_aware', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Codon-Aware Results</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2">';
+            html += '<pre class="mb-2" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + data.alignment + '</pre>';
+            html += '<div class="row g-1" style="font-size: 11px;">';
+            html += '<div class="col-6"><strong>Score:</strong> ' + data.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Codon Matches:</strong> ' + data.codon_statistics.codon_matches + '</div>';
+            html += '<div class="col-6"><strong>Codon Mismatches:</strong> ' + data.codon_statistics.codon_mismatches + '</div>';
+            html += '<div class="col-6"><strong>Codon Identity:</strong> ' + data.codon_statistics.codon_identity_percent.toFixed(1) + '%</div>';
+            html += '</div></div></div>';
+            document.getElementById('codonAwareResults').innerHTML = html;
+            showAlert('Codon-aware alignment completed', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => showAlert('Request failed', 'danger'));
+});
+
+// 5. Detailed Statistics
+document.getElementById('detailedStatsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const seq1 = document.getElementById('statsSeq1').value.trim();
+    const seq2 = document.getElementById('statsSeq2').value.trim();
+
+    if (!seq1 || !seq2) {
+        showAlert('Please enter both sequences', 'warning');
+        return;
+    }
+
+    fetch('/api/alignment/detailed_stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence1: seq1, sequence2: seq2 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const stats = data.statistics;
+            let html = '<div class="card border-0 shadow-sm">';
+            html += '<div class="card-header py-2 bg-light">';
+            html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Statistics</h6>';
+            html += '</div>';
+            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="row g-1">';
+            html += '<div class="col-6"><strong>Score:</strong> ' + stats.score.toFixed(2) + '</div>';
+            html += '<div class="col-6"><strong>Length:</strong> ' + stats.alignment_length + '</div>';
+            html += '<div class="col-6"><strong>Matches:</strong> ' + stats.matches + '</div>';
+            html += '<div class="col-6"><strong>Mismatches:</strong> ' + stats.mismatches + '</div>';
+            html += '<div class="col-6"><strong>Gap Opens:</strong> ' + stats.gap_opens + '</div>';
+            html += '<div class="col-6"><strong>Gap Extends:</strong> ' + stats.gap_extends + '</div>';
+            html += '<div class="col-6"><strong>Gaps Seq1:</strong> ' + stats.gaps_seq1 + '</div>';
+            html += '<div class="col-6"><strong>Gaps Seq2:</strong> ' + stats.gaps_seq2 + '</div>';
+            html += '<div class="col-6"><strong>Total Gaps:</strong> ' + stats.total_gaps + '</div>';
+            html += '<div class="col-6"><strong>Identity:</strong> ' + stats.identity_percent.toFixed(1) + '%</div>';
+            html += '<div class="col-6"><strong>Similarity:</strong> ' + stats.similarity_percent.toFixed(1) + '%</div>';
+            html += '<div class="col-6"><strong>Gap %:</strong> ' + stats.gap_percent.toFixed(1) + '%</div>';
+            html += '</div></div></div>';
+            document.getElementById('detailedStatsResults').innerHTML = html;
+            showAlert('Detailed statistics calculated', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Request failed: ' + error.message, 'danger');
+    });
+});
+
+// Example data loading functions for Advanced tab
+function loadAllAlignmentsExample() {
+    document.getElementById('allAlignSeq1').value = 'ACGTACGT';
+    document.getElementById('allAlignSeq2').value = 'ACGTACCGT';
+    document.getElementById('maxAlignments').value = '5';
+}
+
+function loadIdentityMatrixExample() {
+    document.getElementById('matrixSeqs').value = 'ACGTACGTACGT\nACGTACCGTACGT\nACGTACGACGT\nACGTACGTAC';
+}
+
+function loadCoordinatesExample() {
+    document.getElementById('coordSeq1').value = 'ACGTACGTACGT';
+    document.getElementById('coordSeq2').value = 'ACGTACCGTACGT';
+}
+
+function loadCodonAwareExample() {
+    document.getElementById('codonSeq1').value = 'ATGCGATCG';
+    document.getElementById('codonSeq2').value = 'ATGCCATCG';
+}
+
+function loadDetailedStatsExample() {
+    document.getElementById('statsSeq1').value = 'ACGTACGTACGT';
+    document.getElementById('statsSeq2').value = 'ACGTACCGTACGT';
+}
+
+// File I/O Example - Load example alignment programmatically
+function loadFileIOExample() {
+    // Create example sequences
+    const exampleSequences = [
+        {id: 'Seq1', sequence: 'ACGTACGTACGT', length: 12},
+        {id: 'Seq2', sequence: 'ACGTACCGTACGT', length: 13},
+        {id: 'Seq3', sequence: 'ACGTACGACGT', length: 11},
+        {id: 'Seq4', sequence: 'ACGTACGTAC', length: 10}
+    ];
+
+    // Store as loaded alignment
+    loadedAlignment = exampleSequences;
+
+    // Display the example alignment
+    displayLoadedAlignment({
+        sequences: exampleSequences,
+        num_sequences: exampleSequences.length
+    });
+
+    // Enable export button
+    document.getElementById('exportAlignBtn').disabled = false;
+
+    showAlert('Loaded ' + exampleSequences.length + ' example sequences', 'success');
+}
+</script>

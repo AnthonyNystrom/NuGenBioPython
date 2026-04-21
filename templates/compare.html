@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Compare - NuGenBioPython{% endblock %}
+
+{% block content %}
+{# Compare hub — Pairwise/MSA alignment + BLAST + SearchIO result parsing #}
+{% set tabs = [
+    {"key": "alignment", "title": "Alignment", "icon": "fa-align-center",  "body": "_partials/_hub_compare/alignment_body.html"},
+    {"key": "blast",     "title": "BLAST",     "icon": "fa-search",        "body": "_partials/_hub_compare/blast_body.html"},
+    {"key": "searchio",  "title": "SearchIO",  "icon": "fa-file-code",     "body": "_partials/_hub_compare/searchio_body.html"},
+] %}
+{% set active_tab = active_tab | default('alignment') %}
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-balance-scale"></i> Compare
+        </h2>
+        <p class="lead mb-3">Sequence alignment, BLAST search, and result parsing</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="compareHubTabs" role="tablist">
+    {% for t in tabs %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if t.key == active_tab %}active{% endif %}"
+                id="hub-tab-{{ t.key }}"
+                data-bs-toggle="tab"
+                data-bs-target="#hub-pane-{{ t.key }}"
+                type="button" role="tab">
+            <i class="fas {{ t.icon }} me-2"></i>{{ t.title }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="tab-content" id="compareHubContent">
+    {% for t in tabs %}
+    <div class="tab-pane fade {% if t.key == active_tab %}show active{% endif %}"
+         id="hub-pane-{{ t.key }}" role="tabpanel">
+        {% include t.body %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% include "_partials/_hub_compare/alignment_scripts.html" %}
+{% include "_partials/_hub_compare/blast_scripts.html" %}
+{% include "_partials/_hub_compare/searchio_scripts.html" %}
+{% endblock %}

@@ -1,0 +1,411 @@
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+<style>
+    #phyloTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #phyloTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-project-diagram"></i> Phylogenetics
+        </h2>
+        <p class="lead mb-3">Comprehensive phylogenetic tree analysis using Bio.Phylo</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="phyloTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab">
+                <i class="fas fa-upload d-block mb-1"></i>
+                <small>Parse Tree</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="build-tab" data-bs-toggle="tab" data-bs-target="#build" type="button" role="tab">
+                <i class="fas fa-hammer d-block mb-1"></i>
+                <small>Build Tree</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="manipulate-tab" data-bs-toggle="tab" data-bs-target="#manipulate" type="button" role="tab">
+                <i class="fas fa-edit d-block mb-1"></i>
+                <small>Manipulate</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="analyze-tab" data-bs-toggle="tab" data-bs-target="#analyze" type="button" role="tab">
+                <i class="fas fa-search d-block mb-1"></i>
+                <small>Analyze</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                <i class="fas fa-download d-block mb-1"></i>
+                <small>Export</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="phyloTabContent">
+            <!-- Parse Tree Tab -->
+            <div class="tab-pane fade show active" id="parse" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            {{ card_header("Phylogenetic Tree Input", icon="fa-upload") }}
+                            <div class="card-body py-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning mb-2 small"><i class="fas fa-file"></i> Upload Tree File</h6>
+                                        <form id="treeForm" enctype="multipart/form-data">
+                                            <div class="mb-2">
+                                                <label for="treeFile" class="form-label small">Tree File</label>
+                                                <input type="file" class="form-control form-control-sm" id="treeFile" name="file"
+                                                       accept=".nwk,.newick,.nex,.nexus,.xml,.phyloxml">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label for="treeFormat" class="form-label small">Tree Format</label>
+                                                <select class="form-select form-select-sm" id="treeFormat" name="format">
+                                                    <option value="newick">Newick</option>
+                                                    <option value="nexus">NEXUS</option>
+                                                    <option value="phyloxml">PhyloXML</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="showConfidence" name="show_confidence">
+                                                <label class="form-check-label small" for="showConfidence">
+                                                    Show confidence values
+                                                </label>
+                                            </div>
+                                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseTreeBtn">
+                                                <i class="fas fa-project-diagram me-2"></i> Parse Tree
+                                            </button>
+                                            {{ load_example_btn("loadExampleTree", label="Load Example") }}
+                                        </form>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning mb-2 small"><i class="fas fa-edit"></i> Or Enter Tree String</h6>
+                                        <div class="mb-2">
+                                            <label for="treeString" class="form-label small">Tree String</label>
+                                            <textarea class="form-control form-control-sm" id="treeString" rows="6"
+                                                    placeholder="Enter tree in Newick format, e.g., ((A,B),(C,D));"></textarea>
+                                        </div>
+                                        <button type="button" class="gradient-btn-outline w-100 mb-2" onclick="parseTreeString()">
+                                            <i class="fas fa-code me-2"></i> Parse String
+                                        </button>
+                                        <button type="button" class="gradient-btn-small w-100" onclick="clearTreeString()">
+                                            <i class="fas fa-eraser me-2"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card mb-3 h-100">
+                            {{ card_header("Tree Information", icon="fa-chart-bar") }}
+                            <div class="card-body py-2" id="treeInfo">
+                                <p class="text-muted text-center small">
+                                    <i class="fas fa-arrow-left fa-2x mb-2"></i><br>
+                                    Upload or enter a phylogenetic tree
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree Visualization -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            {{ card_header("Tree Visualization", icon="fa-image") }}
+                            <div class="card-body py-2 text-center" id="treeVisualization">
+                                <p class="text-muted">
+                                    <i class="fas fa-eye fa-2x mb-3"></i><br>
+                                    Tree visualization will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Build Tree Tab -->
+            <div class="tab-pane fade" id="build" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Build Tree from Alignment", icon="fa-hammer") }}
+                            <div class="card-body py-2">
+                                <form id="buildTreeForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label for="alignmentFile" class="form-label small">Alignment File (or paste below)</label>
+                                        <input type="file" class="form-control form-control-sm" id="alignmentFile" name="file">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="alignmentString" class="form-label small">Or Paste Alignment</label>
+                                        <textarea class="form-control form-control-sm" id="alignmentString" rows="6"
+                                                placeholder=">Seq1&#10;ATCGATCG&#10;>Seq2&#10;ATCGGTCG"></textarea>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="alignmentFormat" class="form-label small">Alignment Format</label>
+                                        <select class="form-select form-select-sm" id="alignmentFormat" name="alignment_format">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="stockholm">Stockholm</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="buildMethod" class="form-label small">Tree Building Method</label>
+                                        <select class="form-select form-select-sm" id="buildMethod" name="method">
+                                            <option value="nj">Neighbor Joining (NJ)</option>
+                                            <option value="upgma">UPGMA</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="distanceModel" class="form-label small">Distance Model</label>
+                                        <select class="form-select form-select-sm" id="distanceModel" name="model">
+                                            <option value="identity">Identity</option>
+                                            <option value="blastn">BLASTN</option>
+                                            <option value="trans">Transition</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mt-2" id="buildTreeBtn">
+                                        <i class="fas fa-hammer me-2"></i> Build Tree
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Distance Matrix", icon="fa-table") }}
+                            <div class="card-body py-2" id="distanceMatrixDisplay">
+                                <p class="text-muted text-center small">Distance matrix will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manipulate Tree Tab -->
+            <div class="tab-pane fade" id="manipulate" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            {{ card_header("Prune Tree", icon="fa-cut") }}
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="pruneTerminal" class="form-label small">Terminal to Remove</label>
+                                    <select class="form-select form-select-sm" id="pruneTerminal">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="pruneTree()">
+                                    <i class="fas fa-cut me-2"></i> Prune
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            {{ card_header("Re-root Tree", icon="fa-arrows-alt") }}
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="rootMethod" id="rootMidpoint" value="midpoint" checked>
+                                    <label class="form-check-label small" for="rootMidpoint">
+                                        Root at midpoint
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="rootMethod" id="rootOutgroup" value="outgroup">
+                                    <label class="form-check-label small" for="rootOutgroup">
+                                        Root with outgroup
+                                    </label>
+                                </div>
+                                <div class="mb-2">
+                                    <select class="form-select form-select-sm" id="rerootTerminal" disabled>
+                                        <option value="">Select outgroup...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="rerootTree()">
+                                    <i class="fas fa-arrows-alt me-2"></i> Re-root
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            {{ card_header("Ladderize Tree", icon="fa-sort") }}
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="ladderizeReverse">
+                                    <label class="form-check-label small" for="ladderizeReverse">
+                                        Reverse order
+                                    </label>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="ladderizeTree()">
+                                    <i class="fas fa-sort me-2"></i> Ladderize
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            {{ card_header("Collapse Branches", icon="fa-compress") }}
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="collapseThreshold" class="form-label small">Branch Length Threshold</label>
+                                    <input type="number" class="form-control form-control-sm" id="collapseThreshold"
+                                           step="0.01" placeholder="e.g., 0.1">
+                                    <div class="form-text">Collapse branches shorter than threshold</div>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="collapseTree()">
+                                    <i class="fas fa-compress me-2"></i> Collapse
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            {{ card_header("Current Tree Status", icon="fa-info-circle") }}
+                            <div class="card-body py-2" id="manipulateInfo">
+                                <p class="text-muted text-center">Load a tree first to enable manipulation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Tree Tab -->
+            <div class="tab-pane fade" id="analyze" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("View Terminals & Clades", icon="fa-list") }}
+                            <div class="card-body py-2">
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="viewTerminals()">
+                                    <i class="fas fa-leaf me-2"></i> View All Terminals
+                                </button>
+                                <button class="gradient-btn-outline w-100" onclick="viewClades()">
+                                    <i class="fas fa-sitemap me-2"></i> View All Clades
+                                </button>
+                                <div id="terminalsCladesList" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            {{ card_header("Find Path to Root", icon="fa-route") }}
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="pathTerminal" class="form-label small">Select Terminal</label>
+                                    <select class="form-select form-select-sm" id="pathTerminal">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="findPath()">
+                                    <i class="fas fa-route me-2"></i> Find Path
+                                </button>
+                                <div id="pathDisplay" class="mt-3"></div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            {{ card_header("Common Ancestor", icon="fa-code-branch") }}
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="ancestor1" class="form-label small">First Terminal</label>
+                                    <select class="form-select form-select-sm" id="ancestor1">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="ancestor2" class="form-label small">Second Terminal</label>
+                                    <select class="form-select form-select-sm" id="ancestor2">
+                                        <option value="">Select terminal...</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="findCommonAncestor()">
+                                    <i class="fas fa-code-branch me-2"></i> Find Common Ancestor
+                                </button>
+                                <div id="ancestorDisplay" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Compare Trees", icon="fa-balance-scale") }}
+                            <div class="card-body py-2">
+                                <p class="small mb-2">Compare current tree with another tree</p>
+                                <div class="mb-2">
+                                    <label for="compareTreeString" class="form-label small">Second Tree (Newick)</label>
+                                    <textarea class="form-control form-control-sm" id="compareTreeString" rows="4"
+                                            placeholder="Enter tree in Newick format"></textarea>
+                                </div>
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="compareTrees()">
+                                    <i class="fas fa-balance-scale me-2"></i> Compare Trees
+                                </button>
+                                <div id="comparisonDisplay"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Tab -->
+            <div class="tab-pane fade" id="export" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Export Tree", icon="fa-file-export") }}
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="exportFormat" class="form-label small">Export Format</label>
+                                    <select class="form-select form-select-sm" id="exportFormat">
+                                        <option value="newick">Newick</option>
+                                        <option value="nexus">NEXUS</option>
+                                        <option value="phyloxml">PhyloXML</option>
+                                    </select>
+                                </div>
+                                <button class="gradient-btn-primary w-100 mb-2" onclick="exportTree()">
+                                    <i class="fas fa-file-export me-2"></i> Export Tree
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Visualization Options", icon="fa-palette") }}
+                            <div class="card-body py-2">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="vizShowConfidence">
+                                    <label class="form-check-label small" for="vizShowConfidence">
+                                        Show confidence values
+                                    </label>
+                                </div>
+                                <button class="gradient-btn-primary w-100" onclick="updateVisualization()">
+                                    <i class="fas fa-sync me-2"></i> Update Visualization
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exported Tree Result -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            {{ card_header("Exported Tree", icon="fa-code") }}
+                            <div class="card-body py-2" id="exportedTree">
+                                <p class="text-muted text-center">
+                                    <i class="fas fa-file-export fa-2x mb-3"></i><br>
+                                    Exported tree will appear here
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

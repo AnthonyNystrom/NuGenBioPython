@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_partials/_hub_landing.html" import landing_hub %}
+
+{% block title %}External Data - NuGenBioPython{% endblock %}
+
+{% block content %}
+{{ landing_hub(
+    title="External Data",
+    subtitle="NCBI, UniProt, KEGG, and other bio-database lookups",
+    icon="fa-database",
+    tools=[
+        {"href": "/database", "title": "NCBI Databases",
+         "icon": "fa-globe",
+         "desc": "Entrez search and record fetch (PubMed, nucleotide, protein, gene, PDB, ...)."},
+        {"href": "/kegg", "title": "KEGG",
+         "icon": "fa-project-diagram",
+         "desc": "KEGG pathway, gene, and compound lookups via the KEGG REST API."},
+        {"href": "/pathway", "title": "Pathway",
+         "icon": "fa-sitemap",
+         "desc": "Reactome and KEGG reaction and pathway retrieval."},
+        {"href": "/swissprot", "title": "SwissProt / UniProt",
+         "icon": "fa-atom",
+         "desc": "Parse SwissProt records and retrieve from UniProt."},
+        {"href": "/unigene", "title": "UniGene",
+         "icon": "fa-dna",
+         "desc": "UniGene cluster parsing and retrieval."},
+        {"href": "/biodata", "title": "BioData",
+         "icon": "fa-chart-bar",
+         "desc": "Codon tables, protein properties, molecular weights, literature mining."},
+    ]
+) }}
+{% endblock %}

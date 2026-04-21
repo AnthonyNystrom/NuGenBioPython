@@ -11,6 +11,22 @@ def index():
     return render_template('index.html')
 
 
+# --- Phase-3 landing hubs -------------------------------------------------
+# Sequences and External-data couldn't be fully consolidated (10 and 30 DOM
+# id collisions respectively between source pages) without a JS-side
+# migration. Instead, these hubs surface the sub-tools as linked cards so
+# users still get the sidebar grouping without risking broken JS.
+
+@bp.route('/sequences')
+def sequences_hub():
+    return render_template('sequences.html')
+
+
+@bp.route('/data')
+def data_hub():
+    return render_template('data.html')
+
+
 @bp.route('/sequence')
 def sequence_tools():
     return render_template('sequence.html')
@@ -28,16 +44,28 @@ def seqio_tools():
 
 @bp.route('/alignment')
 def alignment_tools():
-    return render_template('alignment.html')
+    return render_template('compare.html', active_tab='alignment')
+
+
+@bp.route('/compare')
+def compare_hub():
+    return render_template('compare.html', active_tab='alignment')
 
 
 @bp.route('/phylo')
 def phylo_tools():
-    return render_template('phylo.html')
+    return render_template('phylogeny.html', active_tab='phylo')
+
+
+@bp.route('/phylogeny')
+def phylogeny_hub():
+    return render_template('phylogeny.html', active_tab='phylo')
 
 
 @bp.route('/structure')
 def structure_tools():
+    # Structure is already a self-contained hub (all analyses tabbed in one
+    # page). No consolidation needed; we just add the URL alias.
     return render_template('structure.html')
 
 
@@ -65,12 +93,12 @@ def patterns_hub():
 
 @bp.route('/clustering')
 def clustering_tools():
-    return render_template('clustering.html')
+    return render_template('phylogeny.html', active_tab='clustering')
 
 
 @bp.route('/blast')
 def blast_tools():
-    return render_template('blast.html')
+    return render_template('compare.html', active_tab='blast')
 
 
 @bp.route('/kegg')
@@ -85,7 +113,7 @@ def genomediagram_tools():
 
 @bp.route('/popgen')
 def popgen_tools():
-    return render_template('popgen.html')
+    return render_template('phylogeny.html', active_tab='popgen')
 
 
 @bp.route('/pathway')
@@ -105,7 +133,7 @@ def hmm_tools():
 
 @bp.route('/searchio')
 def searchio_tools():
-    return render_template('searchio.html')
+    return render_template('compare.html', active_tab='searchio')
 
 
 @bp.route('/swissprot')

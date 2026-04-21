@@ -1,0 +1,263 @@
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+<div class="row mb-3">
+    <div class="col-12">
+        <h2 class="text-info">
+            <i class="fas fa-project-diagram"></i> Clustering Analysis
+        </h2>
+        <p class="lead">Perform clustering analysis on biological data using various algorithms</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            {{ card_header("Data Input", icon="fa-table") }}
+            <div class="card-body py-2">
+                <form id="clusteringForm">
+                    <div class="mb-2">
+                        <label for="dataMatrix" class="form-label small">Data Matrix</label>
+                        <textarea class="form-control form-control-sm" id="dataMatrix" rows="6" 
+                                placeholder="Enter data matrix (CSV format):&#10;1.2,2.3,3.1&#10;2.1,1.8,3.5&#10;3.2,3.8,1.2&#10;1.1,2.1,3.7"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Enter data as comma-separated values, one sample per row
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label for="sampleNames" class="form-label small">Sample Names (Optional)</label>
+                        <input type="text" class="form-control form-control-sm" id="sampleNames" 
+                               placeholder="e.g., GeneA,GeneB,GeneC,GeneD or Patient1,Patient2,Patient3">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Comma-separated names for each row (leave empty for auto-numbering)
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="clusterMethod" class="form-label small">Clustering Method</label>
+                                <select class="form-select form-select-sm" id="clusterMethod" onchange="updateParameters()">
+                                    <optgroup label="Scikit-Learn Methods">
+                                        <option value="kmeans">K-Means</option>
+                                        <option value="hierarchical">Hierarchical</option>
+                                        <option value="dbscan">DBSCAN</option>
+                                    </optgroup>
+                                    <optgroup label="BioPython Bio.Cluster">
+                                        <option value="biocluster_kcluster">Bio.Cluster K-Means</option>
+                                        <option value="biocluster_kmedoids">Bio.Cluster K-Medoids</option>
+                                        <option value="biocluster_tree">Bio.Cluster Hierarchical</option>
+                                        <option value="biocluster_som">Bio.Cluster SOM</option>
+                                        <option value="biocluster_pca">Bio.Cluster PCA</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2" id="clustersGroup">
+                                <label for="nClusters" class="form-label small">Number of Clusters</label>
+                                <input type="number" class="form-control form-control-sm" id="nClusters" value="3" min="2" max="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="dbscanParameters" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="eps" class="form-label small">Epsilon (ε)</label>
+                                    <input type="number" step="0.1" class="form-control form-control-sm" id="eps" value="0.5" min="0.1">
+                                    <div class="form-text">Maximum distance between points in the same cluster</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="minSamples" class="form-label small">Min Samples</label>
+                                    <input type="number" class="form-control form-control-sm" id="minSamples" value="5" min="1">
+                                    <div class="form-text">Minimum points required to form a dense region</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bioclusterParameters" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6" id="distanceMethodGroup">
+                                <div class="mb-2">
+                                    <label for="distanceMethod" class="form-label small">Distance Method</label>
+                                    <select class="form-select form-select-sm" id="distanceMethod">
+                                        <option value="e">Euclidean Distance</option>
+                                        <option value="c">Pearson Correlation</option>
+                                        <option value="a">Absolute Correlation</option>
+                                        <option value="u">Uncentered Correlation</option>
+                                        <option value="x">Absolute Uncentered Correlation</option>
+                                        <option value="s">Spearman's Rank</option>
+                                        <option value="k">Kendall's τ</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="nPassGroup">
+                                <div class="mb-2">
+                                    <label for="nPass" class="form-label small">Number of Passes</label>
+                                    <input type="number" class="form-control form-control-sm" id="nPass" value="10" min="1">
+                                    <div class="form-text">Number of times clustering is performed</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="linkageMethodGroup" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="linkageMethod" class="form-label small">Linkage Method</label>
+                                    <select class="form-select form-select-sm" id="linkageMethod">
+                                        <option value="s">Single Linkage</option>
+                                        <option value="m">Complete Linkage</option>
+                                        <option value="a">Average Linkage</option>
+                                        <option value="c">Centroid Linkage</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="somParametersGroup" style="display: none;">
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somXDim" class="form-label small">Grid X Dimension</label>
+                                    <input type="number" class="form-control form-control-sm" id="somXDim" value="3" min="2" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somYDim" class="form-label small">Grid Y Dimension</label>
+                                    <input type="number" class="form-control form-control-sm" id="somYDim" value="3" min="2" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-2">
+                                    <label for="somIter" class="form-label small">Iterations</label>
+                                    <input type="number" class="form-control form-control-sm" id="somIter" value="1000" min="100" step="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-3" id="clusterBtn">
+                        <i class="fas fa-project-diagram"></i> Perform Clustering
+                    </button>
+                    {{ load_example_btn("loadClusteringExample", label="Load Example", icon_spacing="") }}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            {{ card_header("Clustering Results", icon="fa-info-circle") }}
+            <div class="card-body py-3" id="clusteringInfo">
+                <div class="text-muted text-center py-4">
+                    <i class="fas fa-arrow-left fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <p class="mb-0">Perform clustering to see results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            {{ card_header("Cluster Visualization", icon="fa-chart-scatter") }}
+            <div class="card-body py-4" id="clusterVisualization">
+                <div class="text-muted text-center py-5">
+                    <i class="fas fa-chart-scatter fa-3x mb-3" style="opacity: 0.2;"></i>
+                    <p class="mb-0">Cluster visualization will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            {{ card_header("Cluster Assignments", icon="fa-table") }}
+            <div class="card-body py-3" id="clusterAssignments">
+                <div class="text-muted text-center py-4">
+                    <p class="mb-0">Cluster assignments will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            {{ card_header("Clustering Methods Information", icon="fa-info-circle") }}
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-info small">K-Means</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Partitional clustering</li>
+                            <li><i class="fas fa-check text-success"></i> Requires number of clusters</li>
+                            <li><i class="fas fa-check text-success"></i> Minimizes within-cluster variance</li>
+                            <li><i class="fas fa-check text-success"></i> Good for spherical clusters</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Hierarchical</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Creates cluster hierarchy</li>
+                            <li><i class="fas fa-check text-success"></i> Produces dendrogram</li>
+                            <li><i class="fas fa-check text-success"></i> No need to specify cluster count</li>
+                            <li><i class="fas fa-check text-success"></i> Good for nested clusters</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">DBSCAN</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Density-based clustering</li>
+                            <li><i class="fas fa-check text-success"></i> Finds arbitrary shaped clusters</li>
+                            <li><i class="fas fa-check text-success"></i> Handles noise and outliers</li>
+                            <li><i class="fas fa-check text-success"></i> No need to specify cluster count</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Bio.Cluster Methods</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster K-Means:</strong> Gene expression clustering with various distance metrics</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster K-Medoids:</strong> Robust clustering using actual data points as centers</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster Hierarchical:</strong> Build phylogenetic-like trees for gene relationships</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster SOM:</strong> Self-organizing map for pattern discovery</li>
+                            <li><i class="fas fa-dna text-success"></i> <strong>Bio.Cluster PCA:</strong> Dimensionality reduction and variance analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info small"><i class="fas fa-lightbulb"></i> Use Cases</h6>
+                        <div>
+                            <strong>Gene Expression Analysis:</strong>
+                            <ul class="small">
+                                <li>Group genes with similar expression patterns</li>
+                                <li>Identify co-regulated gene clusters</li>
+                                <li>Sample classification based on expression profiles</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Protein Analysis:</strong>
+                            <ul class="small">
+                                <li>Classify proteins by structural similarity</li>
+                                <li>Group sequences by evolutionary relationships</li>
+                                <li>Identify functional protein families</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

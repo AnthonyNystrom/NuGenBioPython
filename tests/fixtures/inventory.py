@@ -50,15 +50,27 @@ PAGE_URLS = [
     # resolve to hub views with the correct tab preselected; every old URL
     # must continue to render 200 for backward compatibility.
     "/patterns",
+    "/phylogeny",
+    "/compare",
+    "/sequences",
+    "/data",
 ]
 
 # Hub → active_tab mapping. Used by tests to verify that old URLs still
 # preselect their correct tab inside the new hub view.
 HUB_TAB_PRESELECTION = [
     # (url, hub_name, expected_active_tab)
-    ("/patterns",    "patterns", "motifs"),
-    ("/motifs",      "patterns", "motifs"),
-    ("/restriction", "patterns", "restriction"),
+    ("/patterns",    "patterns",  "motifs"),
+    ("/motifs",      "patterns",  "motifs"),
+    ("/restriction", "patterns",  "restriction"),
+    ("/phylogeny",   "phylogeny", "phylo"),
+    ("/phylo",       "phylogeny", "phylo"),
+    ("/clustering",  "phylogeny", "clustering"),
+    ("/popgen",      "phylogeny", "popgen"),
+    ("/compare",     "compare",   "alignment"),
+    ("/alignment",   "compare",   "alignment"),
+    ("/blast",       "compare",   "blast"),
+    ("/searchio",    "compare",   "searchio"),
 ]
 
 # ---------------------------------------------------------------------------

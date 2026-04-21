@@ -1,0 +1,560 @@
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+<style>
+    #alignmentTabs button.nav-link:hover {
+        background: rgba(255,255,255,0.25) !important;
+    }
+    #alignmentTabs button.nav-link.active {
+        background: rgba(255,255,255,0.15) !important;
+    }
+</style>
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-align-center"></i> Pairwise Alignment
+        </h2>
+        <p class="lead mb-3">Perform pairwise and multiple sequence alignments using Bio.Align</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-gradient p-0 border-0">
+        <div class="d-flex flex-wrap" id="alignmentTabs" role="tablist">
+            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="pairwise-tab" data-bs-toggle="tab" data-bs-target="#pairwise" type="button" role="tab">
+                <i class="fas fa-align-center d-block mb-1"></i>
+                <small>Pairwise</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="msa-tab" data-bs-toggle="tab" data-bs-target="#msa" type="button" role="tab">
+                <i class="fas fa-align-justify d-block mb-1"></i>
+                <small>MSA</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="conservation-tab" data-bs-toggle="tab" data-bs-target="#conservation" type="button" role="tab">
+                <i class="fas fa-chart-line d-block mb-1"></i>
+                <small>Conservation</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fileio-tab" data-bs-toggle="tab" data-bs-target="#fileio" type="button" role="tab">
+                <i class="fas fa-file-import d-block mb-1"></i>
+                <small>File I/O</small>
+            </button>
+            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+                <i class="fas fa-code-branch d-block mb-1"></i>
+                <small>Advanced</small>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="alignmentTabContent">
+            <div class="tab-pane fade show active" id="pairwise" role="tabpanel">
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            {{ card_header("Input Sequences", icon="fa-edit") }}
+            <div class="card-body py-2">
+                <form id="alignmentForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="sequence1" class="form-label small">Sequence 1</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="sequence1" rows="4"
+                                        placeholder="Enter first sequence..."></textarea>
+                                <input type="file" class="form-control form-control-sm mt-1" id="file1" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(1)">
+                                <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <label for="sequence2" class="form-label small">Sequence 2</label>
+                                <textarea class="form-control form-control-sm sequence-display" id="sequence2" rows="4"
+                                        placeholder="Enter second sequence..."></textarea>
+                                <input type="file" class="form-control form-control-sm mt-1" id="file2" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(2)">
+                                <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="alignBtn">
+                        <i class="fas fa-align-center me-2"></i>Align Sequences
+                    </button>
+                    {{ load_example_btn("loadExampleAlignment") }}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            {{ card_header("Alignment Parameters", icon="fa-cog") }}
+            <div class="card-body py-2">
+                <div class="mb-3">
+                    <label for="alignmentMode" class="form-label small">Alignment Mode</label>
+                    <select class="form-select form-select-sm" id="alignmentMode" onchange="toggleSemiGlobalOptions()">
+                        <option value="global" selected>Global (Needleman-Wunsch)</option>
+                        <option value="local">Local (Smith-Waterman)</option>
+                        <option value="semi-global">Semi-Global</option>
+                    </select>
+                </div>
+                <div id="semiGlobalDiv" style="display:none;">
+                    <div class="mb-2">
+                        <label class="form-label small">Query End Gap Score</label>
+                        <input type="number" class="form-control form-control-sm" id="endGapQuery" value="0" step="0.1">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Target End Gap Score</label>
+                        <input type="number" class="form-control form-control-sm" id="endGapTarget" value="0" step="0.1">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="substitutionMatrix" class="form-label small">Substitution Matrix</label>
+                    <select class="form-select form-select-sm" id="substitutionMatrix" onchange="toggleManualScoring()">
+                        <option value="none" selected>None (Manual Scoring)</option>
+                        <optgroup label="Protein Matrices">
+                            <option value="BLOSUM62">BLOSUM62</option>
+                            <option value="BLOSUM45">BLOSUM45</option>
+                            <option value="BLOSUM50">BLOSUM50</option>
+                            <option value="BLOSUM80">BLOSUM80</option>
+                            <option value="BLOSUM90">BLOSUM90</option>
+                            <option value="PAM30">PAM30</option>
+                            <option value="PAM70">PAM70</option>
+                            <option value="PAM250">PAM250</option>
+                            <option value="GONNET1992">GONNET1992</option>
+                        </optgroup>
+                        <optgroup label="DNA Matrices">
+                            <option value="NUC.4.4">NUC.4.4</option>
+                            <option value="MATCH">MATCH</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div id="manualScoringDiv">
+                    <div class="mb-3">
+                        <label for="matchScore" class="form-label small">Match Score</label>
+                        <input type="number" class="form-control form-control-sm" id="matchScore" value="2" min="-10" max="10">
+                    </div>
+                    <div class="mb-3">
+                        <label for="mismatchScore" class="form-label small">Mismatch Score</label>
+                        <input type="number" class="form-control form-control-sm" id="mismatchScore" value="-1" min="-10" max="10">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="gapOpen" class="form-label small">Gap Open Penalty</label>
+                    <input type="number" class="form-control form-control-sm" id="gapOpen" value="-2" min="-10" max="0">
+                </div>
+                <div class="mb-3">
+                    <label for="gapExtend" class="form-label small">Gap Extend Penalty</label>
+                    <input type="number" step="0.1" class="form-control form-control-sm" id="gapExtend" value="-0.5" min="-10" max="0">
+                </div>
+                <button type="button" class="gradient-btn-small w-100" onclick="resetDefaults()">
+                    <i class="fas fa-undo me-2"></i> Reset Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Alignment Results</h6>
+                <div>
+                    <span class="badge bg-info me-2" id="alignmentScore" style="display:none;"></span>
+                    <button type="button" class="gradient-btn-small" id="exportBtn" onclick="exportAlignment()" style="display:none;">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body py-2" id="alignmentResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Enter two sequences and click "Align" to see results
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            {{ card_header("Alignment Information", icon="fa-info-circle") }}
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Scoring System</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Match: Positive score for identical residues</li>
+                            <li><i class="fas fa-times text-danger"></i> Mismatch: Negative score for different residues</li>
+                            <li><i class="fas fa-minus text-warning"></i> Gap Open: Penalty for starting a gap</li>
+                            <li><i class="fas fa-minus text-warning"></i> Gap Extend: Penalty for extending a gap</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Algorithm</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Uses dynamic programming</li>
+                            <li><i class="fas fa-check text-success"></i> Needleman-Wunsch global alignment</li>
+                            <li><i class="fas fa-check text-success"></i> Optimal alignment guaranteed</li>
+                            <li><i class="fas fa-check text-success"></i> Handles insertions and deletions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-info small">Output</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Visual alignment display</li>
+                            <li><i class="fas fa-check text-success"></i> Alignment score</li>
+                            <li><i class="fas fa-check text-success"></i> Match/mismatch indicators</li>
+                            <li><i class="fas fa-check text-success"></i> Gap positions marked</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </div><!-- End Pairwise Tab -->
+
+            <!-- MSA Tab -->
+            <div class="tab-pane fade" id="msa" role="tabpanel">
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-3">
+            {{ card_header("Input Multiple Sequences", icon="fa-edit") }}
+            <div class="card-body py-2">
+                <form id="msaForm">
+                    <div class="mb-2">
+                        <label class="form-label small">Enter Sequences (one per line)</label>
+                        <textarea class="form-control form-control-sm sequence-display" id="msaSequences" rows="8"
+                                placeholder="Enter sequences, one per line...&#10;ACGTACGTACGT&#10;ACGTACCGTACGT&#10;ACGTACGACGT"></textarea>
+                        <div class="form-text"><i class="fas fa-info-circle"></i> Enter at least 2 sequences</div>
+                    </div>
+                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="msaAlignBtn">
+                        <i class="fas fa-align-justify me-2"></i>Align Multiple Sequences
+                    </button>
+                    {{ load_example_btn("loadExampleMSA") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> MSA Results</h6>
+                <div>
+                    <span class="badge bg-info me-2" id="msaScore" style="display:none;"></span>
+                    <button type="button" class="gradient-btn-small" id="msaExportBtn" onclick="exportMSA()" style="display:none;">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body py-2" id="msaResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Enter multiple sequences and click "Align" to see results
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            {{ card_header("Multiple Sequence Alignment Info", icon="fa-info-circle") }}
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Progressive Alignment</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Aligns sequences progressively</li>
+                            <li><i class="fas fa-check text-success"></i> Works with any number of sequences</li>
+                            <li><i class="fas fa-check text-success"></i> Identifies conserved regions</li>
+                            <li><i class="fas fa-check text-success"></i> Useful for phylogenetic analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info small">Applications</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Compare related sequences</li>
+                            <li><i class="fas fa-check text-success"></i> Find conserved motifs</li>
+                            <li><i class="fas fa-check text-success"></i> Evolutionary studies</li>
+                            <li><i class="fas fa-check text-success"></i> Protein family analysis</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </div><!-- End MSA Tab -->
+
+            <!-- Conservation Tab -->
+            <div class="tab-pane fade" id="conservation" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Input Aligned Sequences", icon="fa-dna") }}
+                            <div class="card-body py-2">
+                                <form id="conservationForm">
+                                    <textarea class="form-control form-control-sm sequence-display" id="conservationSeqs" rows="8"
+                                            placeholder="Enter aligned sequences, one per line...&#10;ACGTACGTACGT&#10;ACGTACCGTACGT&#10;ACGTACGACGT"
+                                            oninput="document.getElementById('consensusBtn').disabled = true; document.getElementById('trimBtn').disabled = true;"></textarea>
+                                    <div class="form-text"><i class="fas fa-info-circle"></i> Enter pre-aligned sequences</div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-chart-line me-2"></i>Analyze Conservation
+                                    </button>
+                                    {{ load_example_btn("loadConservationExample") }}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Consensus Options", icon="fa-wrench") }}
+                            <div class="card-body py-2">
+                                <button type="button" class="gradient-btn-info w-100 mb-2" onclick="generateConsensus()" id="consensusBtn" disabled>
+                                    <i class="fas fa-dna me-2"></i>Generate Consensus
+                                </button>
+                                <button type="button" class="gradient-btn-warning w-100" onclick="trimAlignment()" id="trimBtn" disabled>
+                                    <i class="fas fa-cut me-2"></i>Trim Alignment
+                                </button>
+                                <div class="mt-3" id="trimOptions" style="display:none;">
+                                    <label class="form-label small">Min Conservation %</label>
+                                    <input type="number" class="form-control form-control-sm" id="minConservation" value="50" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            {{ card_header("Conservation Analysis Results", icon="fa-chart-bar") }}
+                            <div class="card-body py-2" id="conservationResults">
+                                <p class="text-muted text-center">Analyze alignment to see conservation data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End Conservation Tab -->
+
+            <!-- File I/O Tab -->
+            <div class="tab-pane fade" id="fileio" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Load Alignment File", icon="fa-upload") }}
+                            <div class="card-body py-2">
+                                <form id="loadAlignmentForm" enctype="multipart/form-data">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Choose Alignment File</label>
+                                        <input type="file" class="form-control form-control-sm" id="alignmentFile" name="file">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Format</label>
+                                        <select class="form-select form-select-sm" id="alignmentFileFormat">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="stockholm">Stockholm</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="nexus">NEXUS</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-file-import me-2"></i>Load Alignment
+                                    </button>
+                                    {{ load_example_btn("loadFileIOExample") }}
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            {{ card_header("Export Alignment", icon="fa-download") }}
+                            <div class="card-body py-2">
+                                <form id="exportAlignmentForm">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Export Format</label>
+                                        <select class="form-select form-select-sm" id="exportFormat">
+                                            <option value="fasta">FASTA</option>
+                                            <option value="clustal">Clustal</option>
+                                            <option value="stockholm">Stockholm</option>
+                                            <option value="phylip">PHYLIP</option>
+                                            <option value="nexus">NEXUS</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="gradient-btn-secondary w-100" id="exportAlignBtn" disabled>
+                                        <i class="fas fa-download me-2"></i>Export Alignment
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> Load an alignment first
+                                    </small>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Loaded Alignment</h6>
+                                <span class="badge bg-primary" id="loadedCount">0 sequences</span>
+                            </div>
+                            <div class="card-body py-2" id="loadedAlignmentResults">
+                                <p class="text-muted text-center">Load an alignment file to view sequences</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End File I/O Tab -->
+
+            <!-- Advanced Tab -->
+            <div class="tab-pane fade" id="advanced" role="tabpanel">
+                <!-- Pairwise Analysis Section -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-2"><i class="fas fa-microscope"></i> Pairwise Analysis</h6>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-list"></i> All Alignments</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="allAlignmentsForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="allAlignSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="allAlignSeq2" placeholder="ACGTACCGT">
+                                    <label class="form-label small">Max Results</label>
+                                    <input type="number" class="form-control form-control-sm mb-2" id="maxAlignments" value="5" min="1" max="100">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2">
+                                        <i class="fas fa-list me-1"></i>Generate
+                                    </button>
+                                    {{ load_example_btn("loadAllAlignmentsExample", extra="btn-sm", icon_spacing="me-1") }}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-map-marker-alt"></i> Coordinates</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="coordinatesForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="coordSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="coordSeq2" placeholder="ACGTACCGT">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Extract
+                                    </button>
+                                    {{ load_example_btn("loadCoordinatesExample", extra="btn-sm", icon_spacing="me-1") }}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-chart-pie"></i> Detailed Stats</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="detailedStatsForm">
+                                    <label class="form-label small">Sequence 1</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="statsSeq1" placeholder="ACGTACGT">
+                                    <label class="form-label small">Sequence 2</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="statsSeq2" placeholder="ACGTACCGT">
+                                    <button type="submit" class="gradient-btn-primary w-100 btn-sm mb-2 mt-3">
+                                        <i class="fas fa-chart-pie me-1"></i>Calculate
+                                    </button>
+                                    {{ load_example_btn("loadDetailedStatsExample", extra="btn-sm", icon_spacing="me-1") }}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results for Pairwise Analysis -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div id="allAlignmentsResults"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="coordinatesResults"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="detailedStatsResults"></div>
+                    </div>
+                </div>
+
+                <!-- Multi-Sequence & Specialized Section -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-2"><i class="fas fa-layer-group"></i> Multi-Sequence & Specialized</h6>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Identity Matrix</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="identityMatrixForm">
+                                    <label class="form-label small">Sequences (one per line, max 6 recommended)</label>
+                                    <textarea class="form-control form-control-sm sequence-display" id="matrixSeqs" rows="4" placeholder="ACGTACGT&#10;ACGTACCGT&#10;ACGTACGAT"></textarea>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                        <i class="fas fa-table me-2"></i>Calculate Matrix
+                                    </button>
+                                    {{ load_example_btn("loadIdentityMatrixExample") }}
+                                </form>
+                                <div id="identityMatrixResults" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2 bg-light">
+                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Codon-Aware Alignment</h6>
+                            </div>
+                            <div class="card-body py-2">
+                                <form id="codonAwareForm">
+                                    <label class="form-label small">Coding Sequence 1 (multiple of 3)</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="codonSeq1" placeholder="ATGCGATCG">
+                                    <label class="form-label small">Coding Sequence 2 (multiple of 3)</label>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="codonSeq2" placeholder="ATGCCATCG">
+                                    <div class="form-text mb-2"><i class="fas fa-info-circle"></i> For coding sequences - preserves codon structure</div>
+                                    <button type="submit" class="gradient-btn-primary w-100 mb-2">
+                                        <i class="fas fa-dna me-2"></i>Align Codons
+                                    </button>
+                                    {{ load_example_btn("loadCodonAwareExample") }}
+                                </form>
+                                <div id="codonAwareResults" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- End Advanced Tab -->
+
+        </div><!-- End Tab Content -->
+    </div><!-- End Card Body -->
+</div><!-- End Card -->

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_partials/_hub_landing.html" import landing_hub %}
+
+{% block title %}Sequences - NuGenBioPython{% endblock %}
+
+{% block content %}
+{{ landing_hub(
+    title="Sequences",
+    subtitle="Parse, analyze, and manipulate sequences",
+    icon="fa-dna",
+    tools=[
+        {"href": "/sequence", "title": "Sequence Analysis",
+         "icon": "fa-search",
+         "desc": "GC content, ORFs, translation, melting temperature, codon usage."},
+        {"href": "/seqio", "title": "File I/O (SeqIO)",
+         "icon": "fa-file-import",
+         "desc": "Parse, convert, filter, sort, and transform sequence files in 20+ formats."},
+        {"href": "/features", "title": "Sequence Features",
+         "icon": "fa-puzzle-piece",
+         "desc": "ORF finding, feature creation and extraction, GenBank annotation."},
+    ]
+) }}
+{% endblock %}

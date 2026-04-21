@@ -1,0 +1,48 @@
+{#
+  Landing-hub macro.
+
+  Used when source pages have too many DOM-id collisions to safely render
+  side-by-side in a tabbed view. A landing hub surfaces each sub-tool as a
+  card that links to its existing URL — the user still gets "grouping"
+  semantics in the sidebar IA without the risk of broken JS.
+
+  Usage:
+      {% from "_partials/_hub_landing.html" import landing_hub %}
+      {{ landing_hub(
+          title="Sequences",
+          subtitle="Analyze, parse, and manipulate sequences",
+          icon="fa-dna",
+          tools=[
+              {"href": "/sequence", "title": "Sequence Analysis",
+               "icon": "fa-search", "desc": "GC content, ORFs, Tm, codon usage"},
+              ...
+          ]
+      ) }}
+#}
+{%- macro landing_hub(title, subtitle, icon, tools) -%}
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas {{ icon }}"></i> {{ title }}
+        </h2>
+        <p class="lead mb-3">{{ subtitle }}</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for tool in tools %}
+    <div class="col-md-6 col-xl-4">
+        <a href="{{ tool.href }}" class="text-decoration-none text-reset h-100 d-block">
+            <div class="card h-100 hub-landing-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-2">
+                        <i class="fas {{ tool.icon }} me-2 text-primary"></i>{{ tool.title }}
+                    </h5>
+                    <p class="card-text text-muted small mb-0">{{ tool.desc }}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{%- endmacro -%}

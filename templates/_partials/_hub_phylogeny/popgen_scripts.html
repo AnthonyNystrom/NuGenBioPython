@@ -1,0 +1,253 @@
+
+<script>
+document.getElementById('popgenForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('popgenFile');
+    
+    if (!fileInput.files[0]) {
+        if (window.popgenResults) {
+            displayPopgenResults(window.popgenResults);
+            return;
+        } else {
+            return;
+        }
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    showLoading('parsePopgenBtn');
+    
+    fetch('/api/popgen/parse', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        
+        if (data.success) {
+            displayPopgenResults(data.results);
+        } else {
+            showAlert('Error: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        showAlert('Network error: ' + error.message, 'danger');
+    });
+});
+
+function displayPopgenResults(results) {
+    const resultsDiv = document.getElementById('popgenResults');
+    const countBadge = document.getElementById('popCount');
+
+    // Validate results structure
+    if (!results || !results.populations || !results.loci) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Invalid or incomplete data received</div>';
+        return;
+    }
+
+    countBadge.textContent = `${results.populations.length} populations`;
+    countBadge.style.display = 'inline-block';
+
+    let html = `
+        <div class="mb-3">
+            <h6><i class="fas fa-file-alt"></i> ${results.title}</h6>
+            <p class="text-muted">${results.loci.length} loci across ${results.populations.length} populations</p>
+        </div>
+    `;
+    
+    // Display statistical analysis if available
+    if (results.statistics && !results.statistics.error) {
+        html += `
+            <div class="alert alert-success">
+                <h6><i class="fas fa-chart-bar"></i> Population Genetics Statistics</h6>
+                
+                ${results.statistics.hardy_weinberg && results.statistics.hardy_weinberg.global ? `
+                    <div class="mb-2">
+                        <strong>Hardy-Weinberg Test:</strong> 
+                        <span class="badge bg-info">Global test completed</span>
+                    </div>
+                ` : ''}
+                
+                ${results.statistics.f_statistics && Object.keys(results.statistics.f_statistics).length > 0 ? `
+                    <div class="mb-2">
+                        <strong>F-Statistics:</strong>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            ${Object.entries(results.statistics.f_statistics).map(([key, value]) =>
+                                `<span class="badge bg-secondary">${key}: ${value}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${results.statistics.allele_frequencies && Object.keys(results.statistics.allele_frequencies).length > 0 ? `
+                    <div>
+                        <strong>Allele Frequencies:</strong> 
+                        <span class="badge bg-primary">Available for ${Object.keys(results.statistics.allele_frequencies).length} loci</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else if (results.statistics && results.statistics.error) {
+        html += `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Statistical analysis unavailable: ${results.statistics.error}
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <h6><i class="fas fa-list"></i> Loci</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light"><tr><th>Locus</th><th>Position</th></tr></thead>
+                        <tbody>
+    `;
+
+    results.loci.forEach((locus, index) => {
+        html += `<tr><td><code class="small">${locus}</code></td><td>${index + 1}</td></tr>`;
+    });
+
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <h6><i class="fas fa-users"></i> Populations</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light"><tr><th>Population</th><th>Individuals</th></tr></thead>
+                        <tbody>
+    `;
+
+    results.populations.forEach(pop => {
+        html += `<tr><td><strong>${pop.name}</strong></td><td>${pop.individuals}</td></tr>`;
+    });
+
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    resultsDiv.innerHTML = html;
+
+    // Show advanced analysis section
+    document.getElementById('advancedAnalysisSection').style.display = 'block';
+}
+
+function loadPopgenExample() {
+    showLoading('parsePopgenBtn');
+
+    // Call the dedicated example endpoint - no file upload needed
+    fetch('/api/popgen/load_example', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+
+        if (data.success) {
+            displayPopgenResults(data.results);
+            window.popgenResults = data.results;
+            window.popgenExampleLoaded = true;
+        } else {
+            showAlert('Error loading example: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideLoading('parsePopgenBtn', '<i class="fas fa-chart-bar"></i> Parse GenePop Data');
+        showAlert('Error loading example: ' + error.message, 'danger');
+    });
+}
+
+// Advanced analysis functions
+function runAdvancedAnalysis(endpoint, title) {
+    const fileInput = document.getElementById('popgenFile');
+    const resultsDiv = document.getElementById('advancedResults');
+    const contentDiv = document.getElementById('advancedResultsContent');
+
+    resultsDiv.style.display = 'block';
+
+    // Check if user uploaded a file
+    if (fileInput.files[0]) {
+        contentDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Running analysis...</p></div>';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAdvancedResults(data.results, title);
+            } else {
+                contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+        });
+    } else if (window.popgenExampleLoaded) {
+        // Use example data - create temp file on server
+        contentDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Running analysis with example data...</p></div>';
+
+        fetch(endpoint + '?use_example=true', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAdvancedResults(data.results, title);
+            } else {
+                contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+        });
+    } else {
+        contentDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please upload a GenePop file first or click "Load Example"</div>';
+    }
+}
+
+function displayAdvancedResults(results, title) {
+    const contentDiv = document.getElementById('advancedResultsContent');
+
+    let html = `<h6 class="mb-3"><i class="fas fa-chart-bar"></i> ${title}</h6>`;
+    html += '<div class="table-responsive"><pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">';
+    html += JSON.stringify(results, null, 2);
+    html += '</pre></div>';
+
+    contentDiv.innerHTML = html;
+}
+
+// Pure Python analysis functions
+function runAlleleFrequencies() {
+    runAdvancedAnalysis('/api/popgen/allele_frequencies', 'Allele Frequencies (Pure Python)');
+}
+
+function runHeterozygosityPython() {
+    runAdvancedAnalysis('/api/popgen/heterozygosity_python', 'Heterozygosity Analysis (Pure Python)');
+}
+
+function runHardyWeinbergPython() {
+    runAdvancedAnalysis('/api/popgen/hardy_weinberg_python', 'Hardy-Weinberg Equilibrium Test (Pure Python)');
+}
+
+function runFstPython() {
+    runAdvancedAnalysis('/api/popgen/fst_python', 'Fst Analysis (Pure Python)');
+}
+</script>

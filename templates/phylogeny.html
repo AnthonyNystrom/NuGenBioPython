@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Phylogeny - NuGenBioPython{% endblock %}
+
+{% block content %}
+{# ---------------------------------------------------------------------------
+   Phylogeny hub — consolidates Phylogenetics + Clustering + Population
+   Genetics. Legacy URLs (/phylo, /clustering, /popgen) continue to serve
+   the same sub-tool content but inside this hub with the correct tab
+   preselected via `active_tab`.
+--------------------------------------------------------------------------- #}
+{% set tabs = [
+    {"key": "phylo",      "title": "Phylogenetics",      "icon": "fa-project-diagram", "body": "_partials/_hub_phylogeny/phylo_body.html"},
+    {"key": "clustering", "title": "Clustering",         "icon": "fa-sitemap",         "body": "_partials/_hub_phylogeny/clustering_body.html"},
+    {"key": "popgen",     "title": "Population Genetics","icon": "fa-users",           "body": "_partials/_hub_phylogeny/popgen_body.html"},
+] %}
+{% set active_tab = active_tab | default('phylo') %}
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-tree"></i> Phylogeny
+        </h2>
+        <p class="lead mb-3">Phylogenetic trees, clustering, and population genetics</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="phylogenyHubTabs" role="tablist">
+    {% for t in tabs %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if t.key == active_tab %}active{% endif %}"
+                id="hub-tab-{{ t.key }}"
+                data-bs-toggle="tab"
+                data-bs-target="#hub-pane-{{ t.key }}"
+                type="button" role="tab">
+            <i class="fas {{ t.icon }} me-2"></i>{{ t.title }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="tab-content" id="phylogenyHubContent">
+    {% for t in tabs %}
+    <div class="tab-pane fade {% if t.key == active_tab %}show active{% endif %}"
+         id="hub-pane-{{ t.key }}" role="tabpanel">
+        {% include t.body %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% include "_partials/_hub_phylogeny/phylo_scripts.html" %}
+{% include "_partials/_hub_phylogeny/clustering_scripts.html" %}
+{% include "_partials/_hub_phylogeny/popgen_scripts.html" %}
+{% endblock %}

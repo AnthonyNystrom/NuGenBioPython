@@ -161,6 +161,23 @@ pre {
 }
 
 
+/* ---- Hub landing cards -------------------------------------------------
+   Used by landing-hub pages where sub-tools are surfaced as clickable
+   cards rather than tabbed body inclusion. */
+.hub-landing-card {
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast),
+                border-color var(--transition-fast);
+    cursor: pointer;
+    border-color: var(--color-border);
+}
+.hub-landing-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+
 /* ---- Typography --------------------------------------------------------- */
 body {
     font-family: var(--font-sans);

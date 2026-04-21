@@ -1,0 +1,179 @@
+{% from "_partials/_load_example_button.html" import load_example_btn %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-success">
+            <i class="fas fa-users"></i> Population Genetics
+        </h2>
+        <p class="lead">Analyze population genetic data using Bio.PopGen</p>
+    </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle"></i>
+    <strong>Population Genetics Analysis:</strong> This interface supports GenePop file format parsing and population genetic statistics.
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-upload"></i> Upload GenePop File</h6>
+            </div>
+            <div class="card-body py-2">
+                <form id="popgenForm" enctype="multipart/form-data">
+                    <div class="mb-2">
+                        <label for="popgenFile" class="form-label small">GenePop Data File</label>
+                        <input type="file" class="form-control" id="popgenFile" name="file" 
+                               accept=".gen,.genepop,.txt">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Supported formats: GenePop (.gen, .genepop), text files (.txt)
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="gradient-btn-success w-100 mb-2 mt-3" id="parsePopgenBtn">
+                        <i class="fas fa-chart-bar"></i> Parse GenePop Data
+                    </button>
+                    {{ load_example_btn("loadPopgenExample", label="Load Example", icon_spacing="") }}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> GenePop Format</h6>
+            </div>
+            <div class="card-body py-2">
+                <h6 class="text-success small">File Structure</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-file-alt"></i> Title line</li>
+                    <li><i class="fas fa-list"></i> Locus names</li>
+                    <li><i class="fas fa-users"></i> Population data</li>
+                    <li><i class="fas fa-dna"></i> Individual genotypes</li>
+                </ul>
+                
+                <h6 class="text-success mt-2 small">Analysis Features</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-chart-line"></i> Population statistics</li>
+                    <li><i class="fas fa-balance-scale"></i> Hardy-Weinberg equilibrium</li>
+                    <li><i class="fas fa-exchange-alt"></i> Allele frequencies</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-table"></i> Population Data</h6>
+                <span class="badge bg-success" id="popCount" style="display:none;"></span>
+            </div>
+            <div class="card-body py-2" id="popgenResults">
+                <p class="text-muted text-center">
+                    <i class="fas fa-arrow-up fa-2x mb-3"></i><br>
+                    Upload GenePop data to see population analysis
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3" id="advancedAnalysisSection" style="display:none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-chart-line"></i> Advanced Population Analysis</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Pure Python Implementation</strong>
+                    <p class="mb-0 mt-2 small">These analyses use pure Python implementations and work without external tools.
+                    Results are calculated using numpy/scipy and standard population genetics formulas.</p>
+                </div>
+
+                <p class="text-muted small mb-3">Run additional analyses on the loaded GenePop data:</p>
+
+                <div class="row g-2">
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runAlleleFrequencies()">
+                            <i class="fas fa-chart-pie"></i> Allele Frequencies
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runHeterozygosityPython()">
+                            <i class="fas fa-percentage"></i> Heterozygosity
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runHardyWeinbergPython()">
+                            <i class="fas fa-balance-scale"></i> Hardy-Weinberg Test
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <button class="gradient-btn-info w-100" onclick="runFstPython()">
+                            <i class="fas fa-project-diagram"></i> Fst Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3" id="advancedResults" style="display:none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-table"></i> Advanced Analysis Results</h6>
+            </div>
+            <div class="card-body py-2" id="advancedResultsContent">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Population Genetics Background</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Key Concepts</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-dna text-primary"></i> <strong>Allele Frequency</strong> - Relative frequency of alleles</li>
+                            <li><i class="fas fa-balance-scale text-primary"></i> <strong>Hardy-Weinberg</strong> - Population equilibrium</li>
+                            <li><i class="fas fa-chart-line text-primary"></i> <strong>Genetic Diversity</strong> - Variation within populations</li>
+                            <li><i class="fas fa-exchange-alt text-primary"></i> <strong>Gene Flow</strong> - Migration between populations</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Statistical Measures</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-percentage text-warning"></i> <strong>FST</strong> - Population differentiation</li>
+                            <li><i class="fas fa-calculator text-warning"></i> <strong>Heterozygosity</strong> - Expected vs observed</li>
+                            <li><i class="fas fa-chart-bar text-warning"></i> <strong>Inbreeding</strong> - Coefficient of inbreeding</li>
+                            <li><i class="fas fa-link text-warning"></i> <strong>Linkage</strong> - Genetic linkage analysis</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success small">Applications</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-seedling text-info"></i> <strong>Conservation</strong> - Species preservation</li>
+                            <li><i class="fas fa-microscope text-info"></i> <strong>Disease</strong> - Genetic disease studies</li>
+                            <li><i class="fas fa-globe text-info"></i> <strong>Evolution</strong> - Evolutionary analysis</li>
+                            <li><i class="fas fa-leaf text-info"></i> <strong>Agriculture</strong> - Crop improvement</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
