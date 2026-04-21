@@ -10,12 +10,24 @@ const path = require('path');
 const fs = require('fs');
 const { JSDOM } = require(path.join(__dirname, 'node_modules', 'jsdom'));
 
-const dom = new JSDOM('<!doctype html><html><body></body></html>');
+// url must be set so jsdom gives a non-opaque origin (required by
+// sessionStorage / localStorage access).
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+    url: 'http://localhost/',
+});
 global.window = dom.window;
 global.document = dom.window.document;
 global.DOMParser = dom.window.DOMParser;
+// workspace.js accesses sessionStorage as a bare global (mirrors browser
+// semantics where `window.sessionStorage` and `sessionStorage` are the same).
+global.sessionStorage = dom.window.sessionStorage;
+global.Event = dom.window.Event;
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
+// Stub sessionStorage (jsdom provides it, but ensure isolation across runs)
+global.window.sessionStorage.clear();
+
 const utilsSrc = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'utils.js'), 'utf8');
 eval(utilsSrc.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
 const RP = global.window.ResultsPanel;
@@ -23,6 +35,10 @@ const RP = global.window.ResultsPanel;
 const src = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'formatters.js'), 'utf8');
 eval(src.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
 const F = global.window.NuGenFormatters;
+
+const wsSrc = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'workspace.js'), 'utf8');
+eval(wsSrc.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
+const W = global.window.Workspace;
 
 let pass = 0, fail = 0;
 function t(ok, msg) {
@@ -152,6 +168,59 @@ run('ResultsPanel prefix',       rpHtml, 'id="rp-test-a"', 'data-bs-target="#rp-
 const rpXss = RP.tabs([{ id: 'x', title: '<script>x</script>', content: '' }]);
 t(!rpXss.includes('<script>x</script>'), 'ResultsPanel title XSS-safe');
 t(rpXss.includes('&lt;script&gt;'), 'ResultsPanel title HTML-encoded');
+
+// ---------- Workspace helper ----------
+W.clear();
+t(W.count() === 0, 'Workspace empty after clear()');
+
+// Add / list / get
+const entry = W.add({ type: 'sequence', name: 'seq1', data: 'ATGCATGC' });
+t(!!entry.id, 'Workspace.add returns entry with id');
+t(W.count() === 1, 'Workspace count=1 after add');
+t(W.count('sequence') === 1, 'Workspace.count("sequence") filters by type');
+t(W.list('sequence')[0].name === 'seq1', 'Workspace.list returns the right item');
+t(W.get(entry.id).data === 'ATGCATGC', 'Workspace.get by id');
+
+// Dedup on identical (type + data)
+const dup = W.add({ type: 'sequence', name: 'seq1-again', data: 'ATGCATGC' });
+t(dup.id === entry.id, 'Workspace.add dedupes on same (type, data)');
+t(W.count() === 1, 'Workspace still has 1 item after dup add');
+
+// Different data → distinct entry
+W.add({ type: 'sequence', name: 'seq2', data: 'GGGGCCCC' });
+t(W.count('sequence') === 2, 'Workspace stores distinct-data items');
+
+// Type filtering
+W.add({ type: 'tree', name: 't1', data: '((A,B),(C,D));' });
+t(W.count('tree') === 1, 'Workspace stores items of different types');
+t(W.list('sequence').length === 2, 'type filter unaffected by other types');
+
+// Remove
+W.remove(entry.id);
+t(W.count() === 2, 'Workspace.remove reduces count');
+t(W.get(entry.id) === null, 'removed item no longer retrievable');
+
+// Persist to sessionStorage
+const raw = global.window.sessionStorage.getItem('nugen_workspace_v1');
+t(!!raw, 'Workspace persisted to sessionStorage');
+const parsed = JSON.parse(raw);
+t(parsed.items.length === W.count(), 'persisted count matches in-memory count');
+
+// onChange listener
+let events = 0;
+const off = W.onChange(function () { events += 1; });
+W.add({ type: 'sequence', name: 'seq3', data: 'AAAA' });
+t(events >= 1, 'onChange listener fired on add');
+off();
+
+// Cap at 50 items
+W.clear();
+for (let i = 0; i < 60; i++) W.add({ type: 'sequence', name: 's' + i, data: 'X' + i });
+t(W.count() === 50, 'Workspace caps at 50 items');
+
+// Clear
+W.clear();
+t(W.count() === 0, 'Workspace.clear() empties all items');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);

@@ -32,11 +32,23 @@ def test_security_headers_applied(client):
 
 
 def test_base_template_loads_js_bundle(client):
-    """utils.js and formatters.js must be linked on every page via base.html."""
+    """utils.js, formatters.js, and workspace.js must be linked on every
+    page via base.html."""
     resp = client.get("/sequence")
     body = resp.data
     assert b"/static/js/utils.js" in body
     assert b"/static/js/formatters.js" in body
+    assert b"/static/js/workspace.js" in body
+
+
+def test_workspace_js_served(client):
+    """workspace.js exposes the Phase-4 cross-tool clipboard API."""
+    resp = client.get("/static/js/workspace.js")
+    assert resp.status_code == 200
+    body = resp.data
+    assert b"Workspace.add" in body or b"add = add" in body or b"add: add" in body
+    assert b"sessionStorage" in body
+    assert b"ws-panel" in body
 
 
 def test_base_template_loads_design_tokens(client):
