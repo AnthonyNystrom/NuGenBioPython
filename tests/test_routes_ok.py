@@ -5,9 +5,11 @@ Locks down the URL surface: any redesign that makes one of these 4xx/5xx will
 fail CI. Phase 3 hub consolidation uses this file to prove old URLs stay
 reachable even after they become aliases.
 """
+import re
+
 import pytest
 
-from tests.fixtures.inventory import PAGE_URLS
+from tests.fixtures.inventory import PAGE_URLS, HUB_TAB_PRESELECTION
 
 
 @pytest.mark.parametrize("url", PAGE_URLS)
@@ -58,3 +60,24 @@ def test_base_template_loads_design_tokens(client):
     # .nav-link usages. Check that the selector RULE isn't in components.
     assert b".sidebar-nav .nav-link {" not in components.data
     assert b":where(body) .nav-link" in components.data
+
+
+@pytest.mark.parametrize("url,hub,expected_tab", HUB_TAB_PRESELECTION)
+def test_hub_preselects_correct_tab(client, url, hub, expected_tab):
+    """Phase-3 invariant: each legacy URL (e.g. /motifs) must render the
+    hub view with the correct tab active. Failing this test means someone
+    broke the URL-alias → tab-state wiring and a user who bookmarked the
+    old URL would land on the wrong sub-tool."""
+    resp = client.get(url)
+    assert resp.status_code == 200, f"{url} returned {resp.status_code}"
+    body = resp.data.decode()
+    # Find the active tab id in the hub tab bar
+    m = re.search(
+        r'id="hub-tab-(\w+)"[^>]*class="[^"]*active|class="nav-link active"[^>]*id="hub-tab-(\w+)"',
+        body,
+    )
+    assert m, f"{url}: no active hub tab found in body"
+    active = m.group(1) or m.group(2)
+    assert active == expected_tab, (
+        f"{url}: expected tab={expected_tab!r} but found {active!r}"
+    )

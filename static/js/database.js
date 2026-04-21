@@ -415,28 +415,11 @@ function viewFullRecord(recordId, database) {
 }
 
 function displayRecordInModal(recordData, database, recordId) {
-    let html = '';
-
-    // Create tabbed interface for different views
-    html += `
-        <ul class="nav nav-tabs mb-3" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#raw-view">Raw Data</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#formatted-view">Formatted</button>
-            </li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="raw-view">
-                <pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">${escapeHtml(recordData)}</pre>
-            </div>
-            <div class="tab-pane fade" id="formatted-view">
-                ${formatRecordData(recordData, database)}
-            </div>
-        </div>`;
-
-    document.getElementById('recordModalContent').innerHTML = html;
+    const raw = `<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">${escapeHtml(recordData)}</pre>`;
+    ResultsPanel.render('recordModalContent', [
+        { id: 'raw', title: 'Raw Data', content: raw, active: true },
+        { id: 'fmt', title: 'Formatted', content: formatRecordData(recordData, database) },
+    ], { prefix: 'record-view' });
 }
 
 function formatRecordData(data, database) {

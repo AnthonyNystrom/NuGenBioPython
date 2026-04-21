@@ -46,6 +46,19 @@ PAGE_URLS = [
     "/searchio",
     "/swissprot",
     "/biodata",
+    # Phase-3 hub URLs — new canonical destinations. The old URLs above
+    # resolve to hub views with the correct tab preselected; every old URL
+    # must continue to render 200 for backward compatibility.
+    "/patterns",
+]
+
+# Hub → active_tab mapping. Used by tests to verify that old URLs still
+# preselect their correct tab inside the new hub view.
+HUB_TAB_PRESELECTION = [
+    # (url, hub_name, expected_active_tab)
+    ("/patterns",    "patterns", "motifs"),
+    ("/motifs",      "patterns", "motifs"),
+    ("/restriction", "patterns", "restriction"),
 ]
 
 # ---------------------------------------------------------------------------

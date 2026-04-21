@@ -2,7 +2,7 @@
 
 {% block title %}Structure Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #structureTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -72,9 +72,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Structure Input</h6>
-                            </div>
+                            {{ card_header("Structure Input", icon="fa-upload") }}
                             <div class="card-body py-2">
                                 <form id="structureForm">
                                     <div class="mb-2">
@@ -96,9 +94,7 @@
                             </div>
                         </div>
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Chain Details</h6>
-                            </div>
+                            {{ card_header("Chain Details", icon="fa-table") }}
                             <div class="card-body py-2" id="chainDetails">
                                 <p class="text-muted text-center small">Chain information will appear here</p>
                             </div>
@@ -106,17 +102,13 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Structure Information</h6>
-                            </div>
+                            {{ card_header("Structure Information", icon="fa-info-circle") }}
                             <div class="card-body py-2" id="structureInfo">
                                 <p class="text-muted text-center small">Upload a structure file</p>
                             </div>
                         </div>
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-lightbulb"></i> Supported Formats</h6>
-                            </div>
+                            {{ card_header("Supported Formats", icon="fa-lightbulb") }}
                             <div class="card-body py-2">
                                 <p class="small"><strong>PDB Format:</strong> Traditional format, human-readable (.pdb, .ent)</p>
                                 <p class="small"><strong>mmCIF Format:</strong> Modern format, handles large structures (.cif, .mmcif)</p>
@@ -131,9 +123,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-project-diagram"></i> Structural Superposition</h6>
-                            </div>
+                            {{ card_header("Structural Superposition", icon="fa-project-diagram") }}
                             <div class="card-body py-2">
                                 <form id="superimposeForm">
                                     <div class="mb-2">
@@ -154,9 +144,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Superposition</h6>
-                            </div>
+                            {{ card_header("About Superposition", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">Superimpose calculates the optimal rotation and translation to align two protein structures.</p>
                                 <p class="small"><strong>RMSD:</strong> Root Mean Square Deviation measures structural similarity.</p>
@@ -168,9 +156,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Superposition Results</h6>
-                            </div>
+                            {{ card_header("Superposition Results", icon="fa-chart-bar") }}
                             <div class="card-body py-2" id="superimposeResults">
                                 <p class="text-muted text-center small">Upload two structures to see results</p>
                             </div>
@@ -184,9 +170,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-ruler"></i> Geometric Calculations</h6>
-                            </div>
+                            {{ card_header("Geometric Calculations", icon="fa-ruler") }}
                             <div class="card-body py-2">
                                 <form id="geometryForm">
                                     <div class="mb-2">
@@ -203,9 +187,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Geometry</h6>
-                            </div>
+                            {{ card_header("About Geometry", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small"><strong>Distances:</strong> CA-CA distances between consecutive residues</p>
                                 <p class="small"><strong>Angles:</strong> CA-CA-CA bond angles</p>
@@ -217,9 +199,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-calculator"></i> Geometric Results</h6>
-                            </div>
+                            {{ card_header("Geometric Results", icon="fa-calculator") }}
                             <div class="card-body py-2" id="geometryResults">
                                 <p class="text-muted text-center small">Parse a structure first, then calculate geometry</p>
                             </div>
@@ -233,9 +213,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-check-circle"></i> Quality Metrics</h6>
-                            </div>
+                            {{ card_header("Quality Metrics", icon="fa-check-circle") }}
                             <div class="card-body py-2">
                                 <form id="qualityForm">
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="qualityBtn">
@@ -248,9 +226,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Quality</h6>
-                            </div>
+                            {{ card_header("About Quality", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small"><strong>B-factors:</strong> Thermal motion/disorder of atoms</p>
                                 <p class="small"><strong>Occupancy:</strong> Atom presence confidence</p>
@@ -262,9 +238,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Quality Results</h6>
-                            </div>
+                            {{ card_header("Quality Results", icon="fa-chart-line") }}
                             <div class="card-body py-2" id="qualityResults">
                                 <p class="text-muted text-center small">Parse a structure first, then analyze quality</p>
                             </div>
@@ -278,9 +252,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-network-wired"></i> Contact Analysis</h6>
-                            </div>
+                            {{ card_header("Contact Analysis", icon="fa-network-wired") }}
                             <div class="card-body py-2">
                                 <form id="contactsForm">
                                     <div class="mb-2">
@@ -301,9 +273,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Contacts</h6>
-                            </div>
+                            {{ card_header("About Contacts", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">Contact analysis identifies residue pairs within a specified distance cutoff.</p>
                                 <p class="small">Useful for understanding protein folding and interactions.</p>
@@ -314,9 +284,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Contact Results</h6>
-                            </div>
+                            {{ card_header("Contact Results", icon="fa-list") }}
                             <div class="card-body py-2" id="contactsResults">
                                 <p class="text-muted text-center small">Parse a structure first, then calculate contacts</p>
                             </div>
@@ -330,9 +298,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-link"></i> Molecular Interactions</h6>
-                            </div>
+                            {{ card_header("Molecular Interactions", icon="fa-link") }}
                             <div class="card-body py-2">
                                 <form id="interactionsForm">
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2" id="interactionsBtn">
@@ -345,9 +311,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Interactions</h6>
-                            </div>
+                            {{ card_header("About Interactions", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small"><strong>H-bonds:</strong> N-O distances < 3.5Å</p>
                                 <p class="small"><strong>Salt Bridges:</strong> Charged residue pairs (ARG/LYS ↔ ASP/GLU) within 4Å</p>
@@ -358,9 +322,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-project-diagram"></i> Interaction Results</h6>
-                            </div>
+                            {{ card_header("Interaction Results", icon="fa-project-diagram") }}
                             <div class="card-body py-2" id="interactionsResults">
                                 <p class="text-muted text-center small">Parse a structure first, then detect interactions</p>
                             </div>
@@ -374,9 +336,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Secondary Structure Analysis (DSSP)</h6>
-                            </div>
+                            {{ card_header("Secondary Structure Analysis (DSSP)", icon="fa-dna") }}
                             <div class="card-body py-2">
                                 <form id="dsspForm">
                                     <div class="mb-2">
@@ -393,9 +353,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About DSSP</h6>
-                            </div>
+                            {{ card_header("About DSSP", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small"><strong>H</strong>: Alpha helix</p>
                                 <p class="small"><strong>E</strong>: Extended strand (beta)</p>
@@ -409,9 +367,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-pie"></i> DSSP Results</h6>
-                            </div>
+                            {{ card_header("DSSP Results", icon="fa-chart-pie") }}
                             <div class="card-body py-2" id="dsspResults">
                                 <p class="text-muted text-center small">Upload a PDB file to analyze secondary structure</p>
                             </div>
@@ -425,9 +381,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-scatter"></i> Ramachandran Plot Analysis</h6>
-                            </div>
+                            {{ card_header("Ramachandran Plot Analysis", icon="fa-chart-scatter") }}
                             <div class="card-body py-2">
                                 <form id="ramachandranForm">
                                     <div class="mb-2">
@@ -448,9 +402,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Ramachandran</h6>
-                            </div>
+                            {{ card_header("About Ramachandran", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">Ramachandran plots show allowed phi/psi angle combinations for protein backbone</p>
                                 <p class="small"><strong>Favored regions:</strong></p>
@@ -465,9 +417,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Phi/Psi Results</h6>
-                            </div>
+                            {{ card_header("Phi/Psi Results", icon="fa-table") }}
                             <div class="card-body py-2" id="ramaResults">
                                 <p class="text-muted text-center small">Upload a structure to calculate phi/psi angles</p>
                             </div>
@@ -481,9 +431,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-water"></i> Solvent Accessible Surface Area</h6>
-                            </div>
+                            {{ card_header("Solvent Accessible Surface Area", icon="fa-water") }}
                             <div class="card-body py-2">
                                 <form id="sasaForm">
                                     <div class="mb-2">
@@ -500,9 +448,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About SASA</h6>
-                            </div>
+                            {{ card_header("About SASA", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">SASA measures the surface area of a protein accessible to solvent molecules</p>
                                 <p class="small"><strong>High SASA:</strong> Exposed, surface residues</p>
@@ -515,9 +461,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> SASA Results</h6>
-                            </div>
+                            {{ card_header("SASA Results", icon="fa-chart-bar") }}
                             <div class="card-body py-2" id="sasaResults">
                                 <p class="text-muted text-center small">Upload a structure to calculate solvent accessibility</p>
                             </div>
@@ -531,9 +475,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-crop"></i> Structure Selection & Extraction</h6>
-                            </div>
+                            {{ card_header("Structure Selection & Extraction", icon="fa-crop") }}
                             <div class="card-body py-2">
                                 <form id="selectionForm">
                                     <div class="mb-2">
@@ -567,9 +509,7 @@
                     </div>
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About Selection</h6>
-                            </div>
+                            {{ card_header("About Selection", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">Extract specific parts of protein structures:</p>
                                 <ul class="small">
@@ -584,9 +524,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Selection Results</h6>
-                            </div>
+                            {{ card_header("Selection Results", icon="fa-list") }}
                             <div class="card-body py-2" id="selectionResults">
                                 <p class="text-muted text-center small">Upload a structure and specify selection criteria</p>
                             </div>

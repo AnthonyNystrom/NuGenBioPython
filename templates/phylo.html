@@ -2,7 +2,7 @@
 
 {% block title %}Phylogenetics - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #phyloTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -52,9 +52,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Phylogenetic Tree Input</h6>
-                            </div>
+                            {{ card_header("Phylogenetic Tree Input", icon="fa-upload") }}
                             <div class="card-body py-2">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -107,9 +105,7 @@
 
                     <div class="col-md-4">
                         <div class="card mb-3 h-100">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Tree Information</h6>
-                            </div>
+                            {{ card_header("Tree Information", icon="fa-chart-bar") }}
                             <div class="card-body py-2" id="treeInfo">
                                 <p class="text-muted text-center small">
                                     <i class="fas fa-arrow-left fa-2x mb-2"></i><br>
@@ -124,9 +120,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-image"></i> Tree Visualization</h6>
-                            </div>
+                            {{ card_header("Tree Visualization", icon="fa-image") }}
                             <div class="card-body py-2 text-center" id="treeVisualization">
                                 <p class="text-muted">
                                     <i class="fas fa-eye fa-2x mb-3"></i><br>
@@ -143,9 +137,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-hammer"></i> Build Tree from Alignment</h6>
-                            </div>
+                            {{ card_header("Build Tree from Alignment", icon="fa-hammer") }}
                             <div class="card-body py-2">
                                 <form id="buildTreeForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -191,9 +183,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-table"></i> Distance Matrix</h6>
-                            </div>
+                            {{ card_header("Distance Matrix", icon="fa-table") }}
                             <div class="card-body py-2" id="distanceMatrixDisplay">
                                 <p class="text-muted text-center small">Distance matrix will appear here</p>
                             </div>
@@ -207,9 +197,7 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-cut"></i> Prune Tree</h6>
-                            </div>
+                            {{ card_header("Prune Tree", icon="fa-cut") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="pruneTerminal" class="form-label small">Terminal to Remove</label>
@@ -224,9 +212,7 @@
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-arrows-alt"></i> Re-root Tree</h6>
-                            </div>
+                            {{ card_header("Re-root Tree", icon="fa-arrows-alt") }}
                             <div class="card-body py-2">
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="radio" name="rootMethod" id="rootMidpoint" value="midpoint" checked>
@@ -252,9 +238,7 @@
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-sort"></i> Ladderize Tree</h6>
-                            </div>
+                            {{ card_header("Ladderize Tree", icon="fa-sort") }}
                             <div class="card-body py-2">
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" id="ladderizeReverse">
@@ -269,9 +253,7 @@
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-compress"></i> Collapse Branches</h6>
-                            </div>
+                            {{ card_header("Collapse Branches", icon="fa-compress") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="collapseThreshold" class="form-label small">Branch Length Threshold</label>
@@ -288,9 +270,7 @@
 
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Current Tree Status</h6>
-                            </div>
+                            {{ card_header("Current Tree Status", icon="fa-info-circle") }}
                             <div class="card-body py-2" id="manipulateInfo">
                                 <p class="text-muted text-center">Load a tree first to enable manipulation</p>
                             </div>
@@ -304,9 +284,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-list"></i> View Terminals & Clades</h6>
-                            </div>
+                            {{ card_header("View Terminals & Clades", icon="fa-list") }}
                             <div class="card-body py-2">
                                 <button class="gradient-btn-primary w-100 mb-2" onclick="viewTerminals()">
                                     <i class="fas fa-leaf me-2"></i> View All Terminals
@@ -319,9 +297,7 @@
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-route"></i> Find Path to Root</h6>
-                            </div>
+                            {{ card_header("Find Path to Root", icon="fa-route") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="pathTerminal" class="form-label small">Select Terminal</label>
@@ -337,9 +313,7 @@
                         </div>
 
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-code-branch"></i> Common Ancestor</h6>
-                            </div>
+                            {{ card_header("Common Ancestor", icon="fa-code-branch") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="ancestor1" class="form-label small">First Terminal</label>
@@ -363,9 +337,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-balance-scale"></i> Compare Trees</h6>
-                            </div>
+                            {{ card_header("Compare Trees", icon="fa-balance-scale") }}
                             <div class="card-body py-2">
                                 <p class="small mb-2">Compare current tree with another tree</p>
                                 <div class="mb-2">
@@ -388,9 +360,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-file-export"></i> Export Tree</h6>
-                            </div>
+                            {{ card_header("Export Tree", icon="fa-file-export") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="exportFormat" class="form-label small">Export Format</label>
@@ -409,9 +379,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-palette"></i> Visualization Options</h6>
-                            </div>
+                            {{ card_header("Visualization Options", icon="fa-palette") }}
                             <div class="card-body py-2">
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" id="vizShowConfidence">
@@ -431,9 +399,7 @@
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-code"></i> Exported Tree</h6>
-                            </div>
+                            {{ card_header("Exported Tree", icon="fa-code") }}
                             <div class="card-body py-2" id="exportedTree">
                                 <p class="text-muted text-center">
                                     <i class="fas fa-file-export fa-2x mb-3"></i><br>
@@ -975,18 +941,12 @@ function exportTree() {
             const esc = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
             const showOutline = /newick|nwk/i.test(data.format || '') && F.formatNewickOutline;
             const outlineHtml = showOutline ? F.formatNewickOutline(data.tree_string) : '';
-            const tabId = 'tree-' + Date.now();
             let html = '<label class="form-label small mb-2">Exported Tree (' + esc(data.format) + '):</label>';
             if (showOutline) {
-                html += '<ul class="nav nav-tabs mb-2" role="tablist">' +
-                    '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#' + tabId + '-fmt">Formatted</button></li>' +
-                    '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#' + tabId + '-raw">Raw</button></li>' +
-                    '</ul>' +
-                    '<div class="tab-content">' +
-                    '<div class="tab-pane fade show active" id="' + tabId + '-fmt">' + outlineHtml + '</div>' +
-                    '<div class="tab-pane fade" id="' + tabId + '-raw">' +
-                    '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>' +
-                    '</div></div>';
+                html += ResultsPanel.tabs([
+                    { id: 'fmt', title: 'Formatted', content: outlineHtml, active: true },
+                    { id: 'raw', title: 'Raw', content: '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>' },
+                ], { prefix: 'tree' });
             } else {
                 html += '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>';
             }

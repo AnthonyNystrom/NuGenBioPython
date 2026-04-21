@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Patterns - NuGenBioPython{% endblock %}
+
+{% block content %}
+{# ---------------------------------------------------------------------------
+   Patterns hub — consolidates Motifs + Restriction into a single tabbed view.
+   The `active_tab` variable is set by the backend route (/patterns,
+   /motifs, /restriction) to preselect which sub-tool opens.
+--------------------------------------------------------------------------- #}
+{% set tabs = [
+    {"key": "motifs",      "title": "Motifs",      "icon": "fa-puzzle-piece",  "body": "_partials/_hub_patterns/motifs_body.html"},
+    {"key": "restriction", "title": "Restriction", "icon": "fa-cut",           "body": "_partials/_hub_patterns/restriction_body.html"},
+] %}
+{% set active_tab = active_tab | default('motifs') %}
+
+<div class="row mb-2">
+    <div class="col-12">
+        <h2 class="text-primary mb-1">
+            <i class="fas fa-shapes"></i> Patterns
+        </h2>
+        <p class="lead mb-3">Sequence motif analysis and restriction enzyme tools</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="patternsHubTabs" role="tablist">
+    {% for t in tabs %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if t.key == active_tab %}active{% endif %}"
+                id="hub-tab-{{ t.key }}"
+                data-bs-toggle="tab"
+                data-bs-target="#hub-pane-{{ t.key }}"
+                type="button" role="tab">
+            <i class="fas {{ t.icon }} me-2"></i>{{ t.title }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="tab-content" id="patternsHubContent">
+    {% for t in tabs %}
+    <div class="tab-pane fade {% if t.key == active_tab %}show active{% endif %}"
+         id="hub-pane-{{ t.key }}" role="tabpanel">
+        {% include t.body %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/restriction.js') }}"></script>
+{% include "_partials/_hub_patterns/motifs_scripts.html" %}
+{% endblock %}

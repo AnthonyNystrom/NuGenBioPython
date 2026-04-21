@@ -2,7 +2,7 @@
 
 {% block title %}File I/O (SeqIO) - NuGenBioPython{% endblock %}
 
-{% block content %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}
 <style>
     #seqioTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -57,9 +57,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-upload"></i> Parse Sequence File</h6>
-                            </div>
+                            {{ card_header("Parse Sequence File", icon="fa-upload") }}
                             <div class="card-body py-2">
                                 <form id="parseForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -162,9 +160,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-exchange-alt"></i> Format Converter</h6>
-                            </div>
+                            {{ card_header("Format Converter", icon="fa-exchange-alt") }}
                             <div class="card-body py-2">
                                 <form id="convertForm">
                                     <div class="mb-2">
@@ -214,9 +210,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-filter"></i> Filter Sequences</h6>
-                            </div>
+                            {{ card_header("Filter Sequences", icon="fa-filter") }}
                             <div class="card-body py-2">
                                 <form id="filterForm">
                                     <div class="mb-2">
@@ -265,9 +259,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-sort"></i> Sort Sequences</h6>
-                            </div>
+                            {{ card_header("Sort Sequences", icon="fa-sort") }}
                             <div class="card-body py-2">
                                 <form id="sortForm">
                                     <div class="mb-2">
@@ -314,9 +306,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-calculator"></i> Calculate Statistics</h6>
-                            </div>
+                            {{ card_header("Calculate Statistics", icon="fa-calculator") }}
                             <div class="card-body py-2">
                                 <button class="gradient-btn-primary w-100" id="calculateStatsBtn" disabled>
                                     <i class="fas fa-chart-bar me-2"></i> Calculate Statistics
@@ -332,9 +322,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-line"></i> Sequence Statistics</h6>
-                            </div>
+                            {{ card_header("Sequence Statistics", icon="fa-chart-line") }}
                             <div class="card-body py-2" id="statsResults">
                                 <p class="text-muted text-center">Calculate statistics to see results</p>
                             </div>
@@ -348,9 +336,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Parse FASTQ File</h6>
-                            </div>
+                            {{ card_header("Parse FASTQ File", icon="fa-dna") }}
                             <div class="card-body py-2">
                                 <form id="fastqForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -385,9 +371,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> About FASTQ</h6>
-                            </div>
+                            {{ card_header("About FASTQ", icon="fa-info-circle") }}
                             <div class="card-body py-2">
                                 <p class="small">FASTQ format stores nucleotide sequences with quality scores (Phred scores).</p>
                                 <ul class="small">
@@ -404,9 +388,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-area"></i> Quality Scores</h6>
-                            </div>
+                            {{ card_header("Quality Scores", icon="fa-chart-area") }}
                             <div class="card-body py-2" id="fastqResults">
                                 <p class="text-muted text-center">Parse a FASTQ file to view quality scores</p>
                             </div>
@@ -420,9 +402,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-cut"></i> Extract Subsequences</h6>
-                            </div>
+                            {{ card_header("Extract Subsequences", icon="fa-cut") }}
                             <div class="card-body py-2">
                                 <form id="sliceForm">
                                     <div class="row g-2">
@@ -450,9 +430,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-scissors"></i> Sliced Sequences</h6>
-                            </div>
+                            {{ card_header("Sliced Sequences", icon="fa-scissors") }}
                             <div class="card-body py-2" id="sliceResults">
                                 <p class="text-muted text-center">Parse sequences first, then slice/extract</p>
                             </div>
@@ -467,9 +445,7 @@
                     <!-- Feature Extraction -->
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Extract Features from GenBank/EMBL</h6>
-                            </div>
+                            {{ card_header("Extract Features from GenBank/EMBL", icon="fa-dna") }}
                             <div class="card-body py-2">
                                 <form id="extractFeaturesForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -504,9 +480,7 @@
 
                         <!-- Batch Convert -->
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-layer-group"></i> Batch Convert Files</h6>
-                            </div>
+                            {{ card_header("Batch Convert Files") }}
                             <div class="card-body py-2">
                                 <form id="batchConvertForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -545,18 +519,14 @@
                     <!-- Results Column -->
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-list"></i> Extracted Features</h6>
-                            </div>
+                            {{ card_header("Extracted Features", icon="fa-list") }}
                             <div class="card-body py-2" id="featureResults" style="max-height: 400px; overflow-y: auto;">
                                 <p class="text-muted text-center">Upload a GenBank/EMBL file to extract features</p>
                             </div>
                         </div>
 
                         <div class="card">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-tasks"></i> Batch Conversion Results</h6>
-                            </div>
+                            {{ card_header("Batch Conversion Results", icon="fa-tasks") }}
                             <div class="card-body py-2" id="batchResults" style="max-height: 400px; overflow-y: auto;">
                                 <p class="text-muted text-center">Select multiple files to batch convert</p>
                             </div>
@@ -572,9 +542,7 @@
 <div class="row mt-3">
     <div class="col-12">
         <div class="card">
-            <div class="card-header py-2">
-                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Supported File Formats</h6>
-            </div>
+            {{ card_header("Supported File Formats", icon="fa-info-circle") }}
             <div class="card-body py-2">
                 <div class="row">
                     <div class="col-md-3">
@@ -1068,7 +1036,10 @@ function displayConvertedResult(converted, format) {
         formattedHtml = '<div class="alert alert-secondary mb-0">No formatted view available for <code>' + esc(fmt) + '</code>. Use Raw tab.</div>';
     }
 
-    const tabId = 'conv-' + Date.now();
+    const tabsHtml = ResultsPanel.tabs([
+        { id: 'fmt', title: 'Formatted', content: formattedHtml, active: true },
+        { id: 'raw', title: 'Raw', content: '<textarea class="form-control sequence-display" rows="20" readonly></textarea>' },
+    ], { prefix: 'conv' });
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.innerHTML =
@@ -1079,16 +1050,7 @@ function displayConvertedResult(converted, format) {
         '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
         '</div>' +
         '<div class="modal-body">' +
-        '<ul class="nav nav-tabs mb-3" role="tablist">' +
-        '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#' + tabId + '-fmt">Formatted</button></li>' +
-        '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#' + tabId + '-raw">Raw</button></li>' +
-        '</ul>' +
-        '<div class="tab-content">' +
-        '<div class="tab-pane fade show active" id="' + tabId + '-fmt">' + formattedHtml + '</div>' +
-        '<div class="tab-pane fade" id="' + tabId + '-raw">' +
-        '<textarea class="form-control sequence-display" rows="20" readonly></textarea>' +
-        '</div>' +
-        '</div>' +
+        tabsHtml +
         '</div>' +
         '<div class="modal-footer">' +
         '<button type="button" class="gradient-btn-secondary" data-bs-dismiss="modal">Close</button>' +

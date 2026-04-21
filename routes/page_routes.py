@@ -48,12 +48,19 @@ def database_tools():
 
 @bp.route('/motifs')
 def motifs_tools():
-    return render_template('motifs.html')
+    # Phase-3 hub: /motifs renders the Patterns hub with Motifs tab active.
+    # The old motifs.html template is preserved on disk for rollback.
+    return render_template('patterns.html', active_tab='motifs')
 
 
 @bp.route('/restriction')
 def restriction_tools():
-    return render_template('restriction.html')
+    return render_template('patterns.html', active_tab='restriction')
+
+
+@bp.route('/patterns')
+def patterns_hub():
+    return render_template('patterns.html', active_tab='motifs')
 
 
 @bp.route('/clustering')

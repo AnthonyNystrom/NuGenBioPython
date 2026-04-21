@@ -16,6 +16,10 @@ global.document = dom.window.document;
 global.DOMParser = dom.window.DOMParser;
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const utilsSrc = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'utils.js'), 'utf8');
+eval(utilsSrc.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
+const RP = global.window.ResultsPanel;
+
 const src = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'formatters.js'), 'utf8');
 eval(src.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
 const F = global.window.NuGenFormatters;
@@ -134,6 +138,20 @@ run('Pairwise', F.formatPairwiseAlignment('target 0 ACGT 4\n       ||||\nquery  
 // ---------- Graceful failure ----------
 run('Empty handled', F.formatPubMedXML(''), 'Empty');
 run('Malformed handled', F.formatGenBankText('not genbank'), 'Not a GenBank');
+
+// ---------- ResultsPanel helper ----------
+const rpHtml = RP.tabs([
+    { id: 'a', title: 'First',  content: '<div>ONE</div>', active: true },
+    { id: 'b', title: 'Second', content: '<div>TWO</div>' },
+], { prefix: 'rp-test' });
+run('ResultsPanel tab titles',   rpHtml, 'First', 'Second');
+run('ResultsPanel tab contents', rpHtml, 'ONE', 'TWO');
+run('ResultsPanel active class', rpHtml, 'class="nav-link active"');
+run('ResultsPanel prefix',       rpHtml, 'id="rp-test-a"', 'data-bs-target="#rp-test-a"');
+// XSS-safe title
+const rpXss = RP.tabs([{ id: 'x', title: '<script>x</script>', content: '' }]);
+t(!rpXss.includes('<script>x</script>'), 'ResultsPanel title XSS-safe');
+t(rpXss.includes('&lt;script&gt;'), 'ResultsPanel title HTML-encoded');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);

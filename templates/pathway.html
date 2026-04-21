@@ -2,7 +2,7 @@
 
 {% block title %}Pathway Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #pathwayTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
     #pathwayTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
@@ -280,9 +280,7 @@
                         </div>
 
                         <div class="card mt-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Bio.Pathway Features</h6>
-                            </div>
+                            {{ card_header("Bio.Pathway Features", icon="fa-info-circle") }}
                             <div class="card-body p-2">
                                 <ul class="small mb-0">
                                     <li><strong>Reaction:</strong> Stoichiometry, catalysts, reversibility</li>

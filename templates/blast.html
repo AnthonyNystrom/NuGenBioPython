@@ -2,7 +2,7 @@
 
 {% block title %}BLAST Search - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #blastTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -48,9 +48,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-dna"></i> Query Sequence</h6>
-                            </div>
+                            {{ card_header("Query Sequence", icon="fa-dna") }}
                             <div class="card-body py-2">
                                 <form id="blastForm" enctype="multipart/form-data">
                                     <div class="mb-2">
@@ -154,9 +152,7 @@
 
                     <div class="col-md-4">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-info-circle"></i> Search Info</h6>
-                            </div>
+                            {{ card_header("Search Info", icon="fa-info-circle") }}
                             <div class="card-body py-2" id="searchInfo">
                                 <p class="text-muted text-center small">
                                     <i class="fas fa-cog fa-2x mb-3"></i><br>
@@ -187,9 +183,7 @@
             <!-- Alignment Tab -->
             <div class="tab-pane fade" id="alignment" role="tabpanel">
                 <div class="card mb-3">
-                    <div class="card-header py-2">
-                        <h6 class="mb-0 small"><i class="fas fa-align-left"></i> Detailed Alignment</h6>
-                    </div>
+                    {{ card_header("Detailed Alignment", icon="fa-align-left") }}
                     <div class="card-body py-2" id="alignmentView">
                         <p class="text-muted text-center">
                             <i class="fas fa-align-left fa-2x mb-3"></i><br>
@@ -204,9 +198,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-download"></i> Export Results</h6>
-                            </div>
+                            {{ card_header("Export Results", icon="fa-download") }}
                             <div class="card-body py-2">
                                 <div class="mb-2">
                                     <label for="exportFormat" class="form-label small">Export Format</label>
@@ -225,9 +217,7 @@
 
                     <div class="col-md-6">
                         <div class="card mb-3">
-                            <div class="card-header py-2">
-                                <h6 class="mb-0 small"><i class="fas fa-chart-bar"></i> Statistics</h6>
-                            </div>
+                            {{ card_header("Statistics", icon="fa-chart-bar") }}
                             <div class="card-body py-2" id="statistics">
                                 <p class="text-muted text-center small">
                                     <i class="fas fa-chart-bar fa-2x mb-3"></i><br>

@@ -1,0 +1,27 @@
+{#
+  card_header — renders ONLY the <div class="card-header">…</div> block.
+
+  Keeping the outer <div class="card"> and <div class="card-body"> inline at
+  the call site means indentation / whitespace isn't perturbed — the macro
+  replaces 3 lines of boilerplate without touching layout sensitivity.
+
+  Usage:
+      {% from "_partials/_section_card.html" import card_header %}
+      <div class="card mb-3">
+          {{ card_header("ORF Finder Settings", icon="fa-dna") }}
+          <div class="card-body py-2">
+              ...content...
+          </div>
+      </div>
+
+  Knobs:
+      title        — heading text
+      icon         — FontAwesome class after "fas "; default "fa-layer-group"
+      cls          — classes on the <div class="card-header …">; default "py-2"
+      heading_cls  — classes on the <h6>; default "mb-0 small"
+#}
+{%- macro card_header(title, icon="fa-layer-group", cls="py-2", heading_cls="mb-0 small") -%}
+<div class="card-header {{ cls }}">
+                        <h6 class="{{ heading_cls }}"><i class="fas {{ icon }}"></i> {{ title }}</h6>
+                    </div>
+{%- endmacro -%}

@@ -89,9 +89,84 @@
             .replace(/'/g, '&#39;');
     }
 
+    // ---- ResultsPanel --------------------------------------------------
+    // Produce consistent tabbed result scaffolding so the 3+ pages that
+    // already hand-rolled "Formatted / Raw" tabs (database modal,
+    // alignment result, seqio convert modal, phylo Newick export) can share
+    // one implementation. Each tab's `content` is trusted HTML — callers
+    // pass already-sanitized markup from formatters.js or escapeHtml wrap.
+    //
+    // Usage:
+    //   ResultsPanel.tabs([
+    //     { id: "fmt", title: "Formatted", content: "<div>…</div>", active: true },
+    //     { id: "raw", title: "Raw",       content: "<pre>…</pre>" },
+    //   ])
+    //   → returns an HTML string ready to drop into innerHTML.
+    //
+    // Every tab id is namespaced with a unique prefix so multiple panels
+    // on the same page don't collide.
+    let _panelSeq = 0;
+    function buildResultsPanelTabs(tabs, opts) {
+        opts = opts || {};
+        _panelSeq += 1;
+        const prefix = opts.prefix || ('rp' + _panelSeq);
+
+        // Normalize: ensure exactly one tab is active (first by default)
+        let hasActive = false;
+        const normalized = tabs.map(function (t, i) {
+            const active = !!t.active;
+            if (active) hasActive = true;
+            return {
+                id: prefix + '-' + (t.id || ('tab' + i)),
+                title: t.title,
+                content: t.content == null ? '' : t.content,
+                active: active,
+            };
+        });
+        if (!hasActive && normalized.length) normalized[0].active = true;
+
+        let nav = '<ul class="nav nav-tabs mb-2" role="tablist">';
+        let panes = '<div class="tab-content">';
+        normalized.forEach(function (t) {
+            const actCls = t.active ? ' active' : '';
+            const showCls = t.active ? ' show active' : '';
+            nav += '<li class="nav-item" role="presentation">' +
+                '<button class="nav-link' + actCls + '" type="button" role="tab"' +
+                ' data-bs-toggle="tab" data-bs-target="#' + t.id + '">' +
+                escapeHtml(t.title) + '</button></li>';
+            panes += '<div class="tab-pane fade' + showCls + '" id="' + t.id +
+                '" role="tabpanel">' + t.content + '</div>';
+        });
+        nav += '</ul>';
+        panes += '</div>';
+        return nav + panes;
+    }
+
+    // Helper: render directly into a container element by id
+    function renderResultsPanel(containerId, tabs, opts) {
+        const el = typeof containerId === 'string'
+            ? document.getElementById(containerId)
+            : containerId;
+        if (!el) return;
+        el.innerHTML = buildResultsPanelTabs(tabs, opts);
+    }
+
+    const ResultsPanel = {
+        tabs: buildResultsPanelTabs,
+        render: renderResultsPanel,
+    };
+
     global.showLoading = showLoading;
     global.hideLoading = hideLoading;
     global.showAlert = showAlert;
     global.fetchJSON = fetchJSON;
-    global.NuGenUtils = { showLoading: showLoading, hideLoading: hideLoading, showAlert: showAlert, fetchJSON: fetchJSON, escapeHtml: escapeHtml };
+    global.ResultsPanel = ResultsPanel;
+    global.NuGenUtils = {
+        showLoading: showLoading,
+        hideLoading: hideLoading,
+        showAlert: showAlert,
+        fetchJSON: fetchJSON,
+        escapeHtml: escapeHtml,
+        ResultsPanel: ResultsPanel,
+    };
 })(window);

@@ -1,8 +1,4 @@
-{% extends "base.html" %}
-
-{% block title %}Restriction Enzymes - NuGenBioPython{% endblock %}
-
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
 <style>
     #restrictionTabs button.nav-link:hover {
         background: rgba(255,255,255,0.25) !important;
@@ -479,8 +475,3 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/restriction.js') }}"></script>
-{% endblock %}
