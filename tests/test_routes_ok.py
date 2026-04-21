@@ -29,6 +29,18 @@ def test_security_headers_applied(client):
     assert resp.headers.get("X-Content-Type-Options") == "nosniff"
     assert resp.headers.get("X-Frame-Options") == "DENY"
     assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+    # Phase-5 polish: Content-Security-Policy + Permissions-Policy
+    csp = resp.headers.get("Content-Security-Policy") or ""
+    assert "default-src 'self'" in csp
+    assert "object-src 'none'" in csp
+    assert "frame-ancestors 'none'" in csp
+    # Must allowlist the CDN origins we actually load from
+    assert "cdn.jsdelivr.net" in csp      # Bootstrap
+    assert "cdnjs.cloudflare.com" in csp  # FontAwesome
+    assert "3Dmol.org" in csp             # 3Dmol viewer
+    # 3Dmol's surface rendering uses blob: Web Workers
+    assert "worker-src 'self' blob:" in csp
+    assert resp.headers.get("Permissions-Policy")
 
 
 def test_base_template_loads_js_bundle(client):
@@ -49,6 +61,36 @@ def test_workspace_js_served(client):
     assert b"Workspace.add" in body or b"add = add" in body or b"add: add" in body
     assert b"sessionStorage" in body
     assert b"ws-panel" in body
+
+
+def test_mobile_nav_present(client):
+    """Phase-5 polish: every page has the mobile hamburger + backdrop."""
+    resp = client.get("/")
+    body = resp.data
+    assert b'id="mobileNavToggle"' in body
+    assert b'id="sidebarBackdrop"' in body
+    assert b'id="sidebarContainer"' in body
+
+
+def test_structure_3d_viewer_wired(client):
+    """Phase-5 polish: /structure has the persistent 3Dmol viewer +
+    full control bar (sample loader, style/color selects, surface/spin
+    toggles, reset and PNG download)."""
+    resp = client.get("/structure")
+    body = resp.data
+    assert b'id="view3dContainer"' in body
+    assert b'3Dmol.org' in body or b'3Dmol-min.js' in body
+    # Viewer controls exposed via data-action delegation
+    for action in [
+        b'data-action="view3dLoadSample"',
+        b'data-action="view3dReset"',
+        b'data-action="view3dToggleSpin"',
+        b'data-action="view3dToggleSurface"',
+        b'data-action="view3dDownloadPng"',
+    ]:
+        assert action in body, f'{action!r} not in /structure'
+    # Public viewer API surfaces for per-tab overlays
+    assert b'NuGenStructureViewer' in body
 
 
 def test_base_template_loads_design_tokens(client):

@@ -73,8 +73,17 @@
     </script>
 </head>
 <body>
+    <!-- Mobile nav toggle — hidden on desktop by CSS -->
+    <button type="button" class="mobile-nav-toggle" id="mobileNavToggle"
+            aria-label="Open navigation" aria-expanded="false"
+            aria-controls="sidebarContainer">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+    <!-- Backdrop shown when the sidebar is open on mobile -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
     <!-- Sidebar -->
-    <div class="sidebar-container">
+    <div class="sidebar-container" id="sidebarContainer">
         <div class="sidebar-header">
             <a href="{{ url_for('index') }}" class="sidebar-brand">
                 <i class="fas fa-dna"></i>
@@ -295,6 +304,37 @@
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/formatters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+    <script>
+        // Mobile navigation toggle. No-op on desktop since the hamburger is
+        // hidden by CSS there.
+        (function () {
+            const toggle = document.getElementById('mobileNavToggle');
+            const sidebar = document.getElementById('sidebarContainer');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (!toggle || !sidebar || !backdrop) return;
+
+            function setOpen(open) {
+                sidebar.classList.toggle('show', open);
+                backdrop.hidden = !open;
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                document.body.classList.toggle('sidebar-open', open);
+            }
+            toggle.addEventListener('click', function () {
+                setOpen(!sidebar.classList.contains('show'));
+            });
+            backdrop.addEventListener('click', function () { setOpen(false); });
+            // Close when any nav link is activated (mobile UX)
+            sidebar.querySelectorAll('.nav-link').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth <= 768) setOpen(false);
+                });
+            });
+            // Esc key closes the sidebar
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('show')) setOpen(false);
+            });
+        })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

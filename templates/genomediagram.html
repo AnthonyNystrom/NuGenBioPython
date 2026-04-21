@@ -108,7 +108,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Genomic Features</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="addFeature()">
+                                                    data-action="addFeature">
                                                 <i class="fas fa-plus"></i> Add Feature
                                             </button>
                                         </div>
@@ -122,7 +122,7 @@
                                     </button>
                                     {{ load_example_btn("loadBasicExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
-                                            onclick="clearFeatures()">
+                                            data-action="clearFeatures">
                                         <i class="fas fa-trash"></i> Clear Features
                                     </button>
                                 </form>
@@ -211,7 +211,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Tracks</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="addTrack()">
+                                                    data-action="addTrack">
                                                 <i class="fas fa-plus"></i> Add Track
                                             </button>
                                         </div>
@@ -225,7 +225,7 @@
                                     </button>
                                     {{ load_example_btn("loadMultiTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
-                                            onclick="clearTracks()">
+                                            data-action="clearTracks">
                                         <i class="fas fa-trash"></i> Clear Tracks
                                     </button>
                                 </form>
@@ -293,7 +293,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Data Graphs</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="addDataGraph()">
+                                                    data-action="addDataGraph">
                                                 <i class="fas fa-plus"></i> Add Graph
                                             </button>
                                         </div>
@@ -307,7 +307,7 @@
                                     </button>
                                     {{ load_example_btn("loadDataTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
-                                            onclick="clearDataGraphs()">
+                                            data-action="clearDataGraphs">
                                         <i class="fas fa-trash"></i> Clear Graphs
                                     </button>
                                 </form>
@@ -374,7 +374,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Features (with sigils, strands, labels)</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="addAdvancedFeature()">
+                                                    data-action="addAdvancedFeature">
                                                 <i class="fas fa-plus"></i> Add Feature
                                             </button>
                                         </div>
@@ -389,7 +389,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>CrossLinks (connect features across tracks)</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="addCrossLink()">
+                                                    data-action="addCrossLink">
                                                 <i class="fas fa-plus"></i> Add CrossLink
                                             </button>
                                         </div>

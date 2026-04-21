@@ -2,7 +2,8 @@
   Load Example button macro.
 
   Knobs:
-    onclick_fn     — JS function name, rendered as onclick="{fn}()"
+    onclick_fn     — JS function name, rendered as data-action="{fn}"
+                     (dispatched by the delegated click handler in utils.js)
     size           — "secondary" (default) or "small"
     label          — button text; default "Example"
     extra          — extra class names appended (e.g. "mb-2", "btn-sm")
@@ -17,7 +18,7 @@
 {%- endif -%}
 {%- set full_class = (base_class + " " + extra).strip() -%}
 {%- set icon_class = ("fas " + icon + " " + icon_spacing).strip() -%}
-<button type="button" class="{{ full_class }}" onclick="{{ onclick_fn }}()">
+<button type="button" class="{{ full_class }}" data-action="{{ onclick_fn }}">
                         <i class="{{ icon_class }}"></i>{{ label }}
                     </button>
 {%- endmacro -%}

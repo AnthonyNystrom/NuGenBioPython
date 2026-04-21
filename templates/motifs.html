@@ -58,10 +58,10 @@
                                 <textarea class="form-control form-control-sm sequence-display mb-2" id="motifSequences" rows="6"
                                         placeholder="ACGTACGTACGT&#10;ACGTTCGTACGT&#10;ACGTCCGTACGT"></textarea>
                                 <div class="d-grid gap-2">
-                                    <button class="gradient-btn-secondary" onclick="loadMotifExample()">
+                                    <button class="gradient-btn-secondary" data-action="loadMotifExample">
                                         <i class="fas fa-flask"></i> Load Example
                                     </button>
-                                    <button class="gradient-btn-primary" id="createMotifBtn" onclick="createMotif()">
+                                    <button class="gradient-btn-primary" id="createMotifBtn" data-action="createMotif">
                                         <i class="fas fa-plus me-1"></i> Create Motif
                                     </button>
                                 </div>
@@ -81,7 +81,7 @@
                                     <option value="transfac">TRANSFAC</option>
                                     <option value="pfm">PFM</option>
                                 </select>
-                                <button class="gradient-btn-info" onclick="uploadMotifFile()">
+                                <button class="gradient-btn-info" data-action="uploadMotifFile">
                                     <i class="fas fa-upload me-1"></i> Upload & Parse
                                 </button>
                                 <small class="text-muted d-block mt-2">Supported: JASPAR, MEME, TRANSFAC, PFM formats</small>
@@ -119,7 +119,7 @@
                                         <input type="range" class="form-range" id="searchThreshold" min="0" max="1" step="0.05" value="0.7">
                                     </div>
                                 </div>
-                                <button class="gradient-btn-success" id="searchMotifBtn" onclick="searchMotif()">
+                                <button class="gradient-btn-success" id="searchMotifBtn" data-action="searchMotif">
                                     <i class="fas fa-search me-1"></i> Search Motif
                                 </button>
                             </div>
@@ -153,7 +153,7 @@
                             <div class="card-body py-2">
                                 <textarea class="form-control form-control-sm sequence-display mb-2" id="compareSequences" rows="6"
                                         placeholder="Enter sequences for second motif"></textarea>
-                                <button class="gradient-btn-primary" onclick="compareMotifs()">
+                                <button class="gradient-btn-primary" data-action="compareMotifs">
                                     <i class="fas fa-balance-scale me-1"></i> Compare Motifs
                                 </button>
                             </div>
@@ -236,7 +236,7 @@
                                     <option value="transfac">TRANSFAC</option>
                                     <option value="pfm">PFM</option>
                                 </select>
-                                <button class="gradient-btn-primary" onclick="exportMotif()">
+                                <button class="gradient-btn-primary" data-action="exportMotif">
                                     <i class="fas fa-download me-1"></i> Export Motif
                                 </button>
                             </div>
@@ -247,7 +247,7 @@
                             {{ card_header("Exported Content", icon="fa-file-code") }}
                             <div class="card-body py-2">
                                 <pre class="bg-light p-2 small" id="exportedContent" style="max-height:300px; overflow-y:auto; min-height:200px;">Exported motif will appear here</pre>
-                                <button class="gradient-btn-secondary" onclick="copyExport()">
+                                <button class="gradient-btn-secondary" data-action="copyExport">
                                     <i class="fas fa-copy me-1"></i> Copy to Clipboard
                                 </button>
                             </div>

@@ -87,13 +87,13 @@
                                     <div class="mb-3">
                                         <label class="form-label small mb-2">Select Restriction Enzymes</label>
                                         <div class="d-flex gap-2 mb-2">
-                                            <button type="button" class="btn btn-sm btn-outline-success flex-fill" onclick="selectAllBasicEnzymes()">
+                                            <button type="button" class="btn btn-sm btn-outline-success flex-fill" data-action="selectAllBasicEnzymes">
                                                 <i class="fas fa-check-square"></i> All
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="clearAllBasicEnzymes()">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" data-action="clearAllBasicEnzymes">
                                                 <i class="fas fa-square"></i> Clear
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectCommonBasicEnzymes()">
+                                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" data-action="selectCommonBasicEnzymes">
                                                 <i class="fas fa-star"></i> Common
                                             </button>
                                         </div>

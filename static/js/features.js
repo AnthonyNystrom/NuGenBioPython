@@ -513,7 +513,7 @@ function displayAnnotatedSequence(data) {
     html += `<p><strong>ID:</strong> ${data.summary.id} | <strong>Length:</strong> ${data.summary.length} bp</p>`;
     html += '<p><strong>GenBank Output:</strong></p>';
     html += `<textarea class="form-control" rows="10" readonly>${data.genbank}</textarea>`;
-    html += '<button class="btn btn-primary mt-2" onclick="downloadGenBank()">Download GenBank File</button>';
+    html += '<button class="btn btn-primary mt-2" data-action="downloadGenBank">Download GenBank File</button>';
     html += '</div></div>';
     resultsDiv.innerHTML = html;
     window.currentGenBank = data.genbank;

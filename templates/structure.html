@@ -20,6 +20,57 @@
     </div>
 </div>
 
+<!-- Persistent 3Dmol viewer: visible on every Structure tab, operates on
+     the last-loaded structure. -->
+<div class="card mb-3" id="view3dPanel">
+    <div class="card-header py-2 d-flex flex-wrap align-items-center gap-2">
+        <h6 class="mb-0 small me-auto">
+            <i class="fas fa-cube text-primary me-1"></i> 3D Viewer
+            <span class="text-muted ms-2" id="view3dLabel">— no structure loaded</span>
+        </h6>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dLoadSample" title="Load the bundled sample PDB">
+            <i class="fas fa-flask"></i>
+        </button>
+        <label class="btn btn-sm btn-outline-secondary mb-0" title="Upload PDB/mmCIF">
+            <i class="fas fa-upload"></i>
+            <input type="file" id="view3dFile" accept=".pdb,.ent,.cif,.mmcif" hidden>
+        </label>
+        <select id="view3dStyle" class="form-select form-select-sm" style="width:auto;" title="Representation style">
+            <option value="cartoon">Cartoon</option>
+            <option value="stick">Stick</option>
+            <option value="sphere">Sphere</option>
+            <option value="line">Line</option>
+            <option value="cross">Cross</option>
+        </select>
+        <select id="view3dColor" class="form-select form-select-sm" style="width:auto;" title="Color scheme">
+            <option value="spectrum">Spectrum</option>
+            <option value="chain">By chain</option>
+            <option value="ss">By secondary structure</option>
+            <option value="residue">By residue</option>
+            <option value="bfactor">By B-factor</option>
+            <option value="white">Monochrome</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
+            <i class="fas fa-globe"></i> Surface
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
+            <i class="fas fa-sync"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dReset" title="Reset view">
+            <i class="fas fa-expand-arrows-alt"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dDownloadPng" title="Download PNG">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div id="view3dContainer" style="position:relative; width:100%; height:500px; background:#f8fafc; overflow:hidden;"></div>
+        <div class="small text-muted px-3 py-2" id="view3dStatus">
+            Click the flask <i class="fas fa-flask"></i> to load the bundled sample, or upload a PDB / mmCIF file above. Drag to rotate · scroll to zoom · right-drag to translate.
+        </div>
+    </div>
+</div>
+
 <div class="card shadow-sm border-0 mb-3">
     <div class="card-header bg-gradient p-0 border-0">
         <div class="d-flex" id="structureTabs" role="tablist">
@@ -86,7 +137,7 @@
                                     <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseStructureBtn">
                                         <i class="fas fa-cube me-2"></i>Parse
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2" onclick="fetchFromPDB()">
+                                    <button type="button" class="gradient-btn-secondary w-100 mb-2" data-action="fetchFromPDB">
                                         <i class="fas fa-download me-2"></i>Fetch
                                     </button>
                                     {{ load_example_btn("loadExample", size="small") }}
@@ -116,6 +167,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <!-- Superimpose Tab -->
@@ -542,4 +594,231 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/structure.js') }}"></script>
+
+<!-- 3Dmol.js persistent viewer. Exposes window.NuGenStructureViewer so any
+     tab can drive it (load, recolor, highlight a residue, etc.). -->
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<script>
+(function () {
+    const container = document.getElementById('view3dContainer');
+    const statusEl  = document.getElementById('view3dStatus');
+    const labelEl   = document.getElementById('view3dLabel');
+    const styleSel  = document.getElementById('view3dStyle');
+    const colorSel  = document.getElementById('view3dColor');
+    const fileIn    = document.getElementById('view3dFile');
+    const surfaceBtn= document.getElementById('view3dSurfaceBtn');
+    const spinBtn   = document.getElementById('view3dSpinBtn');
+    if (!container) return;
+    if (!window.$3Dmol) {
+        statusEl.textContent = '3Dmol.js failed to load (blocked by CSP or offline).';
+        return;
+    }
+
+    // Defer init until the container actually has a non-zero size. This
+    // avoids the common "blank canvas" bug where $3Dmol.createViewer is
+    // called before stylesheets have applied the container's height.
+    let viewer = null;
+    let currentLabel = '';
+    let surfaceHandle = null;
+    let spinOn = false;
+
+    function ensureViewer() {
+        if (viewer) return viewer;
+        viewer = $3Dmol.createViewer(container, {
+            backgroundColor: 'white',
+            antialias: true,
+        });
+        viewer.enableFog(true);
+        return viewer;
+    }
+
+    function currentStyleSpec() {
+        const style = styleSel.value;
+        const color = colorSel.value;
+        const colorOpt = (function () {
+            switch (color) {
+                case 'spectrum': return { color: 'spectrum' };
+                case 'chain':    return { colorscheme: 'chainHetatm' };
+                case 'ss':       return { colorscheme: 'ssPyMol' };
+                case 'residue':  return { colorscheme: 'amino' };
+                case 'bfactor':  return { colorscheme: { prop: 'b', gradient: 'roygb', min: 0, max: 100 } };
+                case 'white':    return { color: '#6b7280' };
+                default:         return { color: 'spectrum' };
+            }
+        })();
+        const spec = {};
+        spec[style] = colorOpt;
+        return spec;
+    }
+
+    function applyStyle() {
+        if (!viewer) return;
+        viewer.setStyle({}, currentStyleSpec());
+        // Keep HETATM ligands readable even when protein is cartoon:
+        viewer.setStyle({ hetflag: true }, { stick: { colorscheme: 'Jmol', radius: 0.15 } });
+        viewer.render();
+    }
+
+    function zoomToFit(animate) {
+        if (!viewer) return;
+        viewer.zoomTo({}, animate ? 600 : 0);
+        viewer.render();
+    }
+
+    function clearSurface() {
+        if (viewer && surfaceHandle != null) {
+            try { viewer.removeSurface(surfaceHandle); } catch (_) {}
+        }
+        surfaceHandle = null;
+        if (surfaceBtn) surfaceBtn.classList.remove('active');
+    }
+
+    function loadPdbText(text, label) {
+        statusEl.textContent = 'Rendering ' + (label || 'structure') + '…';
+        try {
+            ensureViewer();
+            clearSurface();
+            viewer.clear();
+            viewer.addModel(text, 'pdb');
+            applyStyle();
+            zoomToFit(false);
+            currentLabel = label || 'structure';
+            labelEl.textContent = '— ' + currentLabel;
+            statusEl.textContent = currentLabel + ' loaded · drag to rotate · scroll to zoom · right-drag to translate';
+        } catch (e) {
+            statusEl.textContent = 'Failed to render: ' + e.message;
+        }
+    }
+
+    function loadSample() {
+        fetch('/api/structure/sample')
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(function (t) { loadPdbText(t, 'sample_protein.pdb'); })
+            .catch(function (e) { statusEl.textContent = 'Failed to fetch sample: ' + e; });
+    }
+
+    // Keep canvas sized to the container: Bootstrap tab switches can change
+    // viewport layout, and window resizing (or mobile orientation change)
+    // leaves the canvas stale without an explicit resize call.
+    function resizeViewer() {
+        if (!viewer) return;
+        viewer.resize();
+        viewer.render();
+    }
+    window.addEventListener('resize', function () {
+        // debounce via rAF
+        if (window.__view3dResizePending) return;
+        window.__view3dResizePending = true;
+        requestAnimationFrame(function () {
+            window.__view3dResizePending = false;
+            resizeViewer();
+        });
+    });
+    // Bootstrap emits this when any tab becomes visible.
+    document.addEventListener('shown.bs.tab', resizeViewer);
+    if (window.ResizeObserver) {
+        new ResizeObserver(resizeViewer).observe(container);
+    }
+
+    // Controls
+    styleSel.addEventListener('change', applyStyle);
+    colorSel.addEventListener('change', applyStyle);
+    fileIn.addEventListener('change', function () {
+        const f = fileIn.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function () { loadPdbText(reader.result, f.name); };
+        reader.readAsText(f);
+    });
+
+    // Global handlers (data-action dispatch defined in utils.js)
+    window.view3dLoadSample = loadSample;
+    window.view3dReset = function () { zoomToFit(true); };
+    window.view3dToggleSpin = function () {
+        if (!viewer) return;
+        spinOn = !spinOn;
+        viewer.spin(spinOn ? 'y' : false);
+        if (spinBtn) spinBtn.classList.toggle('active', spinOn);
+    };
+    window.view3dToggleSurface = function () {
+        if (!viewer) return;
+        if (surfaceHandle != null) { clearSurface(); viewer.render(); return; }
+        try {
+            surfaceHandle = viewer.addSurface($3Dmol.SurfaceType.VDW, {
+                opacity: 0.7, color: 'white',
+            }, { hetflag: false });
+            if (surfaceBtn) surfaceBtn.classList.add('active');
+            viewer.render();
+        } catch (e) {
+            statusEl.textContent = 'Could not build surface: ' + e.message;
+        }
+    };
+    window.view3dDownloadPng = function () {
+        if (!viewer) return;
+        try {
+            const url = viewer.pngURI();
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (currentLabel || 'structure') + '.png';
+            a.click();
+        } catch (e) {
+            statusEl.textContent = 'Could not export PNG: ' + e.message;
+        }
+    };
+
+    // Small public API so other tabs can control the viewer (e.g. the SASA
+    // tab could color residues by their SASA value once a structure is loaded).
+    window.NuGenStructureViewer = {
+        load: loadPdbText,
+        applyStyle: applyStyle,
+        zoomTo: zoomToFit,
+        resize: resizeViewer,
+        colorResidues: function (resiMap) {
+            // resiMap: { "A:10": "#ff0000", ... } — color individual residues
+            if (!viewer) return;
+            applyStyle();
+            Object.keys(resiMap || {}).forEach(function (key) {
+                const [chain, resi] = key.split(':');
+                viewer.addStyle({ chain: chain, resi: parseInt(resi, 10) },
+                                { cartoon: { color: resiMap[key] },
+                                  stick:   { color: resiMap[key] } });
+            });
+            viewer.render();
+        },
+        highlight: function (chain, resi) {
+            if (!viewer) return;
+            viewer.addStyle({ chain: chain, resi: resi }, { stick: { radius: 0.25, color: '#ef4444' } });
+            viewer.zoomTo({ chain: chain, resi: resi }, 500);
+            viewer.render();
+        },
+        getViewer: function () { return viewer; },
+    };
+
+    // Auto-sync: if the user submits the Parse form (uploads a structure via
+    // the main Parse card), mirror that file in the viewer so they see
+    // what they're analyzing.
+    const parseForm = document.getElementById('structureForm');
+    if (parseForm) {
+        parseForm.addEventListener('submit', function () {
+            const f = (document.getElementById('structureFile') || {}).files || [];
+            if (!f[0]) return;
+            const reader = new FileReader();
+            reader.onload = function () { loadPdbText(reader.result, f[0].name); };
+            reader.readAsText(f[0]);
+        });
+    }
+
+    // If the Load Example button on the Parse tab fires, auto-load sample.
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-action="loadExample"]');
+        if (btn && btn.closest('#parse')) {
+            // Let the existing handler run first, then load the sample PDB.
+            setTimeout(loadSample, 50);
+        }
+    });
+})();
+</script>
 {% endblock %}

@@ -156,6 +156,118 @@
         render: renderResultsPanel,
     };
 
+    // ---- Global keyboard shortcuts -------------------------------------
+    // Phase-5 polish: cheap UX wins that don't collide with typing.
+    //
+    //   /        → focus the first visible textarea/input (scroll into view)
+    //   g then h → go to Dashboard (vim-style chord)
+    //   Shift-? → open a small help overlay listing the bindings
+    //   Esc     → close the overlay (also handled elsewhere for sidebar/panel)
+    //
+    // All shortcuts are skipped while an editable field has focus, so they
+    // never steal keystrokes from the user's actual typing.
+    function isEditable(el) {
+        if (!el) return false;
+        const tag = el.tagName;
+        return tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT' ||
+               el.isContentEditable;
+    }
+    function focusFirstInput() {
+        const candidates = Array.from(document.querySelectorAll(
+            'textarea:not([readonly]), input[type="text"], input[type="search"], input:not([type])'
+        ));
+        const visible = candidates.find(function (el) {
+            return el.offsetParent !== null && !el.disabled;
+        });
+        if (visible) {
+            visible.focus({ preventScroll: false });
+            visible.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    }
+    function toggleShortcutsHelp() {
+        let overlay = document.getElementById('ng-shortcuts-help');
+        if (overlay) { overlay.remove(); return; }
+        overlay = document.createElement('div');
+        overlay.id = 'ng-shortcuts-help';
+        overlay.className = 'ng-shortcuts-overlay';
+        overlay.innerHTML =
+            '<div class="ng-shortcuts-card" role="dialog" aria-label="Keyboard shortcuts">' +
+                '<div class="ng-shortcuts-title">Keyboard shortcuts</div>' +
+                '<dl>' +
+                    '<dt><kbd>/</kbd></dt><dd>Focus the first input on the page</dd>' +
+                    '<dt><kbd>g</kbd> <kbd>h</kbd></dt><dd>Go to Dashboard</dd>' +
+                    '<dt><kbd>?</kbd></dt><dd>Show / hide this help</dd>' +
+                    '<dt><kbd>Esc</kbd></dt><dd>Close panels and overlays</dd>' +
+                '</dl>' +
+                '<button type="button" class="btn btn-sm btn-secondary">Close</button>' +
+            '</div>';
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) overlay.remove();
+        });
+        overlay.querySelector('button').addEventListener('click', function () { overlay.remove(); });
+        document.body.appendChild(overlay);
+    }
+
+    // ---- data-action event delegation ---------------------------------
+    // Phase-5 polish: lets us remove inline onclick= handlers page-wide so
+    // we can tighten CSP later. A `<button data-action="foo">` is
+    // equivalent to `<button data-action="foo">` — the global `foo` function
+    // still lives on window. If it takes no arguments, use data-action
+    // alone; for arguments pass data-action-args (JSON).
+    //
+    //     <button data-action="loadExample">Example</button>
+    //     <button data-action="showDetails" data-action-args='[123,"x"]'>…</button>
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const name = btn.dataset.action;
+        const fn = window[name];
+        if (typeof fn !== 'function') return;
+        let args = [];
+        if (btn.dataset.actionArgs) {
+            try { args = JSON.parse(btn.dataset.actionArgs); } catch (_) {}
+            if (!Array.isArray(args)) args = [args];
+        }
+        fn.apply(btn, args);
+    });
+
+    let chord = null;
+    let chordTimer = null;
+    document.addEventListener('keydown', function (e) {
+        // Always allow Esc to close the help overlay
+        if (e.key === 'Escape') {
+            const overlay = document.getElementById('ng-shortcuts-help');
+            if (overlay) overlay.remove();
+            return;
+        }
+        if (isEditable(document.activeElement)) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        if (e.key === '/') {
+            e.preventDefault();
+            focusFirstInput();
+            return;
+        }
+        if (e.key === '?') {
+            e.preventDefault();
+            toggleShortcutsHelp();
+            return;
+        }
+        // Chord handling: g then h → /
+        if (chord === 'g') {
+            clearTimeout(chordTimer);
+            chord = null;
+            if (e.key === 'h') {
+                e.preventDefault();
+                window.location.href = '/';
+                return;
+            }
+        } else if (e.key === 'g') {
+            chord = 'g';
+            chordTimer = setTimeout(function () { chord = null; }, 1200);
+        }
+    });
+
     global.showLoading = showLoading;
     global.hideLoading = hideLoading;
     global.showAlert = showAlert;

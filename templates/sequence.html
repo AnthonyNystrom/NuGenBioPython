@@ -96,13 +96,13 @@
                     <div class="tab-pane fade show active" id="basic" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" onclick="sixFrameTranslation()" id="sixFrameBtn">
+                                <button type="button" class="gradient-btn-primary w-100" data-action="sixFrameTranslation" id="sixFrameBtn">
                                     <i class="fas fa-exchange-alt me-3"></i>
                                     <span>6-Frame Translation</span>
                                 </button>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" onclick="proteinAnalysis()" id="protParamBtn">
+                                <button type="button" class="gradient-btn-secondary w-100" data-action="proteinAnalysis" id="protParamBtn">
                                     <i class="fas fa-microscope me-3"></i>
                                     <span>Protein Analysis (ProtParam)</span>
                                 </button>
@@ -132,7 +132,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">GC Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-warning w-100" onclick="advancedGCAnalysis()">
+                                <button type="button" class="gradient-btn-warning w-100" data-action="advancedGCAnalysis">
                                     <i class="fas fa-chart-line me-3"></i>
                                     <span>GC Skew & GC123</span>
                                 </button>
@@ -156,7 +156,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Advanced Protein Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" onclick="advancedProteinAnalysis()" id="advProtParamBtn">
+                                <button type="button" class="gradient-btn-secondary w-100" data-action="advancedProteinAnalysis" id="advProtParamBtn">
                                     <i class="fas fa-atom me-3"></i>
                                     <span>Molar Extinction & Charge</span>
                                 </button>
@@ -165,7 +165,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Molecular Weight</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" onclick="molecularWeightAdvanced()" id="molWeightBtn">
+                                <button type="button" class="gradient-btn-primary w-100" data-action="molecularWeightAdvanced" id="molWeightBtn">
                                     <i class="fas fa-weight me-3"></i>
                                     <span>MW Variations (ss/ds DNA/RNA)</span>
                                 </button>
@@ -180,7 +180,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Melting Temperature</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-info w-100" onclick="calculateMeltingTemp()" id="meltingTempBtn">
+                                <button type="button" class="gradient-btn-info w-100" data-action="calculateMeltingTemp" id="meltingTempBtn">
                                     <i class="fas fa-thermometer-half me-3"></i>
                                     <span>Calculate Tm</span>
                                 </button>
@@ -193,7 +193,7 @@
                                 <input type="number" class="form-control mb-2" id="minOrfLength" value="75" min="30" step="3">
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-success w-100" onclick="findORFs()" id="orfBtn">
+                                <button type="button" class="gradient-btn-success w-100" data-action="findORFs" id="orfBtn">
                                     <i class="fas fa-dna me-3"></i>
                                     <span>Find ORFs</span>
                                 </button>
@@ -202,7 +202,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Codon Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-warning w-100" onclick="analyzeCodonUsage()" id="codonBtn">
+                                <button type="button" class="gradient-btn-warning w-100" data-action="analyzeCodonUsage" id="codonBtn">
                                     <i class="fas fa-chart-pie me-3"></i>
                                     <span>Codon Usage</span>
                                 </button>
@@ -211,7 +211,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Checksums</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-outline w-100" onclick="calculateChecksums()" id="checksumBtn">
+                                <button type="button" class="gradient-btn-outline w-100" data-action="calculateChecksums" id="checksumBtn">
                                     <i class="fas fa-fingerprint me-3"></i>
                                     <span>Calculate Checksums</span>
                                 </button>
@@ -220,7 +220,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Reference Data</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" onclick="showReferenceData()" id="refDataBtn">
+                                <button type="button" class="gradient-btn-primary w-100" data-action="showReferenceData" id="refDataBtn">
                                     <i class="fas fa-book me-3"></i>
                                     <span>Codon Tables & IUPAC</span>
                                 </button>
@@ -245,7 +245,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" onclick="searchSequence()">
+                                <button type="button" class="gradient-btn-secondary w-100" data-action="searchSequence">
                                     <i class="fas fa-search me-3"></i>
                                     <span>Search Sequence</span>
                                 </button>

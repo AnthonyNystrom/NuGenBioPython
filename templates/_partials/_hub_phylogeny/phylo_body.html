@@ -87,10 +87,10 @@
                                             <textarea class="form-control form-control-sm" id="treeString" rows="6"
                                                     placeholder="Enter tree in Newick format, e.g., ((A,B),(C,D));"></textarea>
                                         </div>
-                                        <button type="button" class="gradient-btn-outline w-100 mb-2" onclick="parseTreeString()">
+                                        <button type="button" class="gradient-btn-outline w-100 mb-2" data-action="parseTreeString">
                                             <i class="fas fa-code me-2"></i> Parse String
                                         </button>
-                                        <button type="button" class="gradient-btn-small w-100" onclick="clearTreeString()">
+                                        <button type="button" class="gradient-btn-small w-100" data-action="clearTreeString">
                                             <i class="fas fa-eraser me-2"></i> Clear
                                         </button>
                                     </div>
@@ -201,7 +201,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="pruneTree()">
+                                <button class="gradient-btn-primary w-100" data-action="pruneTree">
                                     <i class="fas fa-cut me-2"></i> Prune
                                 </button>
                             </div>
@@ -227,7 +227,7 @@
                                         <option value="">Select outgroup...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="rerootTree()">
+                                <button class="gradient-btn-primary w-100" data-action="rerootTree">
                                     <i class="fas fa-arrows-alt me-2"></i> Re-root
                                 </button>
                             </div>
@@ -242,7 +242,7 @@
                                         Reverse order
                                     </label>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="ladderizeTree()">
+                                <button class="gradient-btn-primary w-100" data-action="ladderizeTree">
                                     <i class="fas fa-sort me-2"></i> Ladderize
                                 </button>
                             </div>
@@ -257,7 +257,7 @@
                                            step="0.01" placeholder="e.g., 0.1">
                                     <div class="form-text">Collapse branches shorter than threshold</div>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="collapseTree()">
+                                <button class="gradient-btn-primary w-100" data-action="collapseTree">
                                     <i class="fas fa-compress me-2"></i> Collapse
                                 </button>
                             </div>
@@ -282,10 +282,10 @@
                         <div class="card mb-3">
                             {{ card_header("View Terminals & Clades", icon="fa-list") }}
                             <div class="card-body py-2">
-                                <button class="gradient-btn-primary w-100 mb-2" onclick="viewTerminals()">
+                                <button class="gradient-btn-primary w-100 mb-2" data-action="viewTerminals">
                                     <i class="fas fa-leaf me-2"></i> View All Terminals
                                 </button>
-                                <button class="gradient-btn-outline w-100" onclick="viewClades()">
+                                <button class="gradient-btn-outline w-100" data-action="viewClades">
                                     <i class="fas fa-sitemap me-2"></i> View All Clades
                                 </button>
                                 <div id="terminalsCladesList" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
@@ -301,7 +301,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="findPath()">
+                                <button class="gradient-btn-primary w-100" data-action="findPath">
                                     <i class="fas fa-route me-2"></i> Find Path
                                 </button>
                                 <div id="pathDisplay" class="mt-3"></div>
@@ -323,7 +323,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="findCommonAncestor()">
+                                <button class="gradient-btn-primary w-100" data-action="findCommonAncestor">
                                     <i class="fas fa-code-branch me-2"></i> Find Common Ancestor
                                 </button>
                                 <div id="ancestorDisplay" class="mt-3"></div>
@@ -341,7 +341,7 @@
                                     <textarea class="form-control form-control-sm" id="compareTreeString" rows="4"
                                             placeholder="Enter tree in Newick format"></textarea>
                                 </div>
-                                <button class="gradient-btn-primary w-100 mb-2" onclick="compareTrees()">
+                                <button class="gradient-btn-primary w-100 mb-2" data-action="compareTrees">
                                     <i class="fas fa-balance-scale me-2"></i> Compare Trees
                                 </button>
                                 <div id="comparisonDisplay"></div>
@@ -366,7 +366,7 @@
                                         <option value="phyloxml">PhyloXML</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100 mb-2" onclick="exportTree()">
+                                <button class="gradient-btn-primary w-100 mb-2" data-action="exportTree">
                                     <i class="fas fa-file-export me-2"></i> Export Tree
                                 </button>
                             </div>
@@ -383,7 +383,7 @@
                                         Show confidence values
                                     </label>
                                 </div>
-                                <button class="gradient-btn-primary w-100" onclick="updateVisualization()">
+                                <button class="gradient-btn-primary w-100" data-action="updateVisualization">
                                     <i class="fas fa-sync me-2"></i> Update Visualization
                                 </button>
                             </div>

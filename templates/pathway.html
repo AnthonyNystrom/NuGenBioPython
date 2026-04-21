@@ -66,7 +66,7 @@
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label small mb-0"><strong>Reactants</strong></label>
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                        onclick="addReactant()">
+                                                        data-action="addReactant">
                                                     <i class="fas fa-plus"></i> Add
                                                 </button>
                                             </div>
@@ -81,7 +81,7 @@
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label small mb-0"><strong>Products</strong></label>
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                        onclick="addProduct()">
+                                                        data-action="addProduct">
                                                     <i class="fas fa-plus"></i> Add
                                                 </button>
                                             </div>
@@ -97,7 +97,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Catalysts (Optional)</strong></label>
                                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                    onclick="addCatalyst()">
+                                                    data-action="addCatalyst">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -121,7 +121,7 @@
                                     </button>
                                     {{ load_example_btn("loadReactionExample", label="Load Example", extra="mb-2", icon_spacing="") }}
                                     <button type="button" class="gradient-btn-small w-100"
-                                            onclick="clearReactions()">
+                                            data-action="clearReactions">
                                         <i class="fas fa-trash"></i> Clear All Reactions
                                     </button>
                                 </form>
@@ -157,7 +157,7 @@
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Analyze the complete reaction system using Bio.Pathway.System</p>
                                 <button type="button" class="gradient-btn-primary"
-                                        onclick="analyzeSystem()" id="analyzeSystemBtn">
+                                        data-action="analyzeSystem" id="analyzeSystemBtn">
                                     <i class="fas fa-calculator"></i> Analyze System
                                 </button>
                             </div>
@@ -192,7 +192,7 @@
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Analyze network structure using Bio.Pathway.Network - identify sources, sinks, and interactions</p>
                                 <button type="button" class="gradient-btn-primary"
-                                        onclick="analyzeNetwork()" id="analyzeNetworkBtn">
+                                        data-action="analyzeNetwork" id="analyzeNetworkBtn">
                                     <i class="fas fa-project-diagram"></i> Analyze Network
                                 </button>
                             </div>
@@ -227,7 +227,7 @@
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Generate pathway visualization using Bio.Pathway.MultiGraph</p>
                                 <button type="button" class="gradient-btn-primary"
-                                        onclick="generateVisualization()" id="generateVizBtn">
+                                        data-action="generateVisualization" id="generateVizBtn">
                                     <i class="fas fa-eye"></i> Generate Visualization
                                 </button>
                             </div>
