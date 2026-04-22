@@ -40,6 +40,10 @@ const wsSrc = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'workspace.js
 eval(wsSrc.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
 const W = global.window.Workspace;
 
+const rcSrc = fs.readFileSync(path.join(REPO_ROOT, 'static', 'js', 'results_card.js'), 'utf8');
+eval(rcSrc.replace(/\}\)\(window\);\s*$/, '})(global.window);'));
+const RC = global.window.ResultsCard;
+
 let pass = 0, fail = 0;
 function t(ok, msg) {
     if (ok) { pass++; console.log('PASS', msg); }
@@ -221,6 +225,61 @@ t(W.count() === 50, 'Workspace caps at 50 items');
 // Clear
 W.clear();
 t(W.count() === 0, 'Workspace.clear() empties all items');
+
+// ---------- ResultsCard ----------
+global.document.body.innerHTML = '<div id="rc-test"></div>';
+RC.mount('rc-test', {
+    title: 'Demo',
+    meta: '<span class="meta">42 items</span>',
+    summary: '<div>SUMMARY_CONTENT</div>',
+    details: '<div>DETAILS_CONTENT</div>',
+    raw: 'RAW_TEXT_BODY',
+    downloads: [
+        { label: 'A.txt', filename: 'a.txt', text: 'hello' },
+        { label: 'B.json', filename: 'b.json', text: '{}', mime: 'application/json' },
+    ],
+    workspaceItem: { type: 'sequence', name: 'from rc', data: 'ATGC' },
+});
+const rcHtml = global.document.getElementById('rc-test').innerHTML;
+run('ResultsCard renders title',    rcHtml, 'Demo');
+run('ResultsCard renders meta',     rcHtml, '42 items');
+run('ResultsCard Summary tab',      rcHtml, 'SUMMARY_CONTENT');
+run('ResultsCard Details tab',      rcHtml, 'DETAILS_CONTENT');
+run('ResultsCard Raw tab (escaped)',rcHtml, 'RAW_TEXT_BODY');
+run('ResultsCard Save button',      rcHtml, 'data-rc-save');
+run('ResultsCard Copy button',      rcHtml, 'data-rc-copy');
+run('ResultsCard Download menu',    rcHtml, 'data-rc-download="0"', 'data-rc-download="1"');
+
+// Save wires to Workspace.add
+W.clear();
+global.document.querySelector('[data-rc-save]').click();
+t(W.count() === 1, 'ResultsCard Save wires to Workspace.add');
+t(W.list()[0].name === 'from rc', 'Workspace entry carries the configured name');
+
+// Minimal spec — only title + summary
+global.document.body.innerHTML = '<div id="rc-min"></div>';
+RC.mount('rc-min', { title: 'Only summary', summary: '<p>just this</p>' });
+const rcMin = global.document.getElementById('rc-min').innerHTML;
+t(rcMin.includes('just this'), 'ResultsCard works with only Summary');
+t(!rcMin.includes('data-rc-save'), 'ResultsCard omits Save when no workspaceItem');
+t(!rcMin.includes('data-rc-download'), 'ResultsCard omits Download when no downloads');
+
+// Polish-1: showLoading / showError APIs
+global.document.body.innerHTML = '<div id="rc-load"></div>';
+RC.showLoading('rc-load', { title: 'Running BLAST…' });
+const rcLoad = global.document.getElementById('rc-load').innerHTML;
+t(rcLoad.includes('results-card-loading'), 'showLoading marks card with loading class');
+t(rcLoad.includes('aria-busy="true"'), 'showLoading sets aria-busy');
+t(rcLoad.includes('Running BLAST'), 'showLoading shows custom title');
+t(rcLoad.includes('rc-skeleton-row'), 'showLoading renders skeleton rows');
+
+global.document.body.innerHTML = '<div id="rc-err"></div>';
+RC.showError('rc-err', { title: 'BLAST failed', message: 'NCBI returned 503' });
+const rcErr = global.document.getElementById('rc-err').innerHTML;
+t(rcErr.includes('results-card-error'), 'showError marks card with error class');
+t(rcErr.includes('role="alert"'), 'showError sets role=alert');
+t(rcErr.includes('BLAST failed'), 'showError shows the title');
+t(rcErr.includes('NCBI returned 503'), 'showError shows the message');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);

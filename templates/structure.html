@@ -3,14 +3,19 @@
 {% block title %}Structure Analysis - NuGenBioPython{% endblock %}
 
 {% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #structureTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #structureTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
+{% set analyses = [
+    {"key": "parse",        "target": "parse",        "title": "Parse",           "icon": "fa-cube"},
+    {"key": "geometry",     "target": "geometry",     "title": "Geometry",        "icon": "fa-ruler"},
+    {"key": "quality",      "target": "quality",      "title": "Quality",         "icon": "fa-check-circle"},
+    {"key": "contacts",     "target": "contacts",     "title": "Contacts",        "icon": "fa-network-wired"},
+    {"key": "interactions", "target": "interactions", "title": "Interactions",    "icon": "fa-link"},
+    {"key": "dssp",         "target": "dssp",         "title": "DSSP",            "icon": "fa-dna"},
+    {"key": "ramachandran", "target": "ramachandran", "title": "Ramachandran",    "icon": "fa-chart-scatter"},
+    {"key": "sasa",         "target": "sasa",         "title": "SASA",            "icon": "fa-water"},
+    {"key": "selection",    "target": "selection",    "title": "Selection",       "icon": "fa-crop"},
+    {"key": "superimpose",  "target": "superimpose",  "title": "Superimpose",     "icon": "fa-project-diagram"},
+] %}
+
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1">
@@ -20,106 +25,94 @@
     </div>
 </div>
 
-<!-- Persistent 3Dmol viewer: visible on every Structure tab, operates on
-     the last-loaded structure. -->
-<div class="card mb-3" id="view3dPanel">
-    <div class="card-header py-2 d-flex flex-wrap align-items-center gap-2">
-        <h6 class="mb-0 small me-auto">
-            <i class="fas fa-cube text-primary me-1"></i> 3D Viewer
-            <span class="text-muted ms-2" id="view3dLabel">— no structure loaded</span>
-        </h6>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dLoadSample" title="Load the bundled sample PDB">
-            <i class="fas fa-flask"></i>
-        </button>
-        <label class="btn btn-sm btn-outline-secondary mb-0" title="Upload PDB/mmCIF">
-            <i class="fas fa-upload"></i>
-            <input type="file" id="view3dFile" accept=".pdb,.ent,.cif,.mmcif" hidden>
-        </label>
-        <select id="view3dStyle" class="form-select form-select-sm" style="width:auto;" title="Representation style">
-            <option value="cartoon">Cartoon</option>
-            <option value="stick">Stick</option>
-            <option value="sphere">Sphere</option>
-            <option value="line">Line</option>
-            <option value="cross">Cross</option>
-        </select>
-        <select id="view3dColor" class="form-select form-select-sm" style="width:auto;" title="Color scheme">
-            <option value="spectrum">Spectrum</option>
-            <option value="chain">By chain</option>
-            <option value="ss">By secondary structure</option>
-            <option value="residue">By residue</option>
-            <option value="bfactor">By B-factor</option>
-            <option value="white">Monochrome</option>
-        </select>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
-            <i class="fas fa-globe"></i> Surface
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
-            <i class="fas fa-sync"></i>
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dReset" title="Reset view">
-            <i class="fas fa-expand-arrows-alt"></i>
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="view3dDownloadPng" title="Download PNG">
-            <i class="fas fa-download"></i>
-        </button>
+<div class="row g-3 mb-3 structure-workspace">
+    <div class="col-lg-8">
+        <div class="card structure-viewer-card h-100" id="view3dPanel">
+            <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <h6 class="mb-0 me-auto structure-viewer-title">
+                    <i class="fas fa-cube text-primary me-1"></i> 3D Viewer
+                    <span class="text-muted ms-2 small" id="view3dLabel">— no structure loaded</span>
+                </h6>
+                <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dLoadSample" title="Load bundled sample PDB">
+                    <i class="fas fa-flask"></i>
+                </button>
+                <label class="nug-btn-ghost nug-btn-sm mb-0" title="Upload PDB/mmCIF">
+                    <i class="fas fa-upload"></i>
+                    <input type="file" id="view3dFile" accept=".pdb,.ent,.cif,.mmcif" hidden>
+                </label>
+                <select id="view3dStyle" class="form-select form-select-sm structure-viewer-select" title="Representation style">
+                    <option value="cartoon">Cartoon</option>
+                    <option value="stick">Stick</option>
+                    <option value="sphere">Sphere</option>
+                    <option value="line">Line</option>
+                    <option value="cross">Cross</option>
+                </select>
+                <select id="view3dColor" class="form-select form-select-sm structure-viewer-select" title="Color scheme">
+                    <option value="spectrum">Spectrum</option>
+                    <option value="chain">By chain</option>
+                    <option value="ss">By secondary structure</option>
+                    <option value="residue">By residue</option>
+                    <option value="bfactor">By B-factor</option>
+                    <option value="white">Monochrome</option>
+                </select>
+            </div>
+            <div class="card-body p-0">
+                <div id="view3dContainer" class="structure-viewer-canvas"></div>
+            </div>
+            <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Viewer controls">
+                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
+                        <i class="fas fa-globe"></i> <span class="d-none d-md-inline">Surface</span>
+                    </button>
+                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
+                        <i class="fas fa-sync"></i> <span class="d-none d-md-inline">Spin</span>
+                    </button>
+                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dReset" title="Reset view">
+                        <i class="fas fa-expand-arrows-alt"></i> <span class="d-none d-md-inline">Reset</span>
+                    </button>
+                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dDownloadPng" title="Download PNG">
+                        <i class="fas fa-download"></i> <span class="d-none d-md-inline">PNG</span>
+                    </button>
+                </div>
+                <small class="text-muted ms-auto structure-viewer-status" id="view3dStatus">
+                    Click the flask to load the bundled sample, or upload a PDB / mmCIF file.
+                </small>
+            </div>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div id="view3dContainer" style="position:relative; width:100%; height:500px; background:#f8fafc; overflow:hidden;"></div>
-        <div class="small text-muted px-3 py-2" id="view3dStatus">
-            Click the flask <i class="fas fa-flask"></i> to load the bundled sample, or upload a PDB / mmCIF file above. Drag to rotate · scroll to zoom · right-drag to translate.
+
+    <div class="col-lg-4">
+        <div class="card structure-analyses-card h-100">
+            <div class="card-header py-2">
+                <h6 class="mb-0 small text-uppercase text-muted">
+                    <i class="fas fa-microscope text-primary me-1"></i> Analyses
+                </h6>
+            </div>
+            <nav class="structure-analyses-nav list-group list-group-flush" id="structureTabs" role="tablist" aria-label="Structure analysis">
+                {% for a in analyses %}
+                <button type="button"
+                        class="list-group-item list-group-item-action structure-analysis-item {% if loop.first %}active{% endif %}"
+                        id="{{ a.key }}-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#{{ a.target }}"
+                        role="tab"
+                        aria-controls="{{ a.target }}"
+                        aria-selected="{{ 'true' if loop.first else 'false' }}">
+                    <i class="fas {{ a.icon }} structure-analysis-icon"></i>
+                    <span class="structure-analysis-label">{{ a.title }}</span>
+                    <i class="fas fa-chevron-right structure-analysis-chevron"></i>
+                </button>
+                {% endfor %}
+            </nav>
         </div>
     </div>
 </div>
 
-<div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
-        <div class="d-flex" id="structureTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
-                <i class="fas fa-cube d-block mb-1"></i>
-                <small>Parse</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="superimpose-tab" data-bs-toggle="tab" data-bs-target="#superimpose" type="button">
-                <i class="fas fa-project-diagram d-block mb-1"></i>
-                <small>Superimpose</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="geometry-tab" data-bs-toggle="tab" data-bs-target="#geometry" type="button">
-                <i class="fas fa-ruler d-block mb-1"></i>
-                <small>Geometry</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="quality-tab" data-bs-toggle="tab" data-bs-target="#quality" type="button">
-                <i class="fas fa-check-circle d-block mb-1"></i>
-                <small>Quality</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button">
-                <i class="fas fa-network-wired d-block mb-1"></i>
-                <small>Contacts</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="interactions-tab" data-bs-toggle="tab" data-bs-target="#interactions" type="button">
-                <i class="fas fa-link d-block mb-1"></i>
-                <small>Interactions</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="dssp-tab" data-bs-toggle="tab" data-bs-target="#dssp" type="button">
-                <i class="fas fa-dna d-block mb-1"></i>
-                <small>DSSP</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="ramachandran-tab" data-bs-toggle="tab" data-bs-target="#ramachandran" type="button">
-                <i class="fas fa-chart-scatter d-block mb-1"></i>
-                <small>Ramachandran</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="sasa-tab" data-bs-toggle="tab" data-bs-target="#sasa" type="button">
-                <i class="fas fa-water d-block mb-1"></i>
-                <small>SASA</small>
-            </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="selection-tab" data-bs-toggle="tab" data-bs-target="#selection" type="button">
-                <i class="fas fa-crop d-block mb-1"></i>
-                <small>Selection</small>
-            </button>
-        </div>
-    </div>
+<div class="card structure-analysis-content">
     <div class="card-body p-4">
         <div class="tab-content">
             <!-- Parse Tab -->
-            <div class="tab-pane fade show active" id="parse">
+            <div class="tab-pane fade show active" id="parse" role="tabpanel" aria-labelledby="parse-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -167,11 +160,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- Superimpose Tab -->
-            <div class="tab-pane fade" id="superimpose">
+            <div class="tab-pane fade" id="superimpose" role="tabpanel" aria-labelledby="superimpose-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -218,7 +210,7 @@
             </div>
 
             <!-- Geometry Tab -->
-            <div class="tab-pane fade" id="geometry">
+            <div class="tab-pane fade" id="geometry" role="tabpanel" aria-labelledby="geometry-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -261,7 +253,7 @@
             </div>
 
             <!-- Quality Tab -->
-            <div class="tab-pane fade" id="quality">
+            <div class="tab-pane fade" id="quality" role="tabpanel" aria-labelledby="quality-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -300,7 +292,7 @@
             </div>
 
             <!-- Contacts Tab -->
-            <div class="tab-pane fade" id="contacts">
+            <div class="tab-pane fade" id="contacts" role="tabpanel" aria-labelledby="contacts-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -346,7 +338,7 @@
             </div>
 
             <!-- Interactions Tab -->
-            <div class="tab-pane fade" id="interactions">
+            <div class="tab-pane fade" id="interactions" role="tabpanel" aria-labelledby="interactions-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -384,7 +376,7 @@
             </div>
 
             <!-- DSSP Tab -->
-            <div class="tab-pane fade" id="dssp">
+            <div class="tab-pane fade" id="dssp" role="tabpanel" aria-labelledby="dssp-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -429,7 +421,7 @@
             </div>
 
             <!-- Ramachandran Tab -->
-            <div class="tab-pane fade" id="ramachandran">
+            <div class="tab-pane fade" id="ramachandran" role="tabpanel" aria-labelledby="ramachandran-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -479,7 +471,7 @@
             </div>
 
             <!-- SASA Tab -->
-            <div class="tab-pane fade" id="sasa">
+            <div class="tab-pane fade" id="sasa" role="tabpanel" aria-labelledby="sasa-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -523,7 +515,7 @@
             </div>
 
             <!-- Selection Tab -->
-            <div class="tab-pane fade" id="selection">
+            <div class="tab-pane fade" id="selection" role="tabpanel" aria-labelledby="selection-tab">
                 <div class="row">
                     <div class="col-md-8">
                         <div class="card mb-3">
@@ -587,7 +579,7 @@
 
         </div><!-- End Tab Content -->
     </div><!-- End Card Body -->
-</div><!-- End Card -->
+</div><!-- End Analysis Content Card -->
 
 <button type="button" id="advancedAnalysisBtn" style="display:none;"></button>
 {% endblock %}
@@ -596,7 +588,7 @@
 <script src="{{ url_for('static', filename='js/structure.js') }}"></script>
 
 <!-- 3Dmol.js persistent viewer. Exposes window.NuGenStructureViewer so any
-     tab can drive it (load, recolor, highlight a residue, etc.). -->
+     analysis can drive it (load, recolor, highlight a residue, etc.). -->
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 <script>
 (function () {
@@ -614,9 +606,6 @@
         return;
     }
 
-    // Defer init until the container actually has a non-zero size. This
-    // avoids the common "blank canvas" bug where $3Dmol.createViewer is
-    // called before stylesheets have applied the container's height.
     let viewer = null;
     let currentLabel = '';
     let surfaceHandle = null;
@@ -654,7 +643,6 @@
     function applyStyle() {
         if (!viewer) return;
         viewer.setStyle({}, currentStyleSpec());
-        // Keep HETATM ligands readable even when protein is cartoon:
         viewer.setStyle({ hetflag: true }, { stick: { colorscheme: 'Jmol', radius: 0.15 } });
         viewer.render();
     }
@@ -684,7 +672,7 @@
             zoomToFit(false);
             currentLabel = label || 'structure';
             labelEl.textContent = '— ' + currentLabel;
-            statusEl.textContent = currentLabel + ' loaded · drag to rotate · scroll to zoom · right-drag to translate';
+            statusEl.textContent = currentLabel + ' loaded · drag to rotate · scroll to zoom';
         } catch (e) {
             statusEl.textContent = 'Failed to render: ' + e.message;
         }
@@ -700,16 +688,12 @@
             .catch(function (e) { statusEl.textContent = 'Failed to fetch sample: ' + e; });
     }
 
-    // Keep canvas sized to the container: Bootstrap tab switches can change
-    // viewport layout, and window resizing (or mobile orientation change)
-    // leaves the canvas stale without an explicit resize call.
     function resizeViewer() {
         if (!viewer) return;
         viewer.resize();
         viewer.render();
     }
     window.addEventListener('resize', function () {
-        // debounce via rAF
         if (window.__view3dResizePending) return;
         window.__view3dResizePending = true;
         requestAnimationFrame(function () {
@@ -717,13 +701,11 @@
             resizeViewer();
         });
     });
-    // Bootstrap emits this when any tab becomes visible.
     document.addEventListener('shown.bs.tab', resizeViewer);
     if (window.ResizeObserver) {
         new ResizeObserver(resizeViewer).observe(container);
     }
 
-    // Controls
     styleSel.addEventListener('change', applyStyle);
     colorSel.addEventListener('change', applyStyle);
     fileIn.addEventListener('change', function () {
@@ -734,7 +716,6 @@
         reader.readAsText(f);
     });
 
-    // Global handlers (data-action dispatch defined in utils.js)
     window.view3dLoadSample = loadSample;
     window.view3dReset = function () { zoomToFit(true); };
     window.view3dToggleSpin = function () {
@@ -769,15 +750,12 @@
         }
     };
 
-    // Small public API so other tabs can control the viewer (e.g. the SASA
-    // tab could color residues by their SASA value once a structure is loaded).
     window.NuGenStructureViewer = {
         load: loadPdbText,
         applyStyle: applyStyle,
         zoomTo: zoomToFit,
         resize: resizeViewer,
         colorResidues: function (resiMap) {
-            // resiMap: { "A:10": "#ff0000", ... } — color individual residues
             if (!viewer) return;
             applyStyle();
             Object.keys(resiMap || {}).forEach(function (key) {
@@ -797,9 +775,6 @@
         getViewer: function () { return viewer; },
     };
 
-    // Auto-sync: if the user submits the Parse form (uploads a structure via
-    // the main Parse card), mirror that file in the viewer so they see
-    // what they're analyzing.
     const parseForm = document.getElementById('structureForm');
     if (parseForm) {
         parseForm.addEventListener('submit', function () {
@@ -811,11 +786,9 @@
         });
     }
 
-    // If the Load Example button on the Parse tab fires, auto-load sample.
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-action="loadExample"]');
         if (btn && btn.closest('#parse')) {
-            // Let the existing handler run first, then load the sample PDB.
             setTimeout(loadSample, 50);
         }
     });

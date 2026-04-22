@@ -1,0 +1,42 @@
+{# Sidebar — 6 hubs only, plus Dashboard. Hub pages host their own
+   sub-tool segmented controls (R3). Existing endpoint names are
+   preserved; only what the sidebar LINKS to changes here.
+
+   `request.endpoint` belongs to the pages blueprint (aliases are registered
+   in routes/__init__.py so both 'sequence_tools' and 'pages.sequence_tools'
+   may appear); we match either form. #}
+{% set hubs = [
+    {"label": "Dashboard",     "endpoints": ["index"],                                  "icon": "fa-home",           "href": url_for('index')},
+    {"label": "Sequences",     "endpoints": ["sequences_hub", "sequence_tools",
+                                             "seqio_tools", "features_tools"],          "icon": "fa-dna",            "href": "/sequences"},
+    {"label": "Compare",       "endpoints": ["compare_hub", "alignment_tools",
+                                             "blast_tools", "searchio_tools"],          "icon": "fa-align-center",   "href": "/compare"},
+    {"label": "Patterns",      "endpoints": ["patterns_hub", "motifs_tools",
+                                             "restriction_tools"],                      "icon": "fa-shapes",         "href": "/patterns"},
+    {"label": "Structure",     "endpoints": ["structure_tools"],                        "icon": "fa-cube",           "href": url_for('structure_tools')},
+    {"label": "Phylogeny",     "endpoints": ["phylogeny_hub", "phylo_tools",
+                                             "clustering_tools", "popgen_tools"],       "icon": "fa-project-diagram","href": "/phylogeny"},
+    {"label": "External data", "endpoints": ["data_hub", "database_tools",
+                                             "kegg_tools", "pathway_tools",
+                                             "swissprot_tools", "unigene_tools",
+                                             "biodata_tools", "hmm_tools",
+                                             "genomediagram_tools"],                    "icon": "fa-database",       "href": "/data"},
+] %}
+{% set ep = request.endpoint or '' %}
+{% set ep_short = ep.split('.')[-1] %}
+
+<div class="sidebar-container" id="sidebarContainer">
+    <nav class="sidebar-nav" aria-label="Main navigation">
+        {% for hub in hubs %}
+        {% set is_active = ep_short in hub.endpoints %}
+        <div class="nav-item">
+            <a class="nav-link{% if is_active %} active{% endif %}"
+               href="{{ hub.href }}"
+               {% if is_active %}aria-current="page"{% endif %}>
+                <i class="fas {{ hub.icon }}" aria-hidden="true"></i>
+                <span>{{ hub.label }}</span>
+            </a>
+        </div>
+        {% endfor %}
+    </nav>
+</div>

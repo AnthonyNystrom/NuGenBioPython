@@ -23,19 +23,19 @@
     </div>
 </div>
 
-<ul class="nav nav-tabs mb-3" id="patternsHubTabs" role="tablist">
+<div class="segmented-control mb-3" id="patternsHubTabs" role="tablist">
     {% for t in tabs %}
-    <li class="nav-item" role="presentation">
-        <button class="nav-link {% if t.key == active_tab %}active{% endif %}"
-                id="hub-tab-{{ t.key }}"
-                data-bs-toggle="tab"
-                data-bs-target="#hub-pane-{{ t.key }}"
-                type="button" role="tab">
-            <i class="fas {{ t.icon }} me-2"></i>{{ t.title }}
-        </button>
-    </li>
+    <button class="segmented-item {% if t.key == active_tab %}active{% endif %}"
+            id="hub-tab-{{ t.key }}"
+            data-bs-toggle="tab"
+            data-bs-target="#hub-pane-{{ t.key }}"
+            type="button" role="tab"
+            aria-selected="{{ 'true' if t.key == active_tab else 'false' }}">
+        <i class="fas {{ t.icon }}" aria-hidden="true"></i>
+        <span>{{ t.title }}</span>
+    </button>
     {% endfor %}
-</ul>
+</div>
 
 <div class="tab-content" id="patternsHubContent">
     {% for t in tabs %}

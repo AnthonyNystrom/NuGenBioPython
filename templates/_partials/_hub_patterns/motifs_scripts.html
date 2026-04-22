@@ -182,35 +182,48 @@ function searchMotif() {
 }
 
 function displaySearchResults(matches, stats) {
-    const resultsDiv = document.getElementById('searchResults');
     const countBadge = document.getElementById('matchCount');
-    const statsDiv = document.getElementById('searchStats');
-
     countBadge.textContent = matches.length;
     countBadge.style.display = 'inline-block';
 
-    if (matches.length === 0) {
-        resultsDiv.innerHTML = '<p class="text-muted small text-center m-0">No matches found</p>';
-    } else {
-        let html = '<div class="table-responsive"><table class="table table-sm table-hover small mb-0">';
-        html += '<thead class="table-light"><tr><th>Position</th><th>Score</th><th>Norm. Score</th><th>Strand</th><th>Sequence</th></tr></thead><tbody>';
-        matches.forEach(match => {
-            html += `<tr><td>${match.position}</td><td>${match.score.toFixed(2)}</td><td>${match.normalized_score.toFixed(3)}</td><td>${match.strand}</td><td><code>${match.sequence}</code></td></tr>`;
-        });
-        html += '</tbody></table></div>';
-        resultsDiv.innerHTML = html;
+    if (!matches || matches.length === 0) {
+        document.getElementById('searchResults').innerHTML =
+            '<p class="text-muted small text-center m-0">No matches found</p>';
+        return;
     }
 
-    // Display statistics
-    if (stats) {
-        let statHtml = `<div class="small">
-            <p class="mb-1"><strong>Mean Score:</strong> ${stats.mean_score.toFixed(2)}</p>
-            <p class="mb-1"><strong>Std Dev:</strong> ${stats.std_score.toFixed(2)}</p>
-            <p class="mb-1"><strong>Max Score:</strong> ${stats.max_score.toFixed(2)}</p>
-            <p class="mb-0"><strong>Positions:</strong> ${stats.num_positions}</p>
-        </div>`;
-        statsDiv.innerHTML = statHtml;
-    }
+    const tiles = [
+        { label: 'Matches',    value: matches.length },
+        { label: 'Mean Score', value: stats ? stats.mean_score.toFixed(2) : '—' },
+        { label: 'Max Score',  value: stats ? stats.max_score.toFixed(2) : '—' },
+        { label: 'Std Dev',    value: stats ? stats.std_score.toFixed(2) : '—' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let rows = '';
+    matches.forEach(match => {
+        rows += `<tr><td>${match.position}</td><td>${match.score.toFixed(2)}</td><td>${match.normalized_score.toFixed(3)}</td><td>${match.strand}</td><td><code>${match.sequence}</code></td></tr>`;
+    });
+    const table = `<div class="table-responsive"><table class="table table-sm table-hover small mb-0">
+        <thead class="table-light"><tr><th>Position</th><th>Score</th><th>Norm. Score</th><th>Strand</th><th>Sequence</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+
+    const tsv = ['position\tscore\tnormalized_score\tstrand\tsequence'];
+    matches.forEach(m => tsv.push([m.position, m.score, m.normalized_score, m.strand, m.sequence].join('\t')));
+
+    ResultsCard.mount('searchResults', {
+        title: 'Motif Search',
+        meta: `${matches.length} matches`,
+        summary: tilesHtml + table,
+        raw: JSON.stringify({ matches: matches, stats: stats }, null, 2),
+        workspaceItem: { type: 'motif-matches', name: `Motif matches (${matches.length})`, data: matches },
+        downloads: [
+            { label: 'TSV',  filename: 'motif-matches.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+            { label: 'JSON', filename: 'motif-matches.json', text: JSON.stringify({ matches, stats }, null, 2), mime: 'application/json' },
+        ],
+    });
 }
 
 function compareMotifs() {

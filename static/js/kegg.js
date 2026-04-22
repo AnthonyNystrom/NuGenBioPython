@@ -37,15 +37,9 @@ function displaySearchResults(results, count) {
         resultsDiv.innerHTML = '<p class="text-muted">No results found.</p>';
         return;
     }
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>ID</th><th>Definition</th><th>Actions</th></tr></thead><tbody>';
-    results.forEach(result => {
-        html += `<tr><td><code>${result.id}</code></td><td>${result.definition}</td><td>`;
-        html += `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${result.id}')">`;
-        html += '<i class="fas fa-eye"></i> View</button></td></tr>';
-    });
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    _keggRenderTableCard('searchResults', 'KEGG Search', results, count,
+        ['ID', 'Definition', 'Actions'],
+        r => [`<code>${r.id}</code>`, r.definition || '', `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`]);
 }
 
 function loadSearchExample() {
@@ -89,15 +83,44 @@ function displayListResults(results, total, displayed) {
         resultsDiv.innerHTML = '<p class="text-muted">No entries found.</p>';
         return;
     }
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>ID</th><th>Definition</th><th>Actions</th></tr></thead><tbody>';
-    results.forEach(result => {
-        html += `<tr><td><code>${result.id}</code></td><td>${result.definition || 'N/A'}</td><td>`;
-        html += `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${result.id}')">`;
-        html += '<i class="fas fa-eye"></i> View</button></td></tr>';
+    _keggRenderTableCard('listResults', 'KEGG List', results, displayed,
+        ['ID', 'Definition', 'Actions'],
+        r => [`<code>${r.id}</code>`, r.definition || 'N/A', `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`],
+        `${displayed} of ${total}`);
+}
+
+function _keggRenderTableCard(containerId, title, results, count, headers, rowFn, metaOverride) {
+    const tiles = [{ label: 'Entries', value: count }];
+    const tilesHtml = '<div class="rc-stats mb-3">' +
+        tiles.map(t => `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`).join('') +
+        '</div>';
+    let rows = '';
+    results.forEach(r => {
+        rows += '<tr>' + rowFn(r).map(c => `<td>${c}</td>`).join('') + '</tr>';
     });
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    const table = `<div class="table-responsive"><table class="table table-hover table-sm">
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+
+    const tsv = [headers.join('\t')];
+    results.forEach(r => {
+        tsv.push(rowFn(r).map(c => String(c).replace(/<[^>]*>/g, '').replace(/\t/g, ' ').trim()).join('\t'));
+    });
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount(containerId, {
+            title: title,
+            meta: metaOverride || `${count} ${count === 1 ? 'entry' : 'entries'}`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'kegg', name: `${title} (${count})`, data: results },
+            downloads: [
+                { label: 'TSV',  filename: 'kegg.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'kegg.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById(containerId).innerHTML = tilesHtml + table;
+    }
 }
 
 function loadListExample() {
@@ -141,15 +164,10 @@ function displayLinkResults(results, count) {
         resultsDiv.innerHTML = '<p class="text-muted">No links found.</p>';
         return;
     }
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>Source</th><th>Target</th><th>Actions</th></tr></thead><tbody>';
-    results.forEach(result => {
-        html += `<tr><td><code>${result.source}</code></td><td><code>${result.target}</code></td><td>`;
-        html += `<button class="btn btn-sm btn-outline-primary btn-sm" onclick="viewEntry('${result.target}')">`;
-        html += '<i class="fas fa-eye"></i></button></td></tr>';
-    });
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    _keggRenderTableCard('linkResults', 'KEGG Links', results, count,
+        ['Source', 'Target', 'Actions'],
+        r => [`<code>${r.source}</code>`, `<code>${r.target}</code>`,
+              `<button class="btn btn-sm btn-outline-primary" onclick="viewEntry('${r.target}')"><i class="fas fa-eye"></i></button>`]);
 }
 
 function loadLinkExample() {
@@ -193,13 +211,9 @@ function displayConvertResults(results, count) {
         resultsDiv.innerHTML = '<p class="text-muted">No conversions found.</p>';
         return;
     }
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>Source ID</th><th>Target ID</th></tr></thead><tbody>';
-    results.forEach(result => {
-        html += `<tr><td><code>${result.source_id}</code></td><td><code>${result.target_id}</code></td></tr>`;
-    });
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    _keggRenderTableCard('convertResults', 'KEGG Convert', results, count,
+        ['Source ID', 'Target ID'],
+        r => [`<code>${r.source_id}</code>`, `<code>${r.target_id}</code>`]);
 }
 
 function loadConvertExample() {
@@ -234,13 +248,22 @@ document.getElementById('infoForm').addEventListener('submit', function(e) {
 });
 
 function displayInfoResults(info, database) {
-    const resultsDiv = document.getElementById('infoResults');
-    let html = '<div class="p-3">';
-    html += `<h6>Database: ${database}</h6>`;
-    html += '<pre class="border p-3" style="max-height: 400px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">';
-    html += info.raw_data;
-    html += '</pre></div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('infoResults', {
+            title: 'KEGG Database Info',
+            meta: database,
+            summary: `<p class="small text-muted mb-0">See the Raw tab for the full info record.</p>`,
+            raw: info.raw_data,
+            copyText: info.raw_data,
+            workspaceItem: { type: 'kegg-info', name: `KEGG info ${database}`, data: info },
+            downloads: [
+                { label: 'Text', filename: `kegg-info-${database}.txt`, text: info.raw_data, mime: 'text/plain' },
+            ],
+        });
+    } else {
+        document.getElementById('infoResults').innerHTML =
+            `<div class="p-3"><h6>Database: ${database}</h6><pre class="border p-3" style="max-height: 400px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">${info.raw_data}</pre></div>`;
+    }
 }
 
 // View Entry Details Modal
@@ -264,13 +287,27 @@ function viewEntry(entryId) {
 }
 
 function displayEntryInModal(data) {
-    let html = '';
+    const entryId = (document.getElementById('entryModalLabel').textContent || '').replace(/^Entry:\s*/, '');
+    let image = '';
     if (data.image_url) {
-        html += '<div class="text-center mb-3"><img src="' + data.image_url + '" class="img-fluid border" alt="Pathway diagram" style="max-width: 100%;" onerror="this.style.display=\'none\'"></div>';
+        image = `<div class="text-center mb-3"><img src="${data.image_url}" class="img-fluid border" alt="Pathway diagram" style="max-width: 100%;" onerror="this.style.display='none'"></div>`;
     }
-    html += '<h6>Entry Details</h6>';
-    html += '<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">';
-    html += data.raw_data;
-    html += '</pre>';
-    document.getElementById('entryModalContent').innerHTML = html;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('entryModalContent', {
+            title: 'KEGG Entry',
+            meta: entryId,
+            summary: image + '<p class="small mb-0 text-muted">See the Raw tab for the full KEGG record.</p>',
+            raw: data.raw_data,
+            copyText: data.raw_data,
+            workspaceItem: { type: 'kegg-entry', name: `KEGG ${entryId}`, data: data },
+            downloads: [
+                { label: 'Text', filename: `${entryId.replace(/[^a-z0-9]/gi,'_')}.txt`, text: data.raw_data, mime: 'text/plain' },
+                { label: 'JSON', filename: `${entryId.replace(/[^a-z0-9]/gi,'_')}.json`, text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('entryModalContent').innerHTML = image +
+            '<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">' + data.raw_data + '</pre>';
+    }
 }

@@ -241,152 +241,124 @@ function handleBasicAnalysis(e) {
 }
 
 function displayBasicResults(analysis, sequenceLength) {
-    displayBasicSummary(analysis, sequenceLength);
-    displayBasicDetailedResults(analysis);
-    displayBasicFragmentChart(analysis);
-}
+    // The sibling containers (#basicSummary, #basicFragmentChart) are cleared
+    // so the old split panels collapse; everything renders inside one ResultsCard.
+    const summaryEl = document.getElementById('basicSummary');
+    const chartEl = document.getElementById('basicFragmentChart');
+    if (summaryEl) summaryEl.innerHTML = '<p class="text-muted small mb-0">See results card →</p>';
+    if (chartEl) chartEl.innerHTML = '';
 
-function displayBasicSummary(analysis, sequenceLength) {
-    const summaryDiv = document.getElementById('basicSummary');
-
-    let totalCuts = 0;
-    let enzymesCutting = 0;
-
-    Object.values(analysis).forEach(result => {
-        if (!result.error && result.number_of_cuts > 0) {
-            totalCuts += result.number_of_cuts;
-            enzymesCutting++;
-        }
-    });
-
-    let html = '<div class="row g-2">';
-    html += `
-        <div class="col-12">
-            <div class="border rounded p-2 bg-light text-center">
-                <h6 class="text-success mb-1 small">Sequence Length</h6>
-                <h5 class="mb-0">${sequenceLength} bp</h5>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="border rounded p-2 bg-light text-center">
-                <h6 class="text-success mb-1 small">Total Cut Sites</h6>
-                <h5 class="mb-0">${totalCuts}</h5>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="border rounded p-2 bg-light text-center">
-                <h6 class="text-success mb-1 small">Enzymes Cutting</h6>
-                <h5 class="mb-0">${enzymesCutting}</h5>
-            </div>
-        </div>
-    `;
-    html += '</div>';
-
-    summaryDiv.innerHTML = html;
-}
-
-function displayBasicDetailedResults(analysis) {
-    const resultsDiv = document.getElementById('basicResults');
-
-    let html = '<div class="table-responsive">';
-    html += '<table class="table table-hover table-sm"><thead class="table-light">';
-    html += '<tr><th>Enzyme</th><th>Site</th><th>Type</th><th>Cuts</th><th>Positions</th><th>Fragments</th></tr>';
-    html += '</thead><tbody>';
-
-    Object.entries(analysis).forEach(([enzyme, result]) => {
-        if (result.error) {
-            html += `<tr><td>${enzyme}</td><td colspan="5" class="text-danger small">${result.error}</td></tr>`;
-        } else {
-            const overhangBadge = result.is_blunt ?
-                '<span class="badge bg-secondary">Blunt</span>' :
-                `<span class="badge bg-info">${result.overhang_type}</span>`;
-
-            const fragmentsStr = result.fragments.length > 0 ? result.fragments.join(', ') + ' bp' : 'No cuts';
-            const positionsStr = result.cut_positions.length > 0 ? result.cut_positions.join(', ') : 'None';
-
-            html += `
-                <tr>
-                    <td><strong>${enzyme}</strong></td>
-                    <td><code class="small">${result.recognition_site}</code></td>
-                    <td>${overhangBadge}</td>
-                    <td><span class="badge bg-primary">${result.number_of_cuts}</span></td>
-                    <td><small class="text-muted">${positionsStr}</small></td>
-                    <td><small>${fragmentsStr}</small></td>
-                </tr>
-            `;
-
-            // Show fragment sequences if available
-            if (result.fragment_sequences && result.fragment_sequences.length > 0) {
-                html += `
-                    <tr>
-                        <td colspan="6" class="bg-light">
-                            <small><strong>Fragment Sequences:</strong></small><br>
-                            <div class="sequence-display" style="max-height: 100px; overflow-y: auto;">
-                                ${result.fragment_sequences.map((seq, i) =>
-                                    `<small><strong>Fragment ${i+1}:</strong> ${seq}</small>`
-                                ).join('<br>')}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-    });
-
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
-}
-
-function displayBasicFragmentChart(analysis) {
-    const chartDiv = document.getElementById('basicFragmentChart');
-
-    // Collect all fragments
+    // --- Summary: headline stats + fragment distribution ---
+    let totalCuts = 0, enzymesCutting = 0, totalEnzymes = 0;
     const allFragments = [];
-    Object.entries(analysis).forEach(([enzyme, result]) => {
-        if (!result.error && result.number_of_cuts > 0 && result.fragments.length > 0) {
-            allFragments.push(...result.fragments);
+    Object.values(analysis).forEach(r => {
+        if (r.error) { totalEnzymes++; return; }
+        totalEnzymes++;
+        if (r.number_of_cuts > 0) { totalCuts += r.number_of_cuts; enzymesCutting++; }
+        if (r.fragments) allFragments.push(...r.fragments);
+    });
+    const summary =
+        '<div class="rc-stats">' +
+        '<div class="rc-stat"><div class="rc-stat-label">Sequence length</div>' +
+            '<div class="rc-stat-value">' + sequenceLength + '</div><div class="rc-stat-sub">bp</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Total cut sites</div>' +
+            '<div class="rc-stat-value">' + totalCuts + '</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Enzymes cutting</div>' +
+            '<div class="rc-stat-value">' + enzymesCutting + '</div>' +
+            '<div class="rc-stat-sub">of ' + totalEnzymes + '</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Fragments</div>' +
+            '<div class="rc-stat-value">' + allFragments.length + '</div></div>' +
+        '</div>' +
+        (allFragments.length ? buildFragmentHistogram(allFragments) : '');
+
+    // --- Details: per-enzyme table ---
+    let details = '<div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr>' +
+        '<th>Enzyme</th><th>Site</th><th>Type</th><th>Cuts</th><th>Positions</th><th>Fragments</th></tr></thead><tbody>';
+    Object.entries(analysis).forEach(([enzyme, r]) => {
+        if (r.error) {
+            details += '<tr><td>' + enzyme + '</td><td colspan="5" class="text-danger small">' + r.error + '</td></tr>';
+            return;
+        }
+        const badge = r.is_blunt
+            ? '<span class="badge bg-secondary">Blunt</span>'
+            : '<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">' + r.overhang_type + '</span>';
+        const frags = r.fragments.length ? r.fragments.join(', ') + ' bp' : 'No cuts';
+        const positions = r.cut_positions.length ? r.cut_positions.join(', ') : '—';
+        details += '<tr>' +
+            '<td><strong>' + enzyme + '</strong></td>' +
+            '<td><code class="small">' + r.recognition_site + '</code></td>' +
+            '<td>' + badge + '</td>' +
+            '<td><span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">' + r.number_of_cuts + '</span></td>' +
+            '<td class="small text-muted">' + positions + '</td>' +
+            '<td class="small">' + frags + '</td>' +
+        '</tr>';
+        if (r.fragment_sequences && r.fragment_sequences.length) {
+            const fragHtml = r.fragment_sequences.map((s, i) =>
+                '<div><strong>Fragment ' + (i + 1) + ':</strong> <code>' + s + '</code></div>').join('');
+            details += '<tr><td colspan="6" class="bg-light small">' + fragHtml + '</td></tr>';
         }
     });
+    details += '</tbody></table></div>';
 
-    if (allFragments.length === 0) {
-        chartDiv.innerHTML = '<p class="text-muted small">No fragments to display</p>';
-        return;
-    }
-
-    // Create histogram bins
-    const bins = [0, 100, 500, 1000, 2000, 5000, 10000, Infinity];
-    const binLabels = ['<100', '100-500', '500-1K', '1K-2K', '2K-5K', '5K-10K', '>10K'];
-    const counts = new Array(bins.length - 1).fill(0);
-
-    allFragments.forEach(size => {
-        for (let i = 0; i < bins.length - 1; i++) {
-            if (size >= bins[i] && size < bins[i + 1]) {
-                counts[i]++;
-                break;
-            }
-        }
+    // --- Raw: tab-separated CSV of enzyme/cuts ---
+    const rawLines = ['Enzyme\tSite\tCuts\tPositions\tFragments\tType'];
+    Object.entries(analysis).forEach(([enzyme, r]) => {
+        if (r.error) { rawLines.push(enzyme + '\t' + r.error); return; }
+        rawLines.push([enzyme, r.recognition_site, r.number_of_cuts,
+                       r.cut_positions.join(';'), r.fragments.join(';'), r.overhang_type].join('\t'));
     });
+    const raw = rawLines.join('\n');
 
-    let html = '<h6 class="small">Fragment Size Distribution</h6>';
-    html += '<div class="row">';
-
-    const maxCount = Math.max(...counts);
-
-    counts.forEach((count, i) => {
-        const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-        html += `
-            <div class="col">
-                <div class="text-center mb-2">
-                    <div class="bg-primary" style="height: ${Math.max(percentage, 5)}px; width: 100%; margin-bottom: 5px;"></div>
-                    <small><strong>${count}</strong><br>${binLabels[i]}</small>
-                </div>
-            </div>
-        `;
+    ResultsCard.mount('basicResults', {
+        title: 'Restriction Analysis',
+        meta:  '<span class="meta">' + totalCuts + ' cuts · ' + enzymesCutting + ' enzymes · ' + allFragments.length + ' fragments</span>',
+        summary:  summary,
+        details:  details,
+        raw:      raw,
+        copyText: raw,
+        downloads: [
+            { label: 'Table (TSV)',  filename: 'restriction.tsv',  text: raw, mime: 'text/tab-separated-values' },
+            { label: 'Table (JSON)', filename: 'restriction.json',
+              text: JSON.stringify({ sequence_length: sequenceLength, analysis: analysis }, null, 2),
+              mime: 'application/json' },
+        ],
+        workspaceItem: {
+            type: 'alignment',    // closest existing bucket; UI groups by type
+            name: 'Restriction · ' + enzymesCutting + ' enzymes',
+            data: raw,
+            meta: { source: 'restriction', sequence_length: sequenceLength },
+        },
     });
-
-    html += '</div>';
-    chartDiv.innerHTML = html;
 }
+
+function buildFragmentHistogram(fragments) {
+    const bins  = [0, 100, 500, 1000, 2000, 5000, 10000, Infinity];
+    const labels= ['<100', '100-500', '500-1K', '1K-2K', '2K-5K', '5K-10K', '>10K'];
+    const counts = new Array(bins.length - 1).fill(0);
+    fragments.forEach(size => {
+        for (let i = 0; i < bins.length - 1; i++) {
+            if (size >= bins[i] && size < bins[i + 1]) { counts[i]++; break; }
+        }
+    });
+    const max = Math.max(...counts);
+    let html = '<div class="mt-3"><div class="small text-muted mb-2">Fragment size distribution</div>' +
+               '<div class="d-flex align-items-end gap-2" style="height:80px;">';
+    counts.forEach((c, i) => {
+        const h = max > 0 ? Math.max((c / max) * 100, 3) : 3;
+        html += '<div class="text-center flex-fill">' +
+            '<div style="height:' + h + '%; background:var(--color-primary); border-radius:var(--radius-sm); min-height:3px;"></div>' +
+            '<div class="rc-stat-sub mt-1">' + c + '</div>' +
+            '<div class="rc-stat-sub">' + labels[i] + '</div>' +
+        '</div>';
+    });
+    html += '</div></div>';
+    return html;
+}
+
+
+// Superseded in R2 — histogram now rendered inside the ResultsCard Summary tab
+// (see buildFragmentHistogram). This stub keeps any legacy caller happy.
+function displayBasicFragmentChart() { /* no-op */ }
 
 function loadBasicExample() {
     document.getElementById('basicSequence').value = 'GAATTCAAGCTTATCGATCGAATTCCTGCAGGGATCCAAGCTTTCTAGATGCATGCCTGCAGGAATTC';
@@ -471,46 +443,61 @@ function handleAdvancedAnalysis(e) {
 }
 
 function displayAdvancedResults(result) {
-    const resultsDiv = document.getElementById('advancedResults');
+    const tiles = [
+        { label: 'Sequence',   value: result.sequence_length + ' bp' },
+        { label: 'Tested',     value: result.total_enzymes_tested },
+        { label: 'Matched',    value: result.enzyme_count },
+        { label: 'Filters',    value: result.filters_applied.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = '<div class="alert alert-info small">';
-    html += `<strong>Analysis Summary:</strong><br>`;
-    html += `Sequence length: ${result.sequence_length} bp<br>`;
-    html += `Enzymes tested: ${result.total_enzymes_tested}<br>`;
-    html += `Filters: ${result.filters_applied.join(', ')}<br>`;
-    html += `<strong>Results: ${result.enzyme_count} enzymes match criteria</strong>`;
-    html += '</div>';
+    const filterNote = `<p class="small text-muted mb-3"><strong>Filters applied:</strong> ${result.filters_applied.join(', ') || 'none'}</p>`;
 
+    let body;
     if (result.enzymes.length === 0) {
-        html += '<p class="text-muted text-center">No enzymes match the specified criteria.</p>';
+        body = '<p class="text-muted text-center">No enzymes match the specified criteria.</p>';
     } else {
-        html += '<div class="table-responsive">';
-        html += '<table class="table table-hover table-sm"><thead class="table-light">';
-        html += '<tr><th>Enzyme</th><th>Site</th><th>Type</th><th>Cuts</th><th>Positions</th></tr>';
-        html += '</thead><tbody>';
-
+        let rows = '';
         result.enzymes.forEach(enzyme => {
-            const overhangBadge = enzyme.is_blunt ?
-                '<span class="badge bg-secondary">Blunt</span>' :
-                `<span class="badge bg-info">${enzyme.overhang_type}</span>`;
-
-            const positionsStr = enzyme.positions.join(', ');
-
-            html += `
+            const overhangBadge = enzyme.is_blunt
+                ? '<span class="badge bg-secondary">Blunt</span>'
+                : `<span class="badge bg-info">${enzyme.overhang_type}</span>`;
+            rows += `
                 <tr>
                     <td><strong>${enzyme.name}</strong></td>
                     <td><code class="small">${enzyme.site}</code></td>
                     <td>${overhangBadge}</td>
                     <td><span class="badge bg-primary">${enzyme.cuts}</span></td>
-                    <td><small class="text-muted">${positionsStr}</small></td>
-                </tr>
-            `;
+                    <td><small class="text-muted">${enzyme.positions.join(', ')}</small></td>
+                </tr>`;
         });
-
-        html += '</tbody></table></div>';
+        body = `<div class="table-responsive"><table class="table table-hover table-sm">
+            <thead class="table-light"><tr><th>Enzyme</th><th>Site</th><th>Type</th><th>Cuts</th><th>Positions</th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`;
     }
 
-    resultsDiv.innerHTML = html;
+    const tsv = ['enzyme\tsite\toverhang\tcuts\tpositions'];
+    result.enzymes.forEach(e => {
+        tsv.push([e.name, e.site, e.is_blunt ? 'blunt' : e.overhang_type, e.cuts, e.positions.join(',')].join('\t'));
+    });
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('advancedResults', {
+            title: 'Advanced Restriction',
+            meta: `${result.enzyme_count} / ${result.total_enzymes_tested} enzymes matched`,
+            summary: tilesHtml + filterNote + body,
+            raw: JSON.stringify(result, null, 2),
+            workspaceItem: { type: 'restriction-advanced', name: `Advanced restriction (${result.enzyme_count} enzymes)`, data: result },
+            downloads: [
+                { label: 'TSV',  filename: 'restriction-advanced.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'restriction-advanced.json', text: JSON.stringify(result, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('advancedResults').innerHTML = tilesHtml + filterNote + body;
+    }
 }
 
 function loadAdvancedExample() {
@@ -761,6 +748,47 @@ function displayRestrictionMap(analysis, sequenceLength) {
 
     html += '</div>';
     mapDiv.innerHTML = html;
+
+    // Summary card (tiles + per-enzyme table + downloads) next to the visualization
+    const enzymes = Object.entries(analysis).filter(([_, r]) => !r.error && r.cut_positions);
+    const totalCuts = enzymes.reduce((s, [_, r]) => s + r.cut_positions.length, 0);
+    const tiles = [
+        { label: 'Sequence', value: sequenceLength + ' bp' },
+        { label: 'Enzymes',  value: enzymes.length },
+        { label: 'Cuts',     value: totalCuts },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let rows = '';
+    enzymes.forEach(([enz, r]) => {
+        rows += `<tr>
+            <td><strong>${enz}</strong></td>
+            <td class="text-center"><span class="badge bg-primary">${r.cut_positions.length}</span></td>
+            <td class="small text-muted">${r.cut_positions.join(', ')}</td>
+        </tr>`;
+    });
+    const table = `<div class="table-responsive"><table class="table table-sm">
+        <thead class="table-light"><tr><th>Enzyme</th><th class="text-center">Cuts</th><th>Positions</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+
+    const tsv = ['enzyme\tcuts\tpositions'];
+    enzymes.forEach(([enz, r]) => tsv.push([enz, r.cut_positions.length, r.cut_positions.join(',')].join('\t')));
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('mapResultsCard', {
+            title: 'Restriction Map',
+            meta: `${enzymes.length} enzyme${enzymes.length === 1 ? '' : 's'} · ${totalCuts} cut${totalCuts === 1 ? '' : 's'}`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(analysis, null, 2),
+            workspaceItem: { type: 'restriction-map', name: `Map (${enzymes.length} enzymes)`, data: analysis },
+            downloads: [
+                { label: 'TSV',  filename: 'restriction-map.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'restriction-map.json', text: JSON.stringify(analysis, null, 2), mime: 'application/json' },
+            ],
+        });
+    }
 }
 
 function loadMapExample() {
@@ -813,20 +841,40 @@ function handleCompatibleEnds(e) {
 
 function displayCompatibleResults(pairs) {
     const resultsDiv = document.getElementById('compatibleResults');
-
     if (pairs.length === 0) {
         resultsDiv.innerHTML = '<p class="text-muted small mt-2">No compatible pairs found.</p>';
         return;
     }
 
-    let html = '<div class="alert alert-success small mt-2">';
-    html += `<strong>${pairs.length} compatible pair(s) found:</strong><br>`;
-    pairs.forEach(pair => {
-        html += `<i class="fas fa-link"></i> ${pair.enzyme1} ↔ ${pair.enzyme2} (overhang: ${pair.overhang_seq})<br>`;
-    });
-    html += '</div>';
+    const tiles = [{ label: 'Compatible Pairs', value: pairs.length }];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    resultsDiv.innerHTML = html;
+    let rows = '';
+    pairs.forEach(p => { rows += `<tr><td><strong>${p.enzyme1}</strong></td><td class="text-center">↔</td><td><strong>${p.enzyme2}</strong></td><td><code>${p.overhang_seq}</code></td></tr>`; });
+    const table = `<div class="table-responsive"><table class="table table-sm">
+        <thead class="table-light"><tr><th>Enzyme 1</th><th></th><th>Enzyme 2</th><th>Overhang</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+
+    const tsv = ['enzyme1\tenzyme2\toverhang'];
+    pairs.forEach(p => tsv.push([p.enzyme1, p.enzyme2, p.overhang_seq].join('\t')));
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('compatibleResults', {
+            title: 'Compatible Ends',
+            meta: `${pairs.length} compatible pair${pairs.length === 1 ? '' : 's'}`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(pairs, null, 2),
+            workspaceItem: { type: 'restriction-compatible', name: `Compatible ends (${pairs.length} pairs)`, data: pairs },
+            downloads: [
+                { label: 'TSV',  filename: 'compatible.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'compatible.json', text: JSON.stringify(pairs, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + table;
+    }
 }
 
 function loadCompatibleExample() {

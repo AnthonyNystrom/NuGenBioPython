@@ -133,16 +133,12 @@ function decodeSequence() {
  * Display HMM build results
  */
 function displayHmmResults(model) {
-    const vizDiv = document.getElementById('hmmViz');
-    const analysisDiv = document.getElementById('hmmAnalysis');
-
-    // Visualization
+    // State diagram stays in its own viz panel (chart-like rendering)
     let vizHtml = `
         <div class="text-center mb-3">
             <h6><i class="fas fa-project-diagram"></i> HMM State Diagram</h6>
             <div class="d-flex justify-content-center align-items-center flex-wrap gap-3 p-3">
     `;
-
     for (let i = 0; i < model.states; i++) {
         vizHtml += `
             <div class="text-center">
@@ -157,16 +153,24 @@ function displayHmmResults(model) {
             vizHtml += '<i class="fas fa-arrow-right text-primary fa-2x"></i>';
         }
     }
-
     vizHtml += `
             </div>
             <p class="text-muted small">Model ID: ${model.model_id}</p>
         </div>
     `;
-    vizDiv.innerHTML = vizHtml;
+    document.getElementById('hmmViz').innerHTML = vizHtml;
 
-    // Analysis
-    let analysisHtml = `
+    const tiles = [
+        { label: 'States',      value: model.states },
+        { label: 'Seq Length',  value: model.sequence_length },
+        { label: 'Emissions',   value: model.emissions_possible },
+        { label: 'Transitions', value: model.transitions_possible },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    const details = `
         <div class="row g-3">
             <div class="col-md-6">
                 <h6><i class="fas fa-info-circle"></i> Model Parameters</h6>
@@ -191,12 +195,24 @@ function displayHmmResults(model) {
                     </tbody>
                 </table>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    analysisDiv.innerHTML = analysisHtml;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('hmmAnalysis', {
+            title: 'HMM Model',
+            meta: `${model.type} · ${model.states} states`,
+            summary: tilesHtml,
+            details: details,
+            raw: JSON.stringify(model, null, 2),
+            workspaceItem: { type: 'hmm-model', name: `HMM ${model.type} (${model.states} states)`, data: model },
+            downloads: [
+                { label: 'JSON', filename: 'hmm-model.json', text: JSON.stringify(model, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('hmmAnalysis').innerHTML = tilesHtml + details;
+    }
 
-    // Show training and decoding sections
     document.getElementById('hmmTraining').style.display = 'block';
     document.getElementById('hmmDecoding').style.display = 'block';
 }
@@ -207,7 +223,16 @@ function displayHmmResults(model) {
 function displayTrainingResults(training) {
     const resultsDiv = document.getElementById('trainingResults');
 
-    let html = `
+    const tiles = [
+        { label: 'Iterations', value: training.iterations },
+        { label: 'Converged',  value: training.converged ? 'Yes' : 'No' },
+        { label: 'Improvement', value: training.improvement.toFixed(2) },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml + `
         <div class="alert alert-success">
             <h6><i class="fas fa-graduation-cap"></i> Training Complete</h6>
             <hr>
@@ -261,7 +286,20 @@ function displayTrainingResults(training) {
         `;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('trainingResults', {
+            title: 'HMM Training',
+            meta: `${training.iterations} iterations · ${training.converged ? 'converged' : 'not converged'}`,
+            summary: html,
+            raw: JSON.stringify(training, null, 2),
+            workspaceItem: { type: 'hmm-training', name: `HMM training (${training.iterations} iter)`, data: training },
+            downloads: [
+                { label: 'JSON', filename: 'hmm-training.json', text: JSON.stringify(training, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**
@@ -270,7 +308,16 @@ function displayTrainingResults(training) {
 function displayDecodingResults(decoding) {
     const resultsDiv = document.getElementById('decodingResults');
 
-    let html = `
+    const tiles = [
+        { label: 'Length',     value: decoding.sequence_length },
+        { label: 'Log Prob',   value: decoding.log_probability.toFixed(2) },
+        { label: 'Decode Time', value: decoding.decoding_time + 'ms' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml + `
         <div class="alert alert-success">
             <h6><i class="fas fa-search"></i> Viterbi Decoding Complete</h6>
             <hr>
@@ -327,7 +374,21 @@ function displayDecodingResults(decoding) {
         `;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('decodingResults', {
+            title: 'Viterbi Decoding',
+            meta: `${decoding.sequence_length} positions · log P ${decoding.log_probability.toFixed(2)}`,
+            summary: html,
+            raw: decoding.state_path,
+            copyText: decoding.state_path,
+            workspaceItem: { type: 'hmm-decoding', name: `Viterbi (${decoding.sequence_length} pos)`, data: decoding },
+            downloads: [
+                { label: 'JSON', filename: 'hmm-decoding.json', text: JSON.stringify(decoding, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**
@@ -446,11 +507,12 @@ function displayLiteratureResults(results) {
         return;
     }
 
-    let html = `
-        <div class="mb-3">
-            <span class="badge bg-primary">${results.length} articles found</span>
-        </div>
-    `;
+    const tiles = [{ label: 'Articles', value: results.length }];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml;
 
     results.forEach((article, idx) => {
         const collapseId = `article${idx}`;
@@ -515,7 +577,20 @@ function displayLiteratureResults(results) {
         `;
     });
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('literatureResults', {
+            title: 'Literature Search',
+            meta: `${results.length} articles`,
+            summary: html,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'literature', name: `Literature search (${results.length})`, data: results },
+            downloads: [
+                { label: 'JSON', filename: 'literature.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**
@@ -583,7 +658,16 @@ function displayNexusResults(parsed) {
         return;
     }
 
-    let html = `
+    const tiles = [
+        { label: 'Taxa',       value: parsed.ntax },
+        { label: 'Characters', value: parsed.nchar },
+        { label: 'Type',       value: parsed.datatype },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml + `
         <div class="alert alert-success">
             <h6><i class="fas fa-check-circle"></i> Nexus File Parsed Successfully</h6>
             <hr>
@@ -639,7 +723,20 @@ function displayNexusResults(parsed) {
         `;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('nexusResults', {
+            title: 'Nexus Parse',
+            meta: `${parsed.ntax} taxa · ${parsed.nchar} chars`,
+            summary: html,
+            raw: JSON.stringify(parsed, null, 2),
+            workspaceItem: { type: 'nexus', name: `Nexus (${parsed.ntax} taxa)`, data: parsed },
+            downloads: [
+                { label: 'JSON', filename: 'nexus.json', text: JSON.stringify(parsed, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**
@@ -714,7 +811,16 @@ function displayScopResults(classification) {
         return;
     }
 
-    let html = `
+    const tiles = [
+        { label: 'SCOP ID', value: classification.scop_id },
+        { label: 'Class',   value: (classification.class_name || 'N/A').substring(0, 14) },
+        { label: 'Fold',    value: (classification.fold_name || 'N/A').substring(0, 14) },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml + `
         <div class="alert alert-success">
             <h6><i class="fas fa-sitemap"></i> SCOP Classification Hierarchy</h6>
             <hr>
@@ -733,17 +839,24 @@ function displayScopResults(classification) {
             </div>
         </div>
     `;
-
     if (classification.description) {
-        html += `
-            <div class="mt-3">
-                <h6>Description:</h6>
-                <p class="text-muted">${classification.description}</p>
-            </div>
-        `;
+        html += `<div class="mt-3"><h6>Description:</h6><p class="text-muted">${classification.description}</p></div>`;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('scopResults', {
+            title: 'SCOP Classification',
+            meta: classification.scop_id,
+            summary: html,
+            raw: JSON.stringify(classification, null, 2),
+            workspaceItem: { type: 'scop', name: `SCOP ${classification.scop_id}`, data: classification },
+            downloads: [
+                { label: 'JSON', filename: `scop-${classification.scop_id}.json`, text: JSON.stringify(classification, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**
@@ -809,7 +922,16 @@ function displayCodonResults(alignment) {
         return;
     }
 
-    let html = `
+    const tiles = [
+        { label: 'Sequences', value: alignment.aligned_count },
+        { label: 'Length',    value: alignment.alignment_length + ' codons' },
+        { label: 'Method',    value: alignment.method },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let html = tilesHtml + `
         <div class="alert alert-success">
             <h6><i class="fas fa-align-left"></i> Codon Alignment Results</h6>
             <hr>
@@ -857,7 +979,20 @@ function displayCodonResults(alignment) {
         html += `<p class="text-muted small mt-2"><em>${alignment.note}</em></p>`;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('codonResults', {
+            title: 'Codon Alignment',
+            meta: `${alignment.aligned_count} sequences · ${alignment.alignment_length} codons`,
+            summary: html,
+            raw: JSON.stringify(alignment, null, 2),
+            workspaceItem: { type: 'codon-alignment', name: `Codon alignment (${alignment.aligned_count} seqs)`, data: alignment },
+            downloads: [
+                { label: 'JSON', filename: 'codon-alignment.json', text: JSON.stringify(alignment, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = html;
+    }
 }
 
 /**

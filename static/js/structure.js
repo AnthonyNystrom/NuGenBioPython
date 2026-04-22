@@ -1,6 +1,35 @@
 // Structure Analysis JavaScript
 let currentStructureFile = null;
 
+// Residue-coloring helpers. Each display function can call `applyResidueColors`
+// with a chain-prefixed map {"A:10": "#hex", ...}; the 3Dmol viewer recolors
+// cartoons/sticks for those residues while leaving the rest in the base style.
+function _structureResidueNum(s) {
+    const m = String(s).match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+}
+function _structureSsColor(code) {
+    // PyMol-style SS palette. Unknown codes fall back to neutral slate.
+    const palette = { H: '#ef4444', G: '#f87171', I: '#dc2626',
+                      E: '#f59e0b', B: '#fbbf24',
+                      T: '#14b8a6', S: '#94a3b8' };
+    return palette[code] || '#cbd5e1';
+}
+function _structureGradient(t) {
+    // t in [0,1]. Buried (low) = slate-blue, exposed (high) = coral.
+    t = Math.max(0, Math.min(1, t));
+    const c1 = [30, 64, 175];    // #1e40af
+    const c2 = [252, 165, 165];  // #fca5a5
+    const mix = c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
+    return '#' + mix.map(v => v.toString(16).padStart(2, '0')).join('');
+}
+function applyResidueColors(resiMap) {
+    if (!window.NuGenStructureViewer || !resiMap) return;
+    const keys = Object.keys(resiMap);
+    if (keys.length === 0) return;
+    try { window.NuGenStructureViewer.colorResidues(resiMap); } catch (_) {}
+}
+
 // Parse Tab
 document.getElementById('structureForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -149,13 +178,30 @@ document.getElementById('superimposeForm').addEventListener('submit', function(e
 });
 
 function displaySuperimposeResults(data) {
-    const resultsDiv = document.getElementById('superimposeResults');
-    let html = '<div class="row g-3">';
-    html += `<div class="col-md-4"><div class="border rounded p-3 bg-light text-center"><h6 class="text-info mb-1 small">RMSD</h6><h4 class="mb-0">${data.rmsd.toFixed(3)} Å</h4></div></div>`;
-    html += `<div class="col-md-4"><div class="border rounded p-3 bg-light text-center"><h6 class="text-success mb-1 small">Atoms Aligned</h6><h4 class="mb-0">${data.atoms_aligned}</h4></div></div>`;
-    html += `<div class="col-md-4"><div class="border rounded p-3 bg-light text-center"><h6 class="text-warning mb-1 small">Quality</h6><h4 class="mb-0">${data.rmsd < 2 ? 'Excellent' : data.rmsd < 5 ? 'Good' : 'Fair'}</h4></div></div>`;
-    html += '</div>';
-    resultsDiv.innerHTML = html;
+    const quality = data.rmsd < 2 ? 'Excellent' : data.rmsd < 5 ? 'Good' : 'Fair';
+    const tiles = [
+        { label: 'RMSD',          value: data.rmsd.toFixed(3) + ' Å' },
+        { label: 'Atoms Aligned', value: data.atoms_aligned },
+        { label: 'Quality',       value: quality },
+    ];
+    const tilesHtml = '<div class="rc-stats">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('superimposeResults', {
+            title: 'Structure Superposition',
+            meta: `RMSD ${data.rmsd.toFixed(3)} Å · ${data.atoms_aligned} atoms`,
+            summary: tilesHtml,
+            raw: JSON.stringify(data, null, 2),
+            workspaceItem: { type: 'superimpose', name: `Superimpose RMSD ${data.rmsd.toFixed(3)}`, data: data },
+            downloads: [
+                { label: 'JSON', filename: 'superimpose.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('superimposeResults').innerHTML = tilesHtml;
+    }
 }
 
 // Geometry Tab
@@ -189,35 +235,54 @@ document.getElementById('geometryForm').addEventListener('submit', function(e) {
 });
 
 function displayGeometry(geometry) {
-    const resultsDiv = document.getElementById('geometryResults');
-    let html = '<div class="accordion" id="geometryAccordion">';
+    const tiles = [
+        { label: 'Distances', value: geometry.distances.length },
+        { label: 'Angles',    value: geometry.angles.length },
+        { label: 'Dihedrals', value: geometry.dihedrals.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#distances">Distances (first 10)</button></h2>';
-    html += '<div id="distances" class="accordion-collapse collapse show" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
-    html += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
+    let accordion = '<div class="accordion" id="geometryAccordion">';
+    accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#distances">Distances (first 10)</button></h2>';
+    accordion += '<div id="distances" class="accordion-collapse collapse show" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
+    accordion += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
     geometry.distances.slice(0, 10).forEach(d => {
-        html += `<tr><td>${d.residue1}</td><td>${d.residue2}</td><td>${d.distance}</td></tr>`;
+        accordion += `<tr><td>${d.residue1}</td><td>${d.residue2}</td><td>${d.distance}</td></tr>`;
     });
-    html += '</tbody></table></div></div></div>';
+    accordion += '</tbody></table></div></div></div>';
 
-    html += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#angles">Angles (first 10)</button></h2>';
-    html += '<div id="angles" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
-    html += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Angle (°)</th></tr></thead><tbody>';
+    accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#angles">Angles (first 10)</button></h2>';
+    accordion += '<div id="angles" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
+    accordion += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Angle (°)</th></tr></thead><tbody>';
     geometry.angles.slice(0, 10).forEach(a => {
-        html += `<tr><td>${a.residues}</td><td>${a.angle_degrees}</td></tr>`;
+        accordion += `<tr><td>${a.residues}</td><td>${a.angle_degrees}</td></tr>`;
     });
-    html += '</tbody></table></div></div></div>';
+    accordion += '</tbody></table></div></div></div>';
 
-    html += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#dihedrals">Dihedrals</button></h2>';
-    html += '<div id="dihedrals" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
-    html += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Dihedral (°)</th></tr></thead><tbody>';
+    accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#dihedrals">Dihedrals</button></h2>';
+    accordion += '<div id="dihedrals" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
+    accordion += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Dihedral (°)</th></tr></thead><tbody>';
     geometry.dihedrals.forEach(d => {
-        html += `<tr><td>${d.residues}</td><td>${d.dihedral_degrees}</td></tr>`;
+        accordion += `<tr><td>${d.residues}</td><td>${d.dihedral_degrees}</td></tr>`;
     });
-    html += '</tbody></table></div></div></div>';
+    accordion += '</tbody></table></div></div></div></div>';
 
-    html += '</div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('geometryResults', {
+            title: 'Structure Geometry',
+            meta: `${geometry.distances.length} distances · ${geometry.angles.length} angles · ${geometry.dihedrals.length} dihedrals`,
+            summary: tilesHtml + accordion,
+            raw: JSON.stringify(geometry, null, 2),
+            workspaceItem: { type: 'structure-geometry', name: `Geometry (${geometry.distances.length} distances)`, data: geometry },
+            downloads: [
+                { label: 'JSON', filename: 'structure-geometry.json', text: JSON.stringify(geometry, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('geometryResults').innerHTML = tilesHtml + accordion;
+    }
 }
 
 // Quality Tab
@@ -250,32 +315,51 @@ document.getElementById('qualityForm').addEventListener('submit', function(e) {
 });
 
 function displayQuality(quality) {
-    const resultsDiv = document.getElementById('qualityResults');
-    let html = '<div class="row g-3">';
+    const tiles = [
+        { label: 'Mean B-factor',  value: quality.bfactor_stats.mean ?? '—' },
+        { label: 'Median B-factor', value: quality.bfactor_stats.median ?? '—' },
+        { label: 'Mean Occupancy', value: quality.occupancy_stats.mean ?? '—' },
+        { label: 'Incomplete',     value: quality.residue_completeness.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    if (quality.bfactor_stats.mean) {
-        html += '<div class="col-md-6"><h6 class="small">B-factor Statistics</h6><table class="table table-sm">';
-        html += `<tr><td>Mean</td><td>${quality.bfactor_stats.mean}</td></tr>`;
-        html += `<tr><td>Median</td><td>${quality.bfactor_stats.median}</td></tr>`;
-        html += `<tr><td>Range</td><td>${quality.bfactor_stats.min} - ${quality.bfactor_stats.max}</td></tr>`;
-        html += '</table></div>';
+    let details = '<div class="row g-3">';
+    if (quality.bfactor_stats.mean != null) {
+        details += '<div class="col-md-6"><h6 class="small">B-factor Statistics</h6><table class="table table-sm">';
+        details += `<tr><td>Mean</td><td>${quality.bfactor_stats.mean}</td></tr>`;
+        details += `<tr><td>Median</td><td>${quality.bfactor_stats.median}</td></tr>`;
+        details += `<tr><td>Range</td><td>${quality.bfactor_stats.min} - ${quality.bfactor_stats.max}</td></tr>`;
+        details += '</table></div>';
     }
-
-    if (quality.occupancy_stats.mean) {
-        html += '<div class="col-md-6"><h6 class="small">Occupancy Statistics</h6><table class="table table-sm">';
-        html += `<tr><td>Mean</td><td>${quality.occupancy_stats.mean}</td></tr>`;
-        html += `<tr><td>Range</td><td>${quality.occupancy_stats.min} - ${quality.occupancy_stats.max}</td></tr>`;
-        html += '</table></div>';
+    if (quality.occupancy_stats.mean != null) {
+        details += '<div class="col-md-6"><h6 class="small">Occupancy Statistics</h6><table class="table table-sm">';
+        details += `<tr><td>Mean</td><td>${quality.occupancy_stats.mean}</td></tr>`;
+        details += `<tr><td>Range</td><td>${quality.occupancy_stats.min} - ${quality.occupancy_stats.max}</td></tr>`;
+        details += '</table></div>';
     }
-
-    html += '</div>';
-
+    details += '</div>';
     if (quality.residue_completeness.length > 0) {
-        html += '<h6 class="mt-3 small">Incomplete Residues</h6>';
-        html += '<div class="alert alert-warning small"><strong>Warning:</strong> ' + quality.residue_completeness.length + ' residues have missing backbone atoms</div>';
+        details += '<div class="alert alert-warning small mt-3 mb-0"><strong>Warning:</strong> ' +
+            quality.residue_completeness.length + ' residues have missing backbone atoms</div>';
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('qualityResults', {
+            title: 'Structure Quality',
+            meta: `B-factor mean ${quality.bfactor_stats.mean ?? '—'} · ${quality.residue_completeness.length} incomplete`,
+            summary: tilesHtml,
+            details: details,
+            raw: JSON.stringify(quality, null, 2),
+            workspaceItem: { type: 'structure-quality', name: `Quality (${quality.residue_completeness.length} incomplete)`, data: quality },
+            downloads: [
+                { label: 'JSON', filename: 'structure-quality.json', text: JSON.stringify(quality, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('qualityResults').innerHTML = tilesHtml + details;
+    }
 }
 
 // Contacts Tab
@@ -310,14 +394,45 @@ document.getElementById('contactsForm').addEventListener('submit', function(e) {
 });
 
 function displayContacts(data) {
-    const resultsDiv = document.getElementById('contactsResults');
-    let html = `<p class="small">Found ${data.contact_count} contacts within ${data.cutoff}Å cutoff (showing first 50)</p>`;
-    html += '<table class="table table-sm table-hover"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
-    data.contacts.forEach(contact => {
-        html += `<tr><td>${contact.residue1}</td><td>${contact.residue2}</td><td>${contact.distance}</td></tr>`;
+    const tiles = [
+        { label: 'Contacts', value: data.contact_count },
+        { label: 'Cutoff',   value: data.cutoff + ' Å' },
+        { label: 'Shown',    value: data.contacts.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let rows = '';
+    data.contacts.forEach(c => { rows += `<tr><td>${c.residue1}</td><td>${c.residue2}</td><td>${c.distance}</td></tr>`; });
+    const table = `<div class="table-responsive"><table class="table table-sm table-hover">
+        <thead class="table-light"><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('contactsResults', {
+            title: 'Structure Contacts',
+            meta: `${data.contact_count} contacts within ${data.cutoff} Å`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(data.contacts, null, 2),
+            workspaceItem: { type: 'structure-contacts', name: `Contacts (${data.contact_count})`, data: data.contacts },
+            downloads: [
+                { label: 'JSON', filename: 'structure-contacts.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('contactsResults').innerHTML = tilesHtml + table;
+    }
+
+    const chain = (document.getElementById('contactChainId').value || 'A').toUpperCase();
+    const resiMap = {};
+    data.contacts.forEach(c => {
+        [c.residue1, c.residue2].forEach(r => {
+            const num = _structureResidueNum(r);
+            if (num !== null) resiMap[`${chain}:${num}`] = '#f59e0b';
+        });
     });
-    html += '</tbody></table>';
-    resultsDiv.innerHTML = html;
+    applyResidueColors(resiMap);
 }
 
 // Interactions Tab
@@ -350,29 +465,43 @@ document.getElementById('interactionsForm').addEventListener('submit', function(
 });
 
 function displayInteractions(data) {
-    const resultsDiv = document.getElementById('interactionsResults');
-    let html = '<div class="accordion" id="interactionsAccordion">';
+    const tiles = [
+        { label: 'H-Bonds',      value: data.hbond_count },
+        { label: 'Salt Bridges', value: data.salt_bridge_count },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#hbonds">';
-    html += `Hydrogen Bonds (${data.hbond_count} found, showing first 50)</button></h2>`;
-    html += '<div id="hbonds" class="accordion-collapse collapse show" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
-    html += '<table class="table table-sm"><thead><tr><th>Donor</th><th>Acceptor</th><th>Distance (Å)</th></tr></thead><tbody>';
-    data.hbonds.forEach(hb => {
-        html += `<tr><td>${hb.donor}</td><td>${hb.acceptor}</td><td>${hb.distance}</td></tr>`;
-    });
-    html += '</tbody></table></div></div></div>';
+    let accordion = '<div class="accordion" id="interactionsAccordion">';
+    accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#hbonds">';
+    accordion += `Hydrogen Bonds (${data.hbond_count} found, showing first 50)</button></h2>`;
+    accordion += '<div id="hbonds" class="accordion-collapse collapse show" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
+    accordion += '<table class="table table-sm"><thead><tr><th>Donor</th><th>Acceptor</th><th>Distance (Å)</th></tr></thead><tbody>';
+    data.hbonds.forEach(hb => { accordion += `<tr><td>${hb.donor}</td><td>${hb.acceptor}</td><td>${hb.distance}</td></tr>`; });
+    accordion += '</tbody></table></div></div></div>';
 
-    html += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#saltbridges">';
-    html += `Salt Bridges (${data.salt_bridge_count} found)</button></h2>`;
-    html += '<div id="saltbridges" class="accordion-collapse collapse" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
-    html += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
-    data.salt_bridges.forEach(sb => {
-        html += `<tr><td>${sb.residue1}</td><td>${sb.residue2}</td><td>${sb.distance}</td></tr>`;
-    });
-    html += '</tbody></table></div></div></div>';
+    accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#saltbridges">';
+    accordion += `Salt Bridges (${data.salt_bridge_count} found)</button></h2>`;
+    accordion += '<div id="saltbridges" class="accordion-collapse collapse" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
+    accordion += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
+    data.salt_bridges.forEach(sb => { accordion += `<tr><td>${sb.residue1}</td><td>${sb.residue2}</td><td>${sb.distance}</td></tr>`; });
+    accordion += '</tbody></table></div></div></div></div>';
 
-    html += '</div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('interactionsResults', {
+            title: 'Structure Interactions',
+            meta: `${data.hbond_count} H-bonds · ${data.salt_bridge_count} salt bridges`,
+            summary: tilesHtml + accordion,
+            raw: JSON.stringify(data, null, 2),
+            workspaceItem: { type: 'structure-interactions', name: `Interactions (${data.hbond_count + data.salt_bridge_count})`, data: data },
+            downloads: [
+                { label: 'JSON', filename: 'structure-interactions.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('interactionsResults').innerHTML = tilesHtml + accordion;
+    }
 }
 
 // Helper Functions: showLoading, hideLoading, showAlert are provided globally by static/js/utils.js
@@ -407,31 +536,65 @@ document.getElementById('dsspForm').addEventListener('submit', function(e) {
 });
 
 function displayDsspResults(result) {
-    const resultsDiv = document.getElementById('dsspResults');
-    let html = '<div class="card border-0 shadow-sm mb-3"><div class="card-body">';
-
-    if (result.dssp_available) {
-        const ss = result.secondary_structure;
-        html += '<h6 class="mb-2"><i class="fas fa-chart-pie"></i> Secondary Structure Distribution</h6><div class="row g-2">';
-        for (const [key, count] of Object.entries(ss.counts)) {
-            const name = ss.mapping[key] || key;
-            html += `<div class="col-md-4"><div class="border rounded p-2"><strong>${name} (${key}):</strong> ${count}</div></div>`;
-        }
-        html += '</div>';
-
-        if (result.residue_details.length > 0) {
-            html += '<h6 class="mt-3 mb-2"><i class="fas fa-list"></i> Residue Details (first 50)</h6>';
-            html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SS</th><th>Type</th><th>Accessibility</th><th>Phi</th><th>Psi</th></tr></thead><tbody>';
-            result.residue_details.forEach(r => {
-                html += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.ss}</td><td class="small">${r.ss_name}</td><td>${r.accessibility}</td><td>${r.phi !== null ? r.phi + '°' : '-'}</td><td>${r.psi !== null ? r.psi + '°' : '-'}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
-        }
-    } else {
-        html += '<p class="text-warning">DSSP not available or failed. ' + (result.dssp_error || '') + '</p>';
+    if (!result.dssp_available) {
+        document.getElementById('dsspResults').innerHTML =
+            '<div class="alert alert-warning mb-0"><strong>DSSP not available or failed.</strong> ' + (result.dssp_error || '') + '</div>';
+        return;
     }
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    const ss = result.secondary_structure;
+    const total = Object.values(ss.counts).reduce((a, b) => a + b, 0);
+    const topKeys = Object.entries(ss.counts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const tiles = [
+        { label: 'Residues', value: total },
+    ];
+    topKeys.forEach(([key, count]) => {
+        tiles.push({ label: (ss.mapping[key] || key), value: count });
+    });
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let distribution = '<h6 class="mb-2"><i class="fas fa-chart-pie"></i> Secondary Structure Distribution</h6><div class="row g-2 mb-3">';
+    for (const [key, count] of Object.entries(ss.counts)) {
+        const name = ss.mapping[key] || key;
+        distribution += `<div class="col-md-4"><div class="border rounded p-2"><strong>${name} (${key}):</strong> ${count}</div></div>`;
+    }
+    distribution += '</div>';
+
+    let table = '';
+    if (result.residue_details.length > 0) {
+        table += '<h6 class="mb-2"><i class="fas fa-list"></i> Residue Details (first 50)</h6>';
+        table += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SS</th><th>Type</th><th>Accessibility</th><th>Phi</th><th>Psi</th></tr></thead><tbody>';
+        result.residue_details.forEach(r => {
+            table += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.ss}</td><td class="small">${r.ss_name}</td><td>${r.accessibility}</td><td>${r.phi !== null ? r.phi + '°' : '-'}</td><td>${r.psi !== null ? r.psi + '°' : '-'}</td></tr>`;
+        });
+        table += '</tbody></table></div>';
+    }
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('dsspResults', {
+            title: 'DSSP Secondary Structure',
+            meta: `${total} residues classified`,
+            summary: tilesHtml + distribution,
+            details: table,
+            raw: JSON.stringify(result, null, 2),
+            workspaceItem: { type: 'dssp', name: `DSSP (${total} residues)`, data: result },
+            downloads: [
+                { label: 'JSON', filename: 'dssp.json', text: JSON.stringify(result, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('dsspResults').innerHTML = tilesHtml + distribution + table;
+    }
+
+    if (result.residue_details) {
+        const resiMap = {};
+        result.residue_details.forEach(r => {
+            const num = _structureResidueNum(r.residue);
+            if (num !== null) resiMap[`${r.chain}:${num}`] = _structureSsColor(r.ss);
+        });
+        applyResidueColors(resiMap);
+    }
 }
 
 // Ramachandran Tab
@@ -466,25 +629,64 @@ document.getElementById('ramachandranForm').addEventListener('submit', function(
 });
 
 function displayRamaResults(data) {
-    const resultsDiv = document.getElementById('ramaResults');
-    let html = '<div class="card border-0 shadow-sm mb-3"><div class="card-body">';
+    const tiles = [
+        { label: 'Residues', value: data.total_residues },
+        { label: 'Favored',  value: data.classification.favored },
+        { label: 'Allowed',  value: data.classification.allowed },
+        { label: 'Outliers', value: data.classification.outliers },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += `<h6 class="mb-2"><i class="fas fa-chart-pie"></i> Classification (${data.total_residues} residues)</h6>`;
-    html += '<div class="row g-2 mb-3">';
-    html += `<div class="col-md-4"><div class="border rounded p-2 bg-success text-white text-center"><strong>Favored:</strong> ${data.classification.favored}</div></div>`;
-    html += `<div class="col-md-4"><div class="border rounded p-2 bg-warning text-center"><strong>Allowed:</strong> ${data.classification.allowed}</div></div>`;
-    html += `<div class="col-md-4"><div class="border rounded p-2 bg-danger text-white text-center"><strong>Outliers:</strong> ${data.classification.outliers}</div></div>`;
-    html += '</div>';
+    let summary = tilesHtml +
+        '<div class="row g-2 mb-3">' +
+        `<div class="col-md-4"><div class="border rounded p-2 bg-success text-white text-center"><strong>Favored:</strong> ${data.classification.favored}</div></div>` +
+        `<div class="col-md-4"><div class="border rounded p-2 bg-warning text-center"><strong>Allowed:</strong> ${data.classification.allowed}</div></div>` +
+        `<div class="col-md-4"><div class="border rounded p-2 bg-danger text-white text-center"><strong>Outliers:</strong> ${data.classification.outliers}</div></div>` +
+        '</div>';
 
-    html += '<h6 class="mb-2"><i class="fas fa-table"></i> Phi/Psi Angles (first 100)</h6>';
-    html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Residue</th><th>Phi (°)</th><th>Psi (°)</th></tr></thead><tbody>';
+    let table = '<h6 class="mb-2"><i class="fas fa-table"></i> Phi/Psi Angles (first 100)</h6>';
+    table += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Residue</th><th>Phi (°)</th><th>Psi (°)</th></tr></thead><tbody>';
+    data.phi_psi_data.forEach(r => { table += `<tr><td>${r.residue}</td><td>${r.phi}</td><td>${r.psi}</td></tr>`; });
+    table += '</tbody></table></div>';
+
+    const tsv = ['residue\tphi\tpsi'];
+    data.phi_psi_data.forEach(r => tsv.push([r.residue, r.phi, r.psi].join('\t')));
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('ramaResults', {
+            title: 'Ramachandran',
+            meta: `${data.total_residues} residues · ${data.classification.outliers} outliers`,
+            summary: summary,
+            details: table,
+            raw: JSON.stringify(data, null, 2),
+            workspaceItem: { type: 'ramachandran', name: `Ramachandran (${data.total_residues} residues)`, data: data },
+            downloads: [
+                { label: 'TSV',  filename: 'ramachandran.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'ramachandran.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('ramaResults').innerHTML = summary + table;
+    }
+
+    // Highlight Ramachandran outliers (phi/psi outside favored/allowed) on the viewer.
+    const chain = (document.getElementById('ramaChainId').value || 'A').toUpperCase();
+    const outliers = {};
     data.phi_psi_data.forEach(r => {
-        html += `<tr><td>${r.residue}</td><td>${r.phi}</td><td>${r.psi}</td></tr>`;
+        const phi = r.phi, psi = r.psi;
+        const favored =
+            (phi >= -180 && phi <= -30 && psi >= -90  && psi <= 30) ||
+            (phi >= -180 && phi <= -30 && psi >= 60   && psi <= 180);
+        const allowed =
+            (phi >= -180 && phi <= 0   && psi >= -180 && psi <= 180);
+        if (!favored && !allowed) {
+            const num = _structureResidueNum(r.residue);
+            if (num !== null) outliers[`${chain}:${num}`] = '#ef4444';
+        }
     });
-    html += '</tbody></table></div>';
-
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    applyResidueColors(outliers);
 }
 
 // SASA Tab
@@ -517,45 +719,75 @@ document.getElementById('sasaForm').addEventListener('submit', function(e) {
 });
 
 function displaySasaResults(data) {
-    const resultsDiv = document.getElementById('sasaResults');
-    let html = '<div class="card border-0 shadow-sm mb-3"><div class="card-body">';
-
+    let tiles = [];
+    let summary = '';
     if (data.total_sasa !== undefined) {
-        html += `<h6 class="mb-2"><i class="fas fa-water"></i> Total SASA: ${data.total_sasa} Ų</h6>`;
-        html += '<h6 class="mt-3 mb-2">Chain SASA:</h6><div class="row g-2 mb-3">';
-        for (const [chain, sasa] of Object.entries(data.chain_sasa)) {
-            html += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${sasa} Ų</div></div>`;
+        tiles.push({ label: 'Total SASA', value: data.total_sasa + ' Ų' });
+        tiles.push({ label: 'Chains', value: Object.keys(data.chain_sasa || {}).length });
+        tiles.push({ label: 'Residues', value: (data.residue_sasa || []).length });
+        summary += '<h6 class="mb-2">Chain SASA:</h6><div class="row g-2 mb-3">';
+        for (const [chain, sasa] of Object.entries(data.chain_sasa || {})) {
+            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${sasa} Ų</div></div>`;
         }
-        html += '</div>';
-
+        summary += '</div>';
         if (data.residue_sasa && data.residue_sasa.length > 0) {
-            html += '<h6 class="mb-2">Residue SASA (first 50):</h6>';
-            html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SASA (Ų)</th></tr></thead><tbody>';
-            data.residue_sasa.forEach(r => {
-                html += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.sasa}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
+            summary += '<h6 class="mb-2">Residue SASA (first 50):</h6>';
+            summary += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SASA (Ų)</th></tr></thead><tbody>';
+            data.residue_sasa.forEach(r => { summary += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.sasa}</td></tr>`; });
+            summary += '</tbody></table></div>';
         }
     } else if (data.method) {
-        html += `<p class="text-info">Using ${data.method}</p>`;
-        html += '<h6 class="mb-2">Chain Accessibility:</h6><div class="row g-2 mb-3">';
-        for (const [chain, acc] of Object.entries(data.chain_accessibility)) {
-            html += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${acc}</div></div>`;
+        tiles.push({ label: 'Method', value: data.method });
+        tiles.push({ label: 'Chains', value: Object.keys(data.chain_accessibility || {}).length });
+        tiles.push({ label: 'Residues', value: (data.residue_accessibility || []).length });
+        summary += '<h6 class="mb-2">Chain Accessibility:</h6><div class="row g-2 mb-3">';
+        for (const [chain, acc] of Object.entries(data.chain_accessibility || {})) {
+            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${acc}</div></div>`;
         }
-        html += '</div>';
-
+        summary += '</div>';
         if (data.residue_accessibility) {
-            html += '<h6 class="mb-2">Relative Accessibility (first 50):</h6>';
-            html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>Accessibility</th></tr></thead><tbody>';
-            data.residue_accessibility.forEach(r => {
-                html += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.relative_accessibility}</td></tr>`;
-            });
-            html += '</tbody></table></div>';
+            summary += '<h6 class="mb-2">Relative Accessibility (first 50):</h6>';
+            summary += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>Accessibility</th></tr></thead><tbody>';
+            data.residue_accessibility.forEach(r => { summary += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.relative_accessibility}</td></tr>`; });
+            summary += '</tbody></table></div>';
         }
     }
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('sasaResults', {
+            title: 'Structure SASA',
+            meta: data.total_sasa !== undefined ? `${data.total_sasa} Ų total` : (data.method || 'SASA'),
+            summary: tilesHtml + summary,
+            raw: JSON.stringify(data, null, 2),
+            workspaceItem: { type: 'sasa', name: `SASA analysis`, data: data },
+            downloads: [
+                { label: 'JSON', filename: 'sasa.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('sasaResults').innerHTML = tilesHtml + summary;
+    }
+
+    // Color residues on the 3D viewer by relative solvent accessibility.
+    const resiMap = {};
+    const rows = (data.residue_sasa && data.residue_sasa.length)
+        ? data.residue_sasa.map(r => ({ chain: r.chain, residue: r.residue, v: r.sasa }))
+        : (data.residue_accessibility || []).map(r => ({ chain: r.chain, residue: r.residue, v: r.relative_accessibility }));
+    if (rows.length) {
+        const values = rows.map(r => r.v).filter(v => typeof v === 'number');
+        const min = Math.min.apply(null, values);
+        const max = Math.max.apply(null, values);
+        rows.forEach(r => {
+            const num = _structureResidueNum(r.residue);
+            if (num === null || typeof r.v !== 'number') return;
+            const t = max > min ? (r.v - min) / (max - min) : 0.5;
+            resiMap[`${r.chain}:${num}`] = _structureGradient(t);
+        });
+        applyResidueColors(resiMap);
+    }
 }
 
 // Selection Tab
@@ -592,35 +824,43 @@ document.getElementById('selectionForm').addEventListener('submit', function(e) 
 });
 
 function displaySelectionResults(extraction) {
-    const resultsDiv = document.getElementById('selectionResults');
-    let html = '<div class="card border-0 shadow-sm mb-3"><div class="card-body">';
+    const tiles = [
+        { label: 'Type',    value: extraction.selection_type },
+        { label: 'Value',   value: extraction.selection_value },
+        { label: 'Matched', value: extraction.extracted_count },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += `<h6 class="mb-2"><i class="fas fa-info-circle"></i> Selection Type: ${extraction.selection_type}</h6>`;
-    html += `<p><strong>Selection Value:</strong> ${extraction.selection_value}</p>`;
-    html += `<p><strong>Extracted Count:</strong> ${extraction.extracted_count}</p>`;
-
+    let table = '';
     if (extraction.details.length > 0) {
-        html += '<h6 class="mt-3 mb-2">Details:</h6>';
-        html += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>';
-
-        const firstItem = extraction.details[0];
-        for (const key of Object.keys(firstItem)) {
-            html += `<th>${key}</th>`;
-        }
-        html += '</tr></thead><tbody>';
-
+        const keys = Object.keys(extraction.details[0]);
+        table = '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>';
+        keys.forEach(k => { table += `<th>${k}</th>`; });
+        table += '</tr></thead><tbody>';
         extraction.details.forEach(item => {
-            html += '<tr>';
-            for (const value of Object.values(item)) {
-                html += `<td>${value}</td>`;
-            }
-            html += '</tr>';
+            table += '<tr>';
+            keys.forEach(k => { table += `<td>${item[k]}</td>`; });
+            table += '</tr>';
         });
-        html += '</tbody></table></div>';
+        table += '</tbody></table></div>';
     }
 
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('selectionResults', {
+            title: 'Structure Selection',
+            meta: `${extraction.extracted_count} ${extraction.selection_type}`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(extraction, null, 2),
+            workspaceItem: { type: 'structure-selection', name: `Selection ${extraction.selection_type}=${extraction.selection_value}`, data: extraction },
+            downloads: [
+                { label: 'JSON', filename: 'selection.json', text: JSON.stringify(extraction, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('selectionResults').innerHTML = tilesHtml + table;
+    }
 }
 
 // Example button functions

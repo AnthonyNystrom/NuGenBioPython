@@ -43,7 +43,6 @@ function displayPopgenResults(results) {
     const resultsDiv = document.getElementById('popgenResults');
     const countBadge = document.getElementById('popCount');
 
-    // Validate results structure
     if (!results || !results.populations || !results.loci) {
         resultsDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Invalid or incomplete data received</div>';
         return;
@@ -52,96 +51,75 @@ function displayPopgenResults(results) {
     countBadge.textContent = `${results.populations.length} populations`;
     countBadge.style.display = 'inline-block';
 
-    let html = `
-        <div class="mb-3">
-            <h6><i class="fas fa-file-alt"></i> ${results.title}</h6>
-            <p class="text-muted">${results.loci.length} loci across ${results.populations.length} populations</p>
-        </div>
-    `;
-    
-    // Display statistical analysis if available
-    if (results.statistics && !results.statistics.error) {
-        html += `
-            <div class="alert alert-success">
-                <h6><i class="fas fa-chart-bar"></i> Population Genetics Statistics</h6>
-                
-                ${results.statistics.hardy_weinberg && results.statistics.hardy_weinberg.global ? `
-                    <div class="mb-2">
-                        <strong>Hardy-Weinberg Test:</strong> 
-                        <span class="badge bg-info">Global test completed</span>
-                    </div>
-                ` : ''}
-                
-                ${results.statistics.f_statistics && Object.keys(results.statistics.f_statistics).length > 0 ? `
-                    <div class="mb-2">
-                        <strong>F-Statistics:</strong>
-                        <div class="d-flex flex-wrap gap-1 mt-1">
-                            ${Object.entries(results.statistics.f_statistics).map(([key, value]) =>
-                                `<span class="badge bg-secondary">${key}: ${value}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-                
-                ${results.statistics.allele_frequencies && Object.keys(results.statistics.allele_frequencies).length > 0 ? `
-                    <div>
-                        <strong>Allele Frequencies:</strong> 
-                        <span class="badge bg-primary">Available for ${Object.keys(results.statistics.allele_frequencies).length} loci</span>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    } else if (results.statistics && results.statistics.error) {
-        html += `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                Statistical analysis unavailable: ${results.statistics.error}
-            </div>
-        `;
+    const stats = results.statistics || {};
+    const totalIndividuals = results.populations.reduce((sum, p) => sum + (p.individuals || 0), 0);
+    const tiles = [
+        { label: 'Populations',  value: results.populations.length },
+        { label: 'Loci',         value: results.loci.length },
+        { label: 'Individuals',  value: totalIndividuals },
+        { label: 'F-Stats',      value: stats.f_statistics ? Object.keys(stats.f_statistics).length : 0 },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let statsHtml = '';
+    if (stats.hardy_weinberg && stats.hardy_weinberg.global) {
+        statsHtml += '<div class="mb-2"><strong>Hardy-Weinberg Test:</strong> <span class="badge bg-info">Global test completed</span></div>';
     }
-    
-    html += `
+    if (stats.f_statistics && Object.keys(stats.f_statistics).length > 0) {
+        statsHtml += '<div class="mb-2"><strong>F-Statistics:</strong><div class="d-flex flex-wrap gap-1 mt-1">' +
+            Object.entries(stats.f_statistics).map(([k, v]) =>
+                `<span class="badge bg-secondary">${k}: ${v}</span>`
+            ).join('') + '</div></div>';
+    }
+    if (stats.allele_frequencies && Object.keys(stats.allele_frequencies).length > 0) {
+        statsHtml += '<div><strong>Allele Frequencies:</strong> <span class="badge bg-primary">Available for ' +
+            Object.keys(stats.allele_frequencies).length + ' loci</span></div>';
+    }
+    if (stats.error) {
+        statsHtml = `<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-triangle"></i> Statistical analysis unavailable: ${stats.error}</div>`;
+    }
+    if (statsHtml && !stats.error) {
+        statsHtml = `<div class="alert alert-success mb-3"><h6 class="mb-2"><i class="fas fa-chart-bar"></i> Population Genetics Statistics</h6>${statsHtml}</div>`;
+    }
+
+    let lociRows = '';
+    results.loci.forEach((locus, i) => {
+        lociRows += `<tr><td><code class="small">${locus}</code></td><td>${i + 1}</td></tr>`;
+    });
+    let popRows = '';
+    results.populations.forEach(pop => {
+        popRows += `<tr><td><strong>${pop.name}</strong></td><td>${pop.individuals}</td></tr>`;
+    });
+    const details = `
         <div class="row g-3">
             <div class="col-12 col-lg-6">
-                <h6><i class="fas fa-list"></i> Loci</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead class="table-light"><tr><th>Locus</th><th>Position</th></tr></thead>
-                        <tbody>
-    `;
-
-    results.loci.forEach((locus, index) => {
-        html += `<tr><td><code class="small">${locus}</code></td><td>${index + 1}</td></tr>`;
-    });
-
-    html += `
-                        </tbody>
-                    </table>
-                </div>
+                <h6 class="mb-2"><i class="fas fa-list"></i> Loci</h6>
+                <div class="table-responsive"><table class="table table-sm table-bordered">
+                    <thead class="table-light"><tr><th>Locus</th><th>Position</th></tr></thead>
+                    <tbody>${lociRows}</tbody></table></div>
             </div>
             <div class="col-12 col-lg-6">
-                <h6><i class="fas fa-users"></i> Populations</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead class="table-light"><tr><th>Population</th><th>Individuals</th></tr></thead>
-                        <tbody>
-    `;
+                <h6 class="mb-2"><i class="fas fa-users"></i> Populations</h6>
+                <div class="table-responsive"><table class="table table-sm table-bordered">
+                    <thead class="table-light"><tr><th>Population</th><th>Individuals</th></tr></thead>
+                    <tbody>${popRows}</tbody></table></div>
+            </div>
+        </div>`;
 
-    results.populations.forEach(pop => {
-        html += `<tr><td><strong>${pop.name}</strong></td><td>${pop.individuals}</td></tr>`;
+    ResultsCard.mount('popgenResults', {
+        title: results.title || 'Population Genetics',
+        meta: `${results.populations.length} populations · ${results.loci.length} loci`,
+        summary: tilesHtml + statsHtml,
+        details: details,
+        raw: JSON.stringify(results, null, 2),
+        workspaceItem: { type: 'popgen', name: `${results.title || 'Popgen'} (${results.populations.length} pops)`, data: results },
+        downloads: [
+            { label: 'JSON', filename: 'popgen.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+        ],
     });
 
-    html += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    resultsDiv.innerHTML = html;
-
-    // Show advanced analysis section
     document.getElementById('advancedAnalysisSection').style.display = 'block';
 }
 

@@ -372,81 +372,72 @@ document.getElementById('sequenceForm').addEventListener('submit', function(e) {
 });
 
 function displayResults(analysis) {
-    const resultsArea = document.getElementById('resultsArea');
+    const esc = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
+    const seq = (document.getElementById('sequenceInput') || {}).value || '';
+    const kind = (document.getElementById('sequenceType') || {}).value || 'dna';
 
-    let html = '';
-
-    // Basic properties in compact cards
-    html += '<div class="row g-2 mb-3">';
-    html += `
-        <div class="col-6">
-            <div class="border rounded p-3 bg-light">
-                <div class="small text-muted mb-1">Length</div>
-                <div class="fw-bold">${analysis.length} bases</div>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="border rounded p-3 bg-light">
-                <div class="small text-muted mb-1">Molecular Weight</div>
-                <div class="fw-bold">${analysis.molecular_weight.toFixed(2)} Da</div>
-            </div>
-        </div>
-    `;
-    html += '</div>';
-
-    // Composition
-    html += `
-        <div class="border rounded p-3 bg-light mb-3">
-            <div class="fw-bold text-primary mb-2"><i class="fas fa-chart-pie"></i> Composition</div>
-            <div class="row g-3">
-    `;
-    for (const [base, count] of Object.entries(analysis.composition)) {
-        const percentage = ((count / analysis.length) * 100).toFixed(1);
-        html += `<div class="col-3"><strong>${base}:</strong> ${count} (${percentage}%)</div>`;
+    // --- Summary: stat tiles ---
+    const tiles = [
+        { label: 'Length',            value: analysis.length,                                       sub: kind === 'protein' ? 'residues' : 'bases' },
+        { label: 'Molecular Weight',  value: (analysis.molecular_weight || 0).toFixed(2),           sub: 'Da' },
+    ];
+    if (analysis.gc_content !== null && analysis.gc_content !== undefined) {
+        tiles.push({ label: 'GC Content', value: analysis.gc_content.toFixed(2) + '%' });
     }
-    html += '</div></div>';
+    const comp = analysis.composition || {};
+    const totalBases = Object.values(comp).reduce((a, b) => a + b, 0) || 1;
+    const summary =
+        '<div class="rc-stats">' +
+        tiles.map(t =>
+            '<div class="rc-stat">' +
+                '<div class="rc-stat-label">' + esc(t.label) + '</div>' +
+                '<div class="rc-stat-value">' + esc(t.value) + '</div>' +
+                (t.sub ? '<div class="rc-stat-sub">' + esc(t.sub) + '</div>' : '') +
+            '</div>'
+        ).join('') +
+        '</div>';
 
-    // GC Content (for DNA/RNA)
-    if (analysis.gc_content !== null) {
-        html += `
-            <div class="border rounded p-3 bg-light mb-3">
-                <div class="fw-bold text-primary mb-2"><i class="fas fa-percentage"></i> GC Content</div>
-                <div class="h5 mb-2">${analysis.gc_content.toFixed(2)}%</div>
-                <div class="progress" >
-                    <div class="progress-bar bg-success" ></div>
-                </div>
-            </div>
-        `;
+    // --- Details: composition + complement + translation ---
+    let details = '<dl class="rc-kv">';
+    if (Object.keys(comp).length) {
+        const compRow = Object.entries(comp).map(([base, count]) => {
+            const pct = ((count / totalBases) * 100).toFixed(1);
+            return '<code>' + esc(base) + '</code> ' + esc(count) + ' (' + pct + '%)';
+        }).join(' &nbsp;·&nbsp; ');
+        details += '<dt>Composition</dt><dd>' + compRow + '</dd>';
     }
-
-    // Complement sequences (for DNA/RNA)
     if (analysis.complement) {
-        html += `
-            <div class="border rounded p-3 bg-light mb-3">
-                <div class="fw-bold text-primary mb-2"><i class="fas fa-exchange-alt"></i> Complement Sequences</div>
-                <div class="mb-2">
-                    <div class="small text-muted mb-1">Complement:</div>
-                    <div class="sequence-display">${analysis.complement}</div>
-                </div>
-                <div>
-                    <div class="small text-muted mb-1">Reverse Complement:</div>
-                    <div class="sequence-display">${analysis.reverse_complement}</div>
-                </div>
-            </div>
-        `;
+        details +=
+            '<dt>Complement</dt><dd><code class="font-monospace">' + esc(analysis.complement) + '</code></dd>' +
+            '<dt>Reverse complement</dt><dd><code class="font-monospace">' + esc(analysis.reverse_complement) + '</code></dd>';
     }
-
-    // Translation
     if (analysis.translation) {
-        html += `
-            <div class="border rounded p-3 bg-light mb-3">
-                <div class="fw-bold text-primary mb-2"><i class="fas fa-language"></i> Translation</div>
-                <div class="sequence-display">${analysis.translation}</div>
-            </div>
-        `;
+        details += '<dt>Translation</dt><dd><code class="font-monospace">' + esc(analysis.translation) + '</code></dd>';
     }
+    details += '</dl>';
 
-    resultsArea.innerHTML = html;
+    // --- Raw: FASTA of the input + analysis JSON ---
+    const rawFasta = '>analyzed_sequence ' + kind.toUpperCase() + '\n' + seq + '\n';
+
+    ResultsCard.mount('resultsArea', {
+        title: 'Sequence Analysis',
+        meta:  '<span class="meta">' + esc(kind.toUpperCase()) + ' · ' + esc(analysis.length) + ' ' +
+               (kind === 'protein' ? 'aa' : 'bp') + '</span>',
+        summary: summary,
+        details: details,
+        raw:     rawFasta,
+        copyText: seq,
+        downloads: [
+            { label: 'FASTA', filename: 'analyzed.fasta', text: rawFasta, mime: 'text/plain' },
+            { label: 'JSON',  filename: 'analysis.json', text: JSON.stringify(analysis, null, 2), mime: 'application/json' },
+        ],
+        workspaceItem: {
+            type: 'sequence',
+            name: kind.toUpperCase() + ' (' + analysis.length + (kind === 'protein' ? ' aa' : ' bp') + ')',
+            data: seq,
+            meta: { kind: kind, analysis: analysis },
+        },
+    });
 }
 
 function loadExample() {

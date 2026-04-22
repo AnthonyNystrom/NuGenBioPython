@@ -80,39 +80,32 @@ function parseTreeString() {
 
 // Display Tree Results
 function displayTreeResults(data) {
-    // Display tree information
-    const treeInfoDiv = document.getElementById('treeInfo');
-    let infoHtml = '<div class="row g-2">';
+    const tiles = [
+        { label: 'Terminals',      value: data.terminal_count },
+        { label: 'Internal Nodes', value: data.internal_nodes ?? 'N/A' },
+        { label: 'Branch Length',  value: data.total_branch_length ? data.total_branch_length.toFixed(4) : 'N/A' },
+        { label: 'Bifurcating',    value: data.is_bifurcating ? 'Yes' : 'No' },
+    ];
+    const tilesHtml = '<div class="rc-stats">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    infoHtml += `
-        <div class="col-6">
-            <div class="border rounded p-2 bg-light text-center">
-                <small class="text-warning d-block">Terminals</small>
-                <strong>${data.terminal_count}</strong>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="border rounded p-2 bg-light text-center">
-                <small class="text-warning d-block">Internal Nodes</small>
-                <strong>${data.internal_nodes || 'N/A'}</strong>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="border rounded p-2 bg-light text-center">
-                <small class="text-warning d-block">Branch Length</small>
-                <strong>${data.total_branch_length ? data.total_branch_length.toFixed(4) : 'N/A'}</strong>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="border rounded p-2 bg-light text-center">
-                <small class="text-warning d-block">Bifurcating</small>
-                <strong>${data.is_bifurcating ? 'Yes' : 'No'}</strong>
-            </div>
-        </div>
-    `;
+    const downloads = [];
+    if (data.newick) downloads.push({ label: 'Newick', filename: 'tree.nwk', text: data.newick, mime: 'text/plain' });
+    downloads.push({ label: 'JSON', filename: 'tree.json', text: JSON.stringify(data, null, 2), mime: 'application/json' });
 
-    infoHtml += '</div>';
-    treeInfoDiv.innerHTML = infoHtml;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('treeInfo', {
+            title: 'Phylogenetic Tree',
+            meta: `${data.terminal_count} terminals`,
+            summary: tilesHtml,
+            raw: data.newick || JSON.stringify(data, null, 2),
+            workspaceItem: { type: 'phylo-tree', name: `Tree (${data.terminal_count} terminals)`, data: data },
+            downloads: downloads,
+        });
+    } else {
+        document.getElementById('treeInfo').innerHTML = tilesHtml;
+    }
 
     // Display tree visualization
     const treeVisDiv = document.getElementById('treeVisualization');

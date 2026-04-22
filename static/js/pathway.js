@@ -274,44 +274,17 @@ function analyzeSystem() {
 }
 
 function displaySystemAnalysis(analysis) {
-    const container = document.getElementById('systemAnalysisResults');
+    const tiles = [
+        { label: 'Reactions',    value: analysis.reaction_count },
+        { label: 'Species',      value: analysis.species_count },
+        { label: 'Reversible',   value: analysis.reversible_count },
+        { label: 'Irreversible', value: analysis.irreversible_count },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = `
-        <div class="row g-3 mb-3">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body p-3 text-center">
-                        <h3 class="mb-0">${analysis.reaction_count}</h3>
-                        <small>Reactions</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body p-3 text-center">
-                        <h3 class="mb-0">${analysis.species_count}</h3>
-                        <small>Species</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body p-3 text-center">
-                        <h3 class="mb-0">${analysis.reversible_count}</h3>
-                        <small>Reversible</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-dark">
-                    <div class="card-body p-3 text-center">
-                        <h3 class="mb-0">${analysis.irreversible_count}</h3>
-                        <small>Irreversible</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    const details = `
         <div class="row">
             <div class="col-md-6">
                 <h6 class="mb-2"><i class="fas fa-list"></i> All Species</h6>
@@ -326,10 +299,23 @@ function displaySystemAnalysis(analysis) {
                     <li><strong>Irreversible reactions:</strong> ${analysis.irreversible_reactions.join(', ') || 'None'}</li>
                 </ul>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    container.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('systemAnalysisResults', {
+            title: 'Pathway System Analysis',
+            meta: `${analysis.reaction_count} reactions · ${analysis.species_count} species`,
+            summary: tilesHtml,
+            details: details,
+            raw: JSON.stringify(analysis, null, 2),
+            workspaceItem: { type: 'pathway-system', name: `Pathway system (${analysis.reaction_count} rxns)`, data: analysis },
+            downloads: [
+                { label: 'JSON', filename: 'pathway-system.json', text: JSON.stringify(analysis, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('systemAnalysisResults').innerHTML = tilesHtml + details;
+    }
 }
 
 // ============================================================================
@@ -367,9 +353,17 @@ function analyzeNetwork() {
 }
 
 function displayNetworkAnalysis(analysis) {
-    const container = document.getElementById('networkAnalysisResults');
+    const tiles = [
+        { label: 'Sources',       value: analysis.sources.length },
+        { label: 'Sinks',         value: analysis.sinks.length },
+        { label: 'Intermediates', value: analysis.intermediates.length },
+        { label: 'Interactions',  value: analysis.interactions.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = `
+    const summary = tilesHtml + `
         <div class="row g-3 mb-3">
             <div class="col-md-4">
                 <div class="card border-success">
@@ -407,61 +401,56 @@ function displayNetworkAnalysis(analysis) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>`;
 
-        <div class="card mb-3">
-            <div class="card-header py-2">
-                <h6 class="mb-0"><i class="fas fa-network-wired"></i> Interactions</h6>
-            </div>
-            <div class="card-body p-2">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th>Source</th>
-                                <th>→</th>
-                                <th>Sink</th>
-                                <th>Reaction</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${analysis.interactions.map(i => `
-                                <tr>
-                                    <td><span class="badge bg-primary">${i.source}</span></td>
-                                    <td><i class="fas fa-arrow-right text-muted"></i></td>
-                                    <td><span class="badge bg-info">${i.sink}</span></td>
-                                    <td><small>${i.reaction}</small></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+    const details = `
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Source</th><th>→</th><th>Sink</th><th>Reaction</th></tr></thead>
+                <tbody>
+                    ${analysis.interactions.map(i => `
+                        <tr>
+                            <td><span class="badge bg-primary">${i.source}</span></td>
+                            <td><i class="fas fa-arrow-right text-muted"></i></td>
+                            <td><span class="badge bg-info">${i.sink}</span></td>
+                            <td><small>${i.reaction}</small></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>` + (analysis.species_connections ? `
+        <h6 class="mb-2"><i class="fas fa-sitemap"></i> Species Connections</h6>
+        <div class="row">
+            ${Object.entries(analysis.species_connections).map(([species, conn]) => `
+                <div class="col-md-6 mb-2">
+                    <strong>${species}</strong>
+                    <ul class="small mb-0">
+                        ${conn.upstream.length > 0 ? `<li>Upstream: ${conn.upstream.join(', ')}</li>` : ''}
+                        ${conn.downstream.length > 0 ? `<li>Downstream: ${conn.downstream.join(', ')}</li>` : ''}
+                    </ul>
                 </div>
-            </div>
-        </div>
+            `).join('')}
+        </div>` : '');
 
-        ${analysis.species_connections ? `
-            <div class="card">
-                <div class="card-header py-2">
-                    <h6 class="mb-0"><i class="fas fa-sitemap"></i> Species Connections</h6>
-                </div>
-                <div class="card-body p-2">
-                    <div class="row">
-                        ${Object.entries(analysis.species_connections).map(([species, conn]) => `
-                            <div class="col-md-6 mb-2">
-                                <strong>${species}</strong>
-                                <ul class="small mb-0">
-                                    ${conn.upstream.length > 0 ? `<li>Upstream: ${conn.upstream.join(', ')}</li>` : ''}
-                                    ${conn.downstream.length > 0 ? `<li>Downstream: ${conn.downstream.join(', ')}</li>` : ''}
-                                </ul>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        ` : ''}
-    `;
+    const tsv = ['source\tsink\treaction'];
+    analysis.interactions.forEach(i => tsv.push([i.source, i.sink, i.reaction].join('\t')));
 
-    container.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('networkAnalysisResults', {
+            title: 'Pathway Network',
+            meta: `${analysis.sources.length} sources · ${analysis.sinks.length} sinks · ${analysis.interactions.length} interactions`,
+            summary: summary,
+            details: details,
+            raw: JSON.stringify(analysis, null, 2),
+            workspaceItem: { type: 'pathway-network', name: `Pathway network (${analysis.interactions.length} edges)`, data: analysis },
+            downloads: [
+                { label: 'TSV',  filename: 'pathway-network.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'pathway-network.json', text: JSON.stringify(analysis, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('networkAnalysisResults').innerHTML = summary + details;
+    }
 }
 
 // ============================================================================
@@ -499,24 +488,37 @@ function generateVisualization() {
 
 function displayVisualization(viz) {
     const container = document.getElementById('pathwayVisualization');
-
-    if (viz.graph_image) {
-        container.innerHTML = `
-            <div class="text-center">
-                <img src="${viz.graph_image}" class="img-fluid" alt="Pathway Graph"
-                     style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
-            </div>
-            <div class="mt-3 p-3 bg-light rounded">
-                <h6><i class="fas fa-info-circle"></i> Graph Information</h6>
-                <ul class="small mb-0">
-                    <li><strong>Nodes:</strong> ${viz.node_count}</li>
-                    <li><strong>Edges:</strong> ${viz.edge_count}</li>
-                    <li><strong>Graph Type:</strong> ${viz.graph_type}</li>
-                </ul>
-            </div>
-        `;
-    } else {
+    if (!viz.graph_image) {
         container.innerHTML = '<div class="alert alert-warning">Visualization not available</div>';
+        return;
+    }
+
+    const tiles = [
+        { label: 'Nodes',      value: viz.node_count },
+        { label: 'Edges',      value: viz.edge_count },
+        { label: 'Graph Type', value: viz.graph_type },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    const image = `<div class="text-center">
+        <img src="${viz.graph_image}" class="img-fluid" alt="Pathway Graph" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
+    </div>`;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('pathwayVisualization', {
+            title: 'Pathway Visualization',
+            meta: `${viz.node_count} nodes · ${viz.edge_count} edges`,
+            summary: tilesHtml + image,
+            raw: JSON.stringify(viz, null, 2),
+            workspaceItem: { type: 'pathway-viz', name: `Pathway graph (${viz.node_count} nodes)`, data: viz },
+            downloads: [
+                { label: 'JSON', filename: 'pathway-viz.json', text: JSON.stringify(viz, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        container.innerHTML = tilesHtml + image;
     }
 }
 

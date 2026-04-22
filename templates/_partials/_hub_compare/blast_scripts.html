@@ -61,30 +61,41 @@ document.getElementById('blastForm').addEventListener('submit', function(e) {
 });
 
 function displayResults(data) {
-    const resultsDiv = document.getElementById('blastResults');
     const countBadge = document.getElementById('resultCount');
-
     countBadge.textContent = `${data.num_hits} hits`;
     countBadge.style.display = 'inline-block';
 
-    if (data.results.length === 0) {
-        resultsDiv.innerHTML = '<p class="text-center text-muted">No significant hits found</p>';
+    window.blastCurrentResults = data.results;
+
+    if (!data.results || data.results.length === 0) {
+        document.getElementById('blastResults').innerHTML =
+            '<p class="text-center text-muted">No significant hits found</p>';
         return;
     }
 
-    // Store current results globally for viewAlignment
-    window.blastCurrentResults = data.results;
+    const stats = data.statistics || {};
+    const program = document.getElementById('blastProgram').value;
+    const database = document.getElementById('database').value;
 
-    let html = '<div class="table-responsive"><table class="table table-sm table-hover">';
-    html += '<thead class="table-light"><tr><th>Accession</th><th>Title</th><th>Score (bits)</th><th>E-value</th><th>Identity</th><th>Action</th></tr></thead><tbody>';
+    const tiles = [
+        { label: 'Hits',        value: data.num_hits },
+        { label: 'Avg Identity', value: (stats.avg_identity ?? 0) + '%' },
+        { label: 'Max Identity', value: (stats.max_identity ?? 0) + '%' },
+        { label: 'Avg Score',    value: stats.avg_score ?? '—' },
+        { label: 'Max Score',    value: stats.max_score ?? '—' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
+    let tableRows = '';
     data.results.forEach((hit, index) => {
         const eValue = hit.e_value === 0 ? '0.0' : hit.e_value.toExponential(1);
         const displayScore = hit.bits ? Math.round(hit.bits) : (hit.score ? Math.round(hit.score) : 0);
-
-        html += `<tr>
+        const title = hit.title ? (hit.title.length > 60 ? hit.title.substring(0, 60) + '…' : hit.title) : 'N/A';
+        tableRows += `<tr>
             <td class="small">${hit.accession || 'N/A'}</td>
-            <td class="small">${hit.title ? hit.title.substring(0, 60) + '...' : 'N/A'}</td>
+            <td class="small">${title}</td>
             <td class="text-center"><span class="badge bg-success">${displayScore}</span></td>
             <td class="small">${eValue}</td>
             <td class="text-center">${hit.identity_percent || 0}%</td>
@@ -93,9 +104,38 @@ function displayResults(data) {
             </button></td>
         </tr>`;
     });
+    const table = `<div class="table-responsive"><table class="table table-sm table-hover">
+        <thead class="table-light"><tr><th>Accession</th><th>Title</th><th>Score (bits)</th><th>E-value</th><th>Identity</th><th>Action</th></tr></thead>
+        <tbody>${tableRows}</tbody></table></div>`;
 
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    const tsv = [
+        'accession\ttitle\tbits\tscore\te_value\tidentity_percent\tidentities\talign_length\tgaps'
+    ];
+    data.results.forEach(hit => {
+        tsv.push([
+            hit.accession || '',
+            (hit.title || '').replace(/\t/g, ' '),
+            hit.bits ?? '',
+            hit.score ?? '',
+            hit.e_value ?? '',
+            hit.identity_percent ?? '',
+            hit.identities ?? '',
+            hit.align_length ?? '',
+            hit.gaps ?? '',
+        ].join('\t'));
+    });
+
+    ResultsCard.mount('blastResults', {
+        title: 'BLAST Search',
+        meta: `${program.toUpperCase()} vs ${database} — ${data.num_hits} hits`,
+        summary: tilesHtml + table,
+        raw: JSON.stringify(data.results, null, 2),
+        workspaceItem: { type: 'blast', name: `BLAST ${program} vs ${database} (${data.num_hits} hits)`, data: data.results },
+        downloads: [
+            { label: 'JSON', filename: 'blast-hits.json', text: JSON.stringify(data.results, null, 2), mime: 'application/json' },
+            { label: 'TSV',  filename: 'blast-hits.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+        ],
+    });
 }
 
 // Make viewAlignment globally accessible

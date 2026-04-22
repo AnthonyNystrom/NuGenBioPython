@@ -64,6 +64,15 @@ function displaySearchResults(results, count, database) {
         return;
     }
 
+    const tiles = [
+        { label: 'Total',    value: count },
+        { label: 'Returned', value: results.length },
+        { label: 'Database', value: database },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
     let html = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>ID</th><th>Title</th>';
     if (database === 'pubmed') {
         html += '<th>Authors</th><th>Journal</th><th>Date</th>';
@@ -89,7 +98,21 @@ function displaySearchResults(results, count, database) {
     });
 
     html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('searchResults', {
+            title: 'Entrez Search',
+            meta: `${database} · ${count} total`,
+            summary: tilesHtml + html,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'entrez-search', name: `${database} search (${results.length})`, data: results },
+            downloads: [
+                { label: 'JSON', filename: `${database}-search.json`, text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + html;
+    }
 }
 
 function loadExampleSearch() {
@@ -130,24 +153,39 @@ document.getElementById('globalQueryForm').addEventListener('submit', function(e
 
 function displayGlobalResults(results) {
     const resultsDiv = document.getElementById('globalResults');
-
     if (results.length === 0) {
         resultsDiv.innerHTML = '<p class="text-muted">No results found in any database.</p>';
         return;
     }
 
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>Database</th><th>Count</th></tr></thead><tbody>';
+    const total = results.reduce((s, r) => s + (r.count || 0), 0);
+    const tiles = [
+        { label: 'Databases', value: results.length },
+        { label: 'Total Hits', value: total.toLocaleString() },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    results.forEach(result => {
-        html += `<tr>
-            <td><code>${result.database}</code></td>
-            <td><span class="badge bg-primary">${result.count.toLocaleString()}</span></td>
-        </tr>`;
-    });
+    let rows = '';
+    results.forEach(r => { rows += `<tr><td><code>${r.database}</code></td><td><span class="badge bg-primary">${r.count.toLocaleString()}</span></td></tr>`; });
+    const table = `<div class="table-responsive"><table class="table table-hover table-sm">
+        <thead><tr><th>Database</th><th>Count</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('globalResults', {
+            title: 'Global Entrez Search',
+            meta: `${results.length} databases · ${total.toLocaleString()} total`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'entrez-global', name: `Global search (${total.toLocaleString()})`, data: results },
+            downloads: [
+                { label: 'JSON', filename: 'entrez-global.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + table;
+    }
 }
 
 // Fetch Records Tab
@@ -193,7 +231,31 @@ document.getElementById('fetchForm').addEventListener('submit', function(e) {
 
 function displayFetchedRecords(data, format) {
     const resultsDiv = document.getElementById('fetchResults');
-    resultsDiv.innerHTML = `<pre class="mb-0" style="max-height: 500px; overflow-y: auto; font-size: 12px;">${data}</pre>`;
+    const chars = (data || '').length;
+
+    const tiles = [
+        { label: 'Format', value: format },
+        { label: 'Size',   value: chars.toLocaleString() + ' chars' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('fetchResults', {
+            title: 'Fetched Records',
+            meta: `${format} · ${chars.toLocaleString()} chars`,
+            summary: tilesHtml + `<p class="small mb-0 text-muted">See the Raw tab for the fetched content.</p>`,
+            raw: data,
+            copyText: data,
+            workspaceItem: { type: 'entrez-fetch', name: `Fetched ${format}`, data: data },
+            downloads: [
+                { label: format.toUpperCase(), filename: `records.${format}`, text: data, mime: 'text/plain' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = `<pre class="mb-0" style="max-height: 500px; overflow-y: auto; font-size: 12px;">${data}</pre>`;
+    }
 }
 
 function downloadFetchedRecords() {
@@ -257,18 +319,30 @@ function displayLinkedRecords(links, count) {
         return;
     }
 
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
-    html += '<thead><tr><th>ID</th><th>Title</th></tr></thead><tbody>';
+    const tiles = [{ label: 'Linked Records', value: count }];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    links.forEach(link => {
-        html += `<tr>
-            <td><code>${link.id}</code></td>
-            <td>${link.title || link.name || 'N/A'}</td>
-        </tr>`;
-    });
+    let rows = '';
+    links.forEach(link => { rows += `<tr><td><code>${link.id}</code></td><td>${link.title || link.name || 'N/A'}</td></tr>`; });
+    const table = `<div class="table-responsive"><table class="table table-hover table-sm">
+        <thead><tr><th>ID</th><th>Title</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 
-    html += '</tbody></table></div>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('linkResults', {
+            title: 'Entrez Linked Records',
+            meta: `${count} linked record${count === 1 ? '' : 's'}`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(links, null, 2),
+            workspaceItem: { type: 'entrez-link', name: `Entrez links (${count})`, data: links },
+            downloads: [
+                { label: 'JSON', filename: 'entrez-link.json', text: JSON.stringify(links, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + table;
+    }
 }
 
 // Database Info Tab
@@ -305,49 +379,63 @@ document.getElementById('infoForm').addEventListener('submit', function(e) {
 });
 
 function displayDatabaseInfo(info, database) {
-    const resultsDiv = document.getElementById('infoResults');
+    let title, meta, summary, raw, tilesHtml = '';
 
-    let html = '';
-
-    if (!database) {
-        // Show list of all databases
-        if (Array.isArray(info)) {
-            html = '<h6 class="mb-3">Available NCBI Databases</h6>';
-            html += '<div class="row g-2">';
-            info.forEach(db => {
-                html += `<div class="col-md-3"><span class="badge bg-secondary">${db.name}</span></div>`;
-            });
-            html += '</div>';
+    if (!database && Array.isArray(info)) {
+        const tiles = [{ label: 'Databases', value: info.length }];
+        tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+            `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+        ).join('') + '</div>';
+        summary = tilesHtml + '<h6 class="mb-3">Available NCBI Databases</h6><div class="row g-2">' +
+            info.map(db => `<div class="col-md-3"><span class="badge bg-secondary">${db.name}</span></div>`).join('') +
+            '</div>';
+        title = 'NCBI Databases';
+        meta = `${info.length} databases`;
+        raw = JSON.stringify(info, null, 2);
+    } else if (info) {
+        const tiles = [
+            { label: 'Records',    value: info.count ? parseInt(info.count).toLocaleString() : 'N/A' },
+            { label: 'Fields',     value: (info.fields || []).length },
+            { label: 'Updated',    value: info.last_update || 'N/A' },
+        ];
+        tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+            `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+        ).join('') + '</div>';
+        let body = `<div class="row g-3"><div class="col-md-6"><h6>Database Details</h6><table class="table table-sm">
+                <tr><th>Name</th><td>${info.name || 'N/A'}</td></tr>
+                <tr><th>Description</th><td>${info.description || 'N/A'}</td></tr>
+                <tr><th>Menu Name</th><td>${info.menu_name || 'N/A'}</td></tr>
+                <tr><th>Record Count</th><td>${info.count ? parseInt(info.count).toLocaleString() : 'N/A'}</td></tr>
+                <tr><th>Last Update</th><td>${info.last_update || 'N/A'}</td></tr>
+            </table></div>`;
+        if (info.fields && info.fields.length > 0) {
+            body += `<div class="col-md-6"><h6>Searchable Fields (first 10)</h6><ul class="small">` +
+                info.fields.map(f => `<li><code>${f}</code></li>`).join('') + `</ul></div>`;
         }
+        body += '</div>';
+        summary = tilesHtml + body;
+        title = 'Database Info';
+        meta = `${database} · ${info.count ? parseInt(info.count).toLocaleString() : 'N/A'} records`;
+        raw = JSON.stringify(info, null, 2);
     } else {
-        // Show specific database info
-        if (info) {
-            html += `<div class="row g-3">`;
-            html += `<div class="col-md-6">
-                <h6>Database Details</h6>
-                <table class="table table-sm">
-                    <tr><th>Name</th><td>${info.name || 'N/A'}</td></tr>
-                    <tr><th>Description</th><td>${info.description || 'N/A'}</td></tr>
-                    <tr><th>Menu Name</th><td>${info.menu_name || 'N/A'}</td></tr>
-                    <tr><th>Record Count</th><td>${info.count ? parseInt(info.count).toLocaleString() : 'N/A'}</td></tr>
-                    <tr><th>Last Update</th><td>${info.last_update || 'N/A'}</td></tr>
-                </table>
-            </div>`;
-
-            if (info.fields && info.fields.length > 0) {
-                html += `<div class="col-md-6">
-                    <h6>Searchable Fields (first 10)</h6>
-                    <ul class="small">`;
-                info.fields.forEach(field => {
-                    html += `<li><code>${field}</code></li>`;
-                });
-                html += `</ul></div>`;
-            }
-            html += `</div>`;
-        }
+        document.getElementById('infoResults').innerHTML = '<p class="text-muted">No info available.</p>';
+        return;
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('infoResults', {
+            title: title,
+            meta: meta,
+            summary: summary,
+            raw: raw,
+            workspaceItem: { type: 'entrez-info', name: meta, data: info },
+            downloads: [
+                { label: 'JSON', filename: 'entrez-info.json', text: raw, mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('infoResults').innerHTML = summary;
+    }
 }
 
 // View Full Record Modal

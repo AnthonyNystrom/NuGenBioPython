@@ -165,6 +165,58 @@ function displayClusteringResults(results, method, originalMatrix, sampleNames) 
     displayClusteringInfo(results, method);
     displayClusterAssignments(results, originalMatrix, sampleNames);
     displayClusterVisualization(results, method, sampleNames);
+    mountClusteringCard(results, method, sampleNames);
+}
+
+function _clusterTiles(results, method) {
+    const uniqueClusters = Array.isArray(results.labels) ? new Set(results.labels).size : 0;
+    const map = {
+        'kmeans':       [ { label: 'Clusters', value: uniqueClusters }, { label: 'Inertia', value: (results.inertia ?? 0).toFixed(2) } ],
+        'hierarchical': [ { label: 'Clusters', value: uniqueClusters } ],
+        'dbscan':       [ { label: 'Clusters', value: results.n_clusters ?? 0 }, { label: 'Noise', value: results.n_noise ?? 0 } ],
+        'Bio.Cluster.kcluster':   [ { label: 'Clusters', value: results.n_clusters || uniqueClusters }, { label: 'Error', value: (results.error ?? 0).toFixed(4) } ],
+        'Bio.Cluster.kmedoids':   [ { label: 'Clusters', value: results.n_clusters || uniqueClusters }, { label: 'Error', value: (results.error ?? 0).toFixed(4) } ],
+        'Bio.Cluster.treecluster':[ { label: 'Tree Nodes', value: results.n_nodes ?? 0 } ],
+        'Bio.Cluster.somcluster': [ { label: 'Grid', value: results.grid_shape ? `${results.grid_shape[0]}×${results.grid_shape[1]}` : '—' }, { label: 'Cells', value: results.grid_shape ? results.grid_shape[0] * results.grid_shape[1] : 0 } ],
+        'Bio.Cluster.pca':        [ { label: 'Components', value: (results.components || []).length }, { label: 'Top PC Var', value: results.explained_variance ? results.explained_variance[0].toFixed(2) + '%' : '—' } ],
+    };
+    return map[method] || [ { label: 'Method', value: method } ];
+}
+
+function mountClusteringCard(results, method, sampleNames) {
+    const host = document.getElementById('clusteringCard');
+    if (!host || typeof ResultsCard === 'undefined') return;
+
+    const tiles = _clusterTiles(results, method);
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    const labels = Array.isArray(results.labels) ? results.labels : [];
+    const names = Array.isArray(sampleNames) && sampleNames.length ? sampleNames : labels.map((_, i) => `Sample ${i + 1}`);
+    let tableRows = '';
+    labels.forEach((lbl, i) => {
+        tableRows += `<tr><td class="small">${names[i] ?? ('Sample ' + (i + 1))}</td><td class="text-center">${lbl}</td></tr>`;
+    });
+    const details = labels.length
+        ? `<div class="table-responsive"><table class="table table-sm"><thead class="table-light"><tr><th>Sample</th><th class="text-center">Cluster</th></tr></thead><tbody>${tableRows}</tbody></table></div>`
+        : '';
+
+    const tsv = ['sample\tcluster'];
+    labels.forEach((lbl, i) => tsv.push(`${names[i] ?? ('Sample ' + (i + 1))}\t${lbl}`));
+
+    ResultsCard.mount('clusteringCard', {
+        title: 'Clustering',
+        meta: `${method} — ${labels.length} samples`,
+        summary: tilesHtml,
+        details: details,
+        raw: JSON.stringify(results, null, 2),
+        workspaceItem: { type: 'clustering', name: `${method} (${labels.length} samples)`, data: results },
+        downloads: [
+            { label: 'TSV',  filename: 'clustering.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+            { label: 'JSON', filename: 'clustering.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+        ],
+    });
 }
 
 function displayClusteringInfo(results, method) {

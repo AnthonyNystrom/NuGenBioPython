@@ -16,21 +16,10 @@
     <link href="{{ url_for('static', filename='css/gradient-buttons.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/performance-fix.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/components.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/shell.css') }}" rel="stylesheet">
     <style>
-        .nav-section-header {
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #6c757d;
-            margin-top: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .nav-item .nav-link {
-            padding-left: 1.5rem;
-        }
-
-        /* Prevent flashing during page load */
+        /* Preload-flash prevention only — all other styling lives in
+           tokens.css + components.css + shell.css. */
         .preload *,
         .preload *::before,
         .preload *::after {
@@ -38,11 +27,7 @@
             animation: none !important;
             animation-duration: 0s !important;
         }
-
-        /* Prevent active state flashing on navigation */
-        .nav-link.active {
-            transition: none !important;
-        }
+        .nav-link.active { transition: none !important; }
     </style>
     <script>
         // Disable transitions on page load to prevent flashing
@@ -73,6 +58,9 @@
     </script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    {% include "_partials/_topbar.html" %}
+
     <!-- Mobile nav toggle — hidden on desktop by CSS -->
     <button type="button" class="mobile-nav-toggle" id="mobileNavToggle"
             aria-label="Open navigation" aria-expanded="false"
@@ -82,7 +70,11 @@
     <!-- Backdrop shown when the sidebar is open on mobile -->
     <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar: rendered by the partial so the 6-hub structure is in one place. -->
+    {% include "_partials/_sidebar.html" %}
+
+    {# Legacy inline sidebar kept commented-out during R1 for rollback reference.
+       Will be deleted in R5 cleanup.
     <div class="sidebar-container" id="sidebarContainer">
         <div class="sidebar-header">
             <a href="{{ url_for('index') }}" class="sidebar-brand">
@@ -270,10 +262,11 @@
             </div>
         </nav>
     </div>
+    #}
 
     <!-- Main Content -->
     <div class="main-container">
-        <div class="main-content">
+        <main class="main-content" id="main-content" role="main" tabindex="-1">
             {% block content %}{% endblock %}
 
             <!-- Footer -->
@@ -296,7 +289,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
@@ -304,6 +297,8 @@
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/formatters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/results_card.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/topbar_search.js') }}"></script>
     <script>
         // Mobile navigation toggle. No-op on desktop since the hamburger is
         // hidden by CSS there.

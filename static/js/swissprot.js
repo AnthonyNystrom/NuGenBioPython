@@ -89,6 +89,17 @@ function displayParseResults(records, count) {
         return;
     }
 
+    const totalLen = records.reduce((s, r) => s + (r.sequence_length || 0), 0);
+    const avgLen = Math.round(totalLen / records.length);
+    const tiles = [
+        { label: 'Records',      value: count },
+        { label: 'Total Length', value: totalLen.toLocaleString() },
+        { label: 'Avg Length',   value: avgLen.toLocaleString() + ' AA' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
     let html = '<div class="accordion" id="parseAccordion">';
 
     records.forEach((record, index) => {
@@ -186,11 +197,34 @@ function displayParseResults(records, count) {
     });
 
     html += '</div>';
-    resultsDiv.innerHTML = html;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('parseResults', {
+            title: 'SwissProt Parse',
+            meta: `${count} record${count === 1 ? '' : 's'}`,
+            summary: tilesHtml + html,
+            raw: JSON.stringify(records, null, 2),
+            workspaceItem: { type: 'swissprot', name: `SwissProt (${count} records)`, data: records },
+            downloads: [
+                { label: 'JSON', filename: 'swissprot.json', text: JSON.stringify(records, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + html;
+    }
 }
 
 function displayReadResults(record) {
     const resultsDiv = document.getElementById('readResults');
+
+    const tiles = [
+        { label: 'Length',    value: record.sequence_length + ' AA' },
+        { label: 'Keywords',  value: record.keywords.length },
+        { label: 'Features',  value: record.features ? record.features.length : 0 },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
     let html = `
         <div class="card mb-2">
@@ -303,7 +337,22 @@ function displayReadResults(record) {
         </div>
     `;
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('readResults', {
+            title: 'SwissProt Record',
+            meta: `${record.entry_name} · ${record.sequence_length} AA`,
+            summary: tilesHtml + html,
+            raw: record.sequence,
+            copyText: record.sequence,
+            workspaceItem: { type: 'protein', name: `${record.entry_name} (${record.sequence_length} AA)`, data: record.sequence, meta: { kind: 'protein' } },
+            downloads: [
+                { label: 'FASTA', filename: `${record.entry_name}.fasta`, text: `>${record.entry_name} ${record.description}\n${record.sequence}`, mime: 'text/plain' },
+                { label: 'JSON',  filename: `${record.entry_name}.json`,  text: JSON.stringify(record, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + html;
+    }
 }
 
 function loadParseExample() {

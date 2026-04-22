@@ -45,9 +45,19 @@ function displayParseResults(results, count) {
         return;
     }
 
-    let html = '';
+    const totalHits = results.reduce((s, q) => s + (q.hits ? q.hits.length : 0), 0);
+    const tiles = [
+        { label: 'Queries',  value: count },
+        { label: 'Hits',     value: totalHits },
+        { label: 'Avg Hits', value: count ? (totalHits / count).toFixed(1) : '0' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let details = '';
     results.forEach(query => {
-        html += `
+        details += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
                     <strong>${query.id}</strong> - ${query.description} (${query.seq_len} bp/aa)
@@ -57,16 +67,30 @@ function displayParseResults(results, count) {
                         <thead><tr><th>Hit ID</th><th>Description</th><th>E-value</th><th>Bit Score</th></tr></thead>
                         <tbody>`;
         query.hits.slice(0, 10).forEach(hit => {
-            html += `<tr>
+            details += `<tr>
                 <td><code class="small">${hit.id}</code></td>
                 <td class="small">${hit.description.substring(0, 60)}</td>
                 <td class="small">${hit.evalue}</td>
                 <td class="small">${hit.bitscore}</td>
             </tr>`;
         });
-        html += '</tbody></table></div></div>';
+        details += '</tbody></table></div></div>';
     });
-    resultsDiv.innerHTML = html;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('parseResults', {
+            title: 'SearchIO Parse',
+            meta: `${count} ${count === 1 ? 'query' : 'queries'} · ${totalHits} hits`,
+            summary: tilesHtml + details,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'searchio', name: `SearchIO (${count} queries)`, data: results },
+            downloads: [
+                { label: 'JSON', filename: 'searchio.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + details;
+    }
 }
 
 // Read Tab
@@ -103,22 +127,17 @@ document.getElementById('readForm')?.addEventListener('submit', function(e) {
 });
 
 function displayReadResults(result) {
-    const resultsDiv = document.getElementById('readResults');
+    const tiles = [
+        { label: 'Seq Length', value: result.seq_len + ' bp/aa' },
+        { label: 'Hits',       value: result.num_hits },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = `
-        <div class="card mb-2">
-            <div class="card-header py-1 small bg-primary text-white">
-                <strong>${result.id}</strong> - ${result.description}
-            </div>
-            <div class="card-body p-2 small">
-                <p class="mb-1"><strong>Sequence Length:</strong> ${result.seq_len} bp/aa</p>
-                <p class="mb-2"><strong>Number of Hits:</strong> ${result.num_hits}</p>
-                <strong>Top Hits with HSPs:</strong>
-            </div>
-        </div>`;
-
+    let body = '';
     result.hits.slice(0, 10).forEach(hit => {
-        html += `
+        body += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
                     <strong>${hit.id}</strong> - ${hit.description.substring(0, 80)}
@@ -129,17 +148,25 @@ function displayReadResults(result) {
                         <thead><tr><th>E-value</th><th>Bit Score</th><th>Query Range</th><th>Hit Range</th></tr></thead>
                         <tbody>`;
         hit.hsps.forEach(hsp => {
-            html += `<tr>
-                <td>${hsp.evalue}</td>
-                <td>${hsp.bitscore}</td>
-                <td>${hsp.query_start}-${hsp.query_end}</td>
-                <td>${hsp.hit_start}-${hsp.hit_end}</td>
-            </tr>`;
+            body += `<tr><td>${hsp.evalue}</td><td>${hsp.bitscore}</td><td>${hsp.query_start}-${hsp.query_end}</td><td>${hsp.hit_start}-${hsp.hit_end}</td></tr>`;
         });
-        html += '</tbody></table></div></div>';
+        body += '</tbody></table></div></div>';
     });
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('readResults', {
+            title: 'SearchIO Record',
+            meta: `${result.id} · ${result.num_hits} hits`,
+            summary: tilesHtml + body,
+            raw: JSON.stringify(result, null, 2),
+            workspaceItem: { type: 'searchio-record', name: `${result.id} (${result.num_hits} hits)`, data: result },
+            downloads: [
+                { label: 'JSON', filename: 'searchio-record.json', text: JSON.stringify(result, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('readResults').innerHTML = tilesHtml + body;
+    }
 }
 
 // Index Tab
@@ -178,26 +205,39 @@ document.getElementById('indexForm')?.addEventListener('submit', function(e) {
 });
 
 function displayIndexResults(results) {
-    const resultsDiv = document.getElementById('indexResults');
     const countBadge = document.getElementById('indexCount');
-
     countBadge.textContent = results.total_queries + ' total queries';
     countBadge.style.display = 'inline-block';
 
-    let html = `<p class="small mb-2"><strong>Total Queries in File:</strong> ${results.total_queries}</p>`;
-    html += '<table class="table table-sm small"><thead><tr><th>Query ID</th><th>Description</th><th>Length</th><th>Hits</th></tr></thead><tbody>';
+    const tiles = [
+        { label: 'Total Queries', value: results.total_queries },
+        { label: 'Shown',         value: results.queries.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    results.queries.forEach(query => {
-        html += `<tr>
-            <td><code class="small">${query.id}</code></td>
-            <td class="small">${query.description.substring(0, 60)}</td>
-            <td class="small">${query.seq_len}</td>
-            <td><span class="badge bg-secondary">${query.num_hits}</span></td>
-        </tr>`;
+    let rows = '';
+    results.queries.forEach(q => {
+        rows += `<tr><td><code class="small">${q.id}</code></td><td class="small">${q.description.substring(0, 60)}</td><td class="small">${q.seq_len}</td><td><span class="badge bg-secondary">${q.num_hits}</span></td></tr>`;
     });
+    const table = `<div class="table-responsive"><table class="table table-sm small">
+        <thead><tr><th>Query ID</th><th>Description</th><th>Length</th><th>Hits</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 
-    html += '</tbody></table>';
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('indexResults', {
+            title: 'SearchIO Index',
+            meta: `${results.total_queries} queries indexed`,
+            summary: tilesHtml + table,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'searchio-index', name: `Index (${results.total_queries} queries)`, data: results },
+            downloads: [
+                { label: 'JSON', filename: 'searchio-index.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('indexResults').innerHTML = tilesHtml + table;
+    }
 }
 
 // Convert Tab
@@ -236,19 +276,33 @@ document.getElementById('convertForm')?.addEventListener('submit', function(e) {
 });
 
 function displayConvertResults(result) {
-    const resultsDiv = document.getElementById('convertResults');
+    const tiles = [
+        { label: 'Queries', value: result.count },
+        { label: 'Size',    value: result.content_size.toLocaleString() + ' bytes' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = `
-        <div class="card mb-2">
-            <div class="card-body p-2 small">
-                <p class="mb-1"><strong>Queries Converted:</strong> ${result.count}</p>
-                <p class="mb-1"><strong>Output Size:</strong> ${result.content_size} bytes</p>
-                <strong>Preview:</strong>
-                <pre class="bg-light p-2 small mt-1" style="max-height:300px;overflow-y:auto;">${result.content_preview}</pre>
-            </div>
-        </div>`;
+    const summary = tilesHtml + `<p class="small mb-0 text-muted">Full converted output is in the Raw tab.</p>`;
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('convertResults', {
+            title: 'SearchIO Convert',
+            meta: `${result.count} queries · ${result.content_size.toLocaleString()} bytes`,
+            summary: summary,
+            raw: result.content_preview || '',
+            copyText: result.content_preview || '',
+            downloads: [
+                { label: 'Preview', filename: 'searchio-convert.txt', text: result.content_preview || '', mime: 'text/plain' },
+            ],
+        });
+    } else {
+        document.getElementById('convertResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
+            <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
+            <pre class="bg-light p-2 small mt-1" style="max-height:300px;overflow-y:auto;">${result.content_preview}</pre>
+        </div></div>`;
+    }
 }
 
 // Filter Tab
@@ -291,15 +345,24 @@ document.getElementById('filterForm')?.addEventListener('submit', function(e) {
 });
 
 function displayFilterResults(results, count) {
-    const resultsDiv = document.getElementById('filterResults');
     const countBadge = document.getElementById('filterCount');
-
     countBadge.textContent = count + ' queries';
     countBadge.style.display = 'inline-block';
 
-    let html = '';
+    const totalPassed = results.reduce((s, q) => s + (q.filtered_count || 0), 0);
+    const totalOriginal = results.reduce((s, q) => s + (q.original_count || 0), 0);
+    const tiles = [
+        { label: 'Queries',      value: count },
+        { label: 'Hits Passed',  value: totalPassed },
+        { label: 'Pass Rate',    value: totalOriginal ? Math.round(100 * totalPassed / totalOriginal) + '%' : '—' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let body = '';
     results.forEach(query => {
-        html += `
+        body += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
                     <strong>${query.id}</strong> - ${query.description}
@@ -310,18 +373,25 @@ function displayFilterResults(results, count) {
                         <thead><tr><th>Hit ID</th><th>Description</th><th>E-value</th><th>Bit Score</th><th>Identity</th></tr></thead>
                         <tbody>`;
         query.hits.slice(0, 10).forEach(hit => {
-            html += `<tr>
-                <td><code class="small">${hit.id}</code></td>
-                <td class="small">${hit.description.substring(0, 50)}</td>
-                <td class="small">${hit.evalue}</td>
-                <td class="small">${hit.bitscore}</td>
-                <td class="small">${hit.identity}</td>
-            </tr>`;
+            body += `<tr><td><code class="small">${hit.id}</code></td><td class="small">${hit.description.substring(0, 50)}</td><td class="small">${hit.evalue}</td><td class="small">${hit.bitscore}</td><td class="small">${hit.identity}</td></tr>`;
         });
-        html += '</tbody></table></div></div>';
+        body += '</tbody></table></div></div>';
     });
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('filterResults', {
+            title: 'SearchIO Filter',
+            meta: `${count} queries · ${totalPassed} hits passed`,
+            summary: tilesHtml + body,
+            raw: JSON.stringify(results, null, 2),
+            workspaceItem: { type: 'searchio-filter', name: `Filter (${totalPassed} hits)`, data: results },
+            downloads: [
+                { label: 'JSON', filename: 'searchio-filter.json', text: JSON.stringify(results, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('filterResults').innerHTML = tilesHtml + body;
+    }
 }
 
 // Write Tab
@@ -362,19 +432,32 @@ document.getElementById('writeForm')?.addEventListener('submit', function(e) {
 });
 
 function displayWriteResults(result) {
-    const resultsDiv = document.getElementById('writeResults');
+    const tiles = [
+        { label: 'Queries', value: result.count },
+        { label: 'Size',    value: result.content_size.toLocaleString() + ' bytes' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = `
-        <div class="card mb-2">
-            <div class="card-body p-2 small">
-                <p class="mb-1"><strong>Queries Written:</strong> ${result.count}</p>
-                <p class="mb-1"><strong>Output Size:</strong> ${result.content_size} bytes</p>
-                <strong>Content Preview:</strong>
-                <pre class="bg-light p-2 small mt-1" style="max-height:400px;overflow-y:auto;">${result.content}</pre>
-            </div>
-        </div>`;
-
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('writeResults', {
+            title: 'SearchIO Write',
+            meta: `${result.count} queries · ${result.content_size.toLocaleString()} bytes`,
+            summary: tilesHtml + `<p class="small mb-0 text-muted">Full output is in the Raw tab.</p>`,
+            raw: result.content || '',
+            copyText: result.content || '',
+            workspaceItem: { type: 'searchio-write', name: `Write (${result.count} queries)`, data: result.content },
+            downloads: [
+                { label: 'Output', filename: 'searchio-output.txt', text: result.content || '', mime: 'text/plain' },
+            ],
+        });
+    } else {
+        document.getElementById('writeResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
+            <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
+            <pre class="bg-light p-2 small mt-1" style="max-height:400px;overflow-y:auto;">${result.content}</pre>
+        </div></div>`;
+    }
 }
 
 // Formats Tab
@@ -400,11 +483,21 @@ function loadFormats() {
 }
 
 function displayFormats(formats) {
-    const resultsDiv = document.getElementById('formatsResults');
+    const allFormats = Object.values(formats).flat();
+    const writable = allFormats.filter(f => f.can_write).length;
+    const tiles = [
+        { label: 'Categories', value: Object.keys(formats).length },
+        { label: 'Formats',    value: allFormats.length },
+        { label: 'Writable',   value: writable },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    let html = '';
+    let body = '';
+    const tsv = ['category\tid\tname\tcan_write\tdescription'];
     for (const [category, formatList] of Object.entries(formats)) {
-        html += `<div class="card mb-2">
+        body += `<div class="card mb-2">
             <div class="card-header py-1 small bg-primary text-white"><strong>${category}</strong></div>
             <div class="card-body p-2">
                 <table class="table table-sm small mb-0">
@@ -412,17 +505,26 @@ function displayFormats(formats) {
                     <tbody>`;
         formatList.forEach(fmt => {
             const canWrite = fmt.can_write ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>';
-            html += `<tr>
-                <td><code class="small">${fmt.id}</code></td>
-                <td class="small">${fmt.name}</td>
-                <td class="small">${fmt.description}</td>
-                <td>${canWrite}</td>
-            </tr>`;
+            body += `<tr><td><code class="small">${fmt.id}</code></td><td class="small">${fmt.name}</td><td class="small">${fmt.description}</td><td>${canWrite}</td></tr>`;
+            tsv.push([category, fmt.id, fmt.name, fmt.can_write ? 'yes' : 'no', fmt.description].join('\t'));
         });
-        html += '</tbody></table></div></div>';
+        body += '</tbody></table></div></div>';
     }
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('formatsResults', {
+            title: 'SearchIO Formats',
+            meta: `${allFormats.length} formats · ${writable} writable`,
+            summary: tilesHtml + body,
+            raw: tsv.join('\n'),
+            downloads: [
+                { label: 'TSV',  filename: 'searchio-formats.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'searchio-formats.json', text: JSON.stringify(formats, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('formatsResults').innerHTML = tilesHtml + body;
+    }
 }
 
 // Example data functions

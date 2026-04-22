@@ -122,23 +122,36 @@
         motif:     { icon: 'fa-puzzle-piece',   title: 'Motifs'     },
     };
 
+    function setPanelOpen(panel, open) {
+        panel.classList.toggle('ws-collapsed', !open);
+        const topBtn = document.getElementById('topbarWorkspaceBtn');
+        if (topBtn) {
+            topBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            topBtn.classList.toggle('is-active', open);
+        }
+    }
+
     function ensurePanel() {
         let panel = document.getElementById('ws-panel');
         if (panel) return panel;
 
+        // Panel is a right-side drawer; toggle lives on the topbar
+        // (#topbarWorkspaceBtn). The legacy floating .ws-toggle hook is
+        // preserved for back-compat but hidden via shell.css.
         panel = document.createElement('aside');
         panel.id = 'ws-panel';
         panel.className = 'ws-panel ws-collapsed';
         panel.setAttribute('aria-label', 'Workspace');
         panel.innerHTML =
-            '<button type="button" class="ws-toggle" aria-label="Toggle workspace">' +
-                '<i class="fas fa-layer-group"></i>' +
-                '<span class="ws-badge" id="ws-badge" hidden>0</span>' +
-            '</button>' +
             '<div class="ws-body">' +
-                '<div class="ws-header">' +
-                    '<strong>Workspace</strong>' +
-                    '<button type="button" class="ws-clear btn btn-link btn-sm p-0" title="Clear all">Clear</button>' +
+                '<div class="ws-header d-flex align-items-center justify-content-between">' +
+                    '<strong><i class="fas fa-layer-group me-2 text-primary"></i>Workspace</strong>' +
+                    '<div>' +
+                        '<button type="button" class="ws-clear btn btn-link btn-sm p-0 me-3" title="Clear all">Clear</button>' +
+                        '<button type="button" class="ws-close btn btn-link btn-sm p-0" title="Close" aria-label="Close">' +
+                            '<i class="fas fa-times"></i>' +
+                        '</button>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="ws-hint small text-muted mb-2">' +
                     'Save sequences, structures, or trees here and reuse them in other tools.' +
@@ -147,8 +160,21 @@
             '</div>';
         document.body.appendChild(panel);
 
-        panel.querySelector('.ws-toggle').addEventListener('click', function () {
-            panel.classList.toggle('ws-collapsed');
+        // The in-topbar button is the primary opener; wire it once on render.
+        const topBtn = document.getElementById('topbarWorkspaceBtn');
+        if (topBtn) {
+            topBtn.addEventListener('click', function () {
+                setPanelOpen(panel, panel.classList.contains('ws-collapsed'));
+            });
+        }
+        panel.querySelector('.ws-close').addEventListener('click', function () {
+            setPanelOpen(panel, false);
+        });
+        // Esc closes the drawer
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !panel.classList.contains('ws-collapsed')) {
+                setPanelOpen(panel, false);
+            }
         });
         panel.querySelector('.ws-clear').addEventListener('click', function () {
             if (confirm('Clear all workspace items?')) clearAll();
@@ -160,19 +186,32 @@
         const panel = ensurePanel();
         const s = load();
         const listEl = panel.querySelector('.ws-list');
-        const badge = panel.querySelector('#ws-badge');
 
-        if (badge) {
-            if (s.items.length) {
-                badge.hidden = false;
-                badge.textContent = String(s.items.length);
-            } else {
-                badge.hidden = true;
-            }
-        }
+        // Reflect item count in the topbar badge (R1 primary location) and
+        // keep the legacy in-panel badge (#ws-badge) in sync if present.
+        const topBadge = document.getElementById('topbarWorkspaceBadge');
+        const legacyBadge = panel.querySelector('#ws-badge');
+        const n = s.items.length;
+        [topBadge, legacyBadge].forEach(function (b) {
+            if (!b) return;
+            if (n) { b.hidden = false; b.textContent = String(n); }
+            else   { b.hidden = true; }
+        });
 
         if (!s.items.length) {
-            listEl.innerHTML = '<p class="text-muted small mb-0">No saved items yet.</p>';
+            listEl.innerHTML =
+                '<div class="ws-empty">' +
+                    '<i class="fas fa-layer-group ws-empty-icon" aria-hidden="true"></i>' +
+                    '<h6 class="ws-empty-title">Workspace is empty</h6>' +
+                    '<p class="ws-empty-text small">' +
+                        'Run any analysis (BLAST, alignment, restriction, structure…) and click ' +
+                        '<strong><i class="fas fa-layer-group"></i> Save</strong> on the result card. ' +
+                        'Saved items live here across pages so you can reuse them.' +
+                    '</p>' +
+                    '<a class="btn btn-sm btn-outline-primary" href="/sequence">' +
+                        '<i class="fas fa-play me-1"></i> Try sequence analysis' +
+                    '</a>' +
+                '</div>';
             return;
         }
 

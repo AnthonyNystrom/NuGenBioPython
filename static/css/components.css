@@ -53,38 +53,135 @@
 }
 
 
-/* ---- Button hierarchy (token-driven, same visual system) -----------------
-   Phase 1 does NOT change button colors — we keep the existing gradients to
-   avoid visual shock. What we DO change: consistent radius, shadow, and
-   focus, all via tokens so Phase 2's palette change is a one-line edit. */
+/* ---- Button system (R1) ---------------------------------------------------
+   One solid primary (sky-600), a neutral secondary, and a ghost/outline
+   variant. The legacy .gradient-btn-* classes are ALIASED onto the same
+   visual styles so ~220 existing consumers repaint automatically without
+   any template edits. gradient-buttons.css is still loaded but its rules
+   are overridden here.
+--------------------------------------------------------------------------- */
+.nug-btn,
 .gradient-btn-primary,
 .gradient-btn-secondary,
 .gradient-btn-info,
 .gradient-btn-warning,
 .gradient-btn-success,
-.gradient-btn-outline {
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-fast),
-                box-shadow var(--transition-fast),
-                filter var(--transition-fast);
-    font-family: var(--font-sans);
-}
+.gradient-btn-outline,
 .gradient-btn-small {
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-fast),
-                box-shadow var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 8px 16px !important;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md) !important;
     font-family: var(--font-sans);
+    font-size: var(--font-size-sm) !important;
+    font-weight: 500;
+    line-height: 1.35 !important;
+    background-image: none !important;
+    background-color: var(--slate-100);
+    color: var(--slate-800);
+    box-shadow: none !important;
+    cursor: pointer;
+    transform: none !important;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast),
+        border-color var(--transition-fast);
 }
+.nug-btn:hover,
 .gradient-btn-primary:hover,
 .gradient-btn-secondary:hover,
 .gradient-btn-info:hover,
 .gradient-btn-warning:hover,
 .gradient-btn-success:hover,
+.gradient-btn-outline:hover,
+.gradient-btn-small:hover {
+    background-color: var(--slate-200);
+    color: var(--slate-900);
+    transform: none !important;
+    filter: none !important;
+}
+
+/* Primary — solid sky */
+.nug-btn-primary,
+.gradient-btn-primary {
+    background-color: var(--color-primary) !important;
+    color: var(--color-text-inverse) !important;
+    border-color: var(--color-primary) !important;
+}
+.nug-btn-primary:hover,
+.gradient-btn-primary:hover {
+    background-color: var(--color-primary-hover) !important;
+    color: var(--color-text-inverse) !important;
+    border-color: var(--color-primary-hover) !important;
+}
+
+/* Success / Info / Warning / Secondary (legacy gradients) all collapse to a
+   neutral secondary visually. Semantic accent colors are reserved for
+   alerts/badges, not buttons. */
+.nug-btn-secondary,
+.gradient-btn-secondary,
+.gradient-btn-info,
+.gradient-btn-warning,
+.gradient-btn-success {
+    background-color: var(--color-surface) !important;
+    color: var(--slate-700) !important;
+    border-color: var(--color-border) !important;
+}
+.nug-btn-secondary:hover,
+.gradient-btn-secondary:hover,
+.gradient-btn-info:hover,
+.gradient-btn-warning:hover,
+.gradient-btn-success:hover {
+    background-color: var(--slate-100) !important;
+    color: var(--slate-900) !important;
+    border-color: var(--color-border-strong) !important;
+}
+
+/* Ghost/outline — like secondary but no fill */
+.nug-btn-ghost,
+.gradient-btn-outline {
+    background-color: transparent !important;
+    color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+.nug-btn-ghost:hover,
 .gradient-btn-outline:hover {
-    box-shadow: var(--shadow-md);
-    filter: brightness(1.05);
+    background-color: var(--color-primary-bg) !important;
+    color: var(--color-primary-hover) !important;
+    border-color: var(--color-primary-hover) !important;
+}
+
+/* Small variant — compact Load Example buttons, etc. */
+.nug-btn-sm,
+.gradient-btn-small {
+    padding: 5px 10px !important;
+    font-size: var(--font-size-xs) !important;
+    font-weight: 500;
+    background-color: var(--color-surface) !important;
+    color: var(--slate-700) !important;
+    border: 1px solid var(--color-border) !important;
+}
+.nug-btn-sm:hover,
+.gradient-btn-small:hover {
+    background-color: var(--slate-100) !important;
+    color: var(--slate-900) !important;
+    border-color: var(--color-border-strong) !important;
+}
+
+/* Disabled state for all of the above */
+.nug-btn:disabled,
+.gradient-btn-primary:disabled,
+.gradient-btn-secondary:disabled,
+.gradient-btn-info:disabled,
+.gradient-btn-warning:disabled,
+.gradient-btn-success:disabled,
+.gradient-btn-outline:disabled,
+.gradient-btn-small:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 
@@ -271,6 +368,256 @@ pre {
 }
 
 
+/* ---- Segmented control (R3) -------------------------------------------
+   Used at the HUB level (Patterns / Phylogeny / Compare) to pick a
+   sub-tool. Visually distinct from .nav-tabs (which live INSIDE the
+   sub-tool or the results card) so users can tell the two navigation
+   levels apart.
+
+   Bootstrap tab-switching still drives pane show/hide — each .segmented-
+   item has `data-bs-toggle="tab"`. Only the visual chrome changes. */
+.segmented-control {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--slate-100);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    gap: 2px;
+    max-width: 100%;
+    overflow-x: auto;
+    /* Hide scrollbar on overflow while keeping scrollability on touch */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.segmented-control::-webkit-scrollbar { display: none; }
+
+.segmented-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: calc(var(--radius-md) - 2px);
+    color: var(--slate-600);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+.segmented-item:hover,
+.segmented-item:focus-visible {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--slate-900);
+}
+.segmented-item.active,
+.segmented-item[aria-selected="true"] {
+    background: var(--color-surface);
+    color: var(--slate-900);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-border);
+}
+.segmented-item i {
+    font-size: 13px;
+    color: var(--slate-500);
+}
+.segmented-item.active i { color: var(--color-primary); }
+
+
+/* ---- Results card (R2) ------------------------------------------------
+   One component every tool's result display uses. See static/js/results_card.js.
+--------------------------------------------------------------------------- */
+.results-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+}
+.results-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--slate-50);
+    flex-wrap: wrap;
+}
+.results-card-title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    min-width: 0;
+    flex-wrap: wrap;
+}
+.results-card-title strong {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+.results-card-meta,
+.results-card-title .meta {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+.results-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+@media (max-width: 480px) {
+    /* Collapse the action button labels on tiny phones — keep icons */
+    .btn-rc-action span { display: none; }
+    .btn-rc-action { padding: 6px 8px; }
+    .results-card-header { padding: var(--space-2) var(--space-3); }
+    .results-card-body { padding: var(--space-3); }
+    /* Stat tiles already use auto-fit; tighten on small phones */
+    .rc-stats { gap: var(--space-2); }
+}
+.btn-rc-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--slate-700);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+.btn-rc-action:hover,
+.btn-rc-action:focus-visible {
+    background: var(--slate-100);
+    color: var(--slate-900);
+}
+.btn-rc-action i {
+    color: var(--slate-500);
+    font-size: 12px;
+}
+.btn-rc-action:hover i { color: var(--color-primary); }
+.results-card-body {
+    padding: var(--space-4);
+}
+.results-card-body .nav-tabs {
+    margin-bottom: var(--space-3);
+    padding-bottom: 0;
+}
+.results-card-body .tab-content {
+    font-size: var(--font-size-sm);
+}
+.results-card .results-raw {
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--slate-50);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: var(--line-height-normal);
+    max-height: 420px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Loading skeleton — same chrome as a real card so swap is jump-free. */
+.results-card-loading .results-card-header {
+    background: var(--slate-50);
+}
+.rc-skeleton-row,
+.rc-skeleton-block {
+    background: linear-gradient(90deg, var(--slate-100) 0%, var(--slate-50) 50%, var(--slate-100) 100%);
+    background-size: 200% 100%;
+    border-radius: var(--radius-sm);
+    animation: rc-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.rc-skeleton-row {
+    height: 14px;
+    margin-bottom: var(--space-2);
+}
+.rc-skeleton-block {
+    height: 140px;
+    margin-top: var(--space-3);
+}
+@keyframes rc-skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Error state — same chrome, danger-tinted header strap. */
+.results-card-error .results-card-header {
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+}
+.results-card-error .results-card-title strong {
+    color: #b91c1c;
+}
+.results-card-error .results-card-title strong i {
+    color: #ef4444;
+    margin-right: 6px;
+}
+.results-card-error .rc-error-text {
+    margin: 0;
+    color: var(--slate-700);
+}
+
+/* Stat tiles used inside Summary */
+.rc-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-3);
+}
+.rc-stat {
+    padding: var(--space-3) var(--space-4);
+    background: var(--slate-50);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.rc-stat-label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 2px;
+}
+.rc-stat-value {
+    color: var(--color-text);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+.rc-stat-sub {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    margin-top: 2px;
+}
+
+/* Key-value detail rows */
+.rc-kv {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: var(--space-2) var(--space-4);
+    align-items: baseline;
+    font-size: var(--font-size-sm);
+}
+.rc-kv > dt {
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+.rc-kv > dd { margin: 0; color: var(--color-text); }
+
+
 /* ---- Keyboard shortcuts help overlay ---------------------------------- */
 .ng-shortcuts-overlay {
     position: fixed;
@@ -383,6 +730,127 @@ pre {
     h2 { font-size: 1.4rem; }
     .lead { font-size: 1rem; }
     .main-content { padding-left: var(--space-3); padding-right: var(--space-3); }
+}
+
+
+/* ---- Structure page (R4) ----------------------------------------------
+   Viewer-first layout: 3Dmol dock left (8/12), analyses menu right (4/12),
+   active analysis renders in the card below. The viewer card stays a fixed
+   aspect so switching analyses doesn't reflow the page. */
+.structure-workspace { align-items: stretch; }
+
+.structure-viewer-card {
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.structure-viewer-card .card-header {
+    background: var(--slate-50);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+.structure-viewer-card .card-footer {
+    background: var(--slate-50);
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--color-border);
+}
+.structure-viewer-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--slate-900);
+    margin: 0;
+}
+.structure-viewer-select {
+    width: auto;
+    min-width: 120px;
+}
+.structure-viewer-canvas {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: var(--slate-50);
+    overflow: hidden;
+}
+@media (max-width: 992px) {
+    .structure-viewer-canvas { height: 360px; }
+}
+.structure-viewer-status {
+    font-size: 12px;
+    line-height: 1.2;
+    max-width: 60%;
+    text-align: right;
+}
+
+.structure-analyses-card {
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+.structure-analyses-nav {
+    max-height: 540px;
+    overflow-y: auto;
+    border: 0;
+}
+.structure-analyses-nav .structure-analysis-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-3);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--slate-700);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-align: left;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    cursor: pointer;
+}
+.structure-analyses-nav .structure-analysis-item:last-child {
+    border-bottom: 0;
+}
+.structure-analyses-nav .structure-analysis-item:hover,
+.structure-analyses-nav .structure-analysis-item:focus-visible {
+    background: var(--slate-50);
+    color: var(--slate-900);
+}
+.structure-analyses-nav .structure-analysis-item.active {
+    background: var(--color-primary-bg);
+    color: var(--color-primary-hover);
+    box-shadow: inset 3px 0 0 var(--color-primary);
+}
+.structure-analysis-icon {
+    width: 18px;
+    text-align: center;
+    color: var(--slate-500);
+    font-size: 14px;
+}
+.structure-analyses-nav .structure-analysis-item.active .structure-analysis-icon {
+    color: var(--color-primary);
+}
+.structure-analysis-label {
+    flex: 1;
+}
+.structure-analysis-chevron {
+    font-size: 11px;
+    color: var(--slate-400);
+    opacity: 0;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+.structure-analyses-nav .structure-analysis-item:hover .structure-analysis-chevron,
+.structure-analyses-nav .structure-analysis-item.active .structure-analysis-chevron {
+    opacity: 1;
+}
+.structure-analyses-nav .structure-analysis-item.active .structure-analysis-chevron {
+    color: var(--color-primary);
+    transform: translateX(2px);
+}
+
+.structure-analysis-content {
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+.structure-analysis-content > .card-body > .tab-content > .tab-pane:not(.show) {
+    display: none;
 }
 
 

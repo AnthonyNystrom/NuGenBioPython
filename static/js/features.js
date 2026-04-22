@@ -89,33 +89,82 @@ document.getElementById('orfForm').addEventListener('submit', function(e) {
 });
 
 function displayORFs(data) {
-    const resultsDiv = document.getElementById('orfResults');
-    let html = `<div class="alert alert-info small">Found ${data.orf_count} ORFs (showing top 50, minimum length: ${data.min_length} bp)</div>`;
+    window.currentORFs = data.orfs;
 
-    if (data.orfs.length === 0) {
-        html += '<div class="alert alert-warning">No ORFs found. Try lowering the minimum length.</div>';
-    } else {
-        html += '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr>';
-        html += '<th>Start</th><th>End</th><th>Length</th><th>Frame</th><th>Strand</th><th>Protein Length</th><th>Action</th>';
-        html += '</tr></thead><tbody>';
-
-        data.orfs.forEach((orf, index) => {
-            html += `<tr>
-                <td>${orf.start}</td>
-                <td>${orf.end}</td>
-                <td>${orf.length} bp</td>
-                <td>${orf.frame}</td>
-                <td>${orf.strand}</td>
-                <td>${orf.protein_length} aa</td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="showORFDetails(${index})">View</button></td>
-            </tr>`;
+    // Empty-state shortcut
+    if (!data.orfs.length) {
+        ResultsCard.mount('orfResults', {
+            title: 'ORF Finder',
+            meta: '<span class="meta">No ORFs found</span>',
+            summary: '<div class="alert alert-warning mb-0">No ORFs found with minimum length ' +
+                     data.min_length + ' bp. Try lowering the minimum length.</div>',
         });
-
-        html += '</tbody></table></div>';
+        return;
     }
 
-    resultsDiv.innerHTML = html;
-    window.currentORFs = data.orfs;
+    // --- Summary: headline stats ---
+    const longest = data.orfs.reduce((m, o) => Math.max(m, o.length), 0);
+    const avg = Math.round(data.orfs.reduce((s, o) => s + o.length, 0) / data.orfs.length);
+    const summary =
+        '<div class="rc-stats">' +
+        '<div class="rc-stat"><div class="rc-stat-label">ORFs found</div>' +
+            '<div class="rc-stat-value">' + data.orf_count + '</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Longest</div>' +
+            '<div class="rc-stat-value">' + longest + '</div><div class="rc-stat-sub">bp</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Average</div>' +
+            '<div class="rc-stat-value">' + avg + '</div><div class="rc-stat-sub">bp</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Min length</div>' +
+            '<div class="rc-stat-value">' + data.min_length + '</div><div class="rc-stat-sub">bp</div></div>' +
+        '</div>';
+
+    // --- Details: table with View action ---
+    let details = '<div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr>';
+    details += '<th>Start</th><th>End</th><th>Length</th><th>Frame</th><th>Strand</th><th>Protein length</th><th></th>';
+    details += '</tr></thead><tbody>';
+    data.orfs.forEach((orf, index) => {
+        details += '<tr>' +
+            '<td>' + orf.start + '</td>' +
+            '<td>' + orf.end + '</td>' +
+            '<td>' + orf.length + ' bp</td>' +
+            '<td>' + orf.frame + '</td>' +
+            '<td>' + orf.strand + '</td>' +
+            '<td>' + orf.protein_length + ' aa</td>' +
+            '<td><button class="btn btn-sm btn-outline-primary" data-action="showORFDetails" data-action-args="[' + index + ']">View</button></td>' +
+        '</tr>';
+    });
+    details += '</tbody></table></div>';
+
+    // --- Raw: FASTA of every ORF's protein sequence ---
+    const fasta = data.orfs.map((o, i) =>
+        '>ORF_' + (i + 1) + ' ' + o.start + '-' + o.end + ' frame=' + o.frame + ' strand=' + o.strand +
+        '\n' + (o.protein || '')
+    ).join('\n') + '\n';
+
+    ResultsCard.mount('orfResults', {
+        title: 'ORF Finder',
+        meta:  '<span class="meta">' + data.orf_count + ' ORFs · min ' + data.min_length + ' bp</span>',
+        summary:  summary,
+        details:  details,
+        raw:      fasta,
+        copyText: fasta,
+        downloads: [
+            { label: 'Proteins (FASTA)', filename: 'orfs_protein.fasta', text: fasta, mime: 'text/plain' },
+            { label: 'DNA (FASTA)', filename: 'orfs_dna.fasta',
+              text: data.orfs.map((o, i) =>
+                  '>ORF_' + (i + 1) + ' ' + o.start + '-' + o.end + ' frame=' + o.frame +
+                  '\n' + (o.sequence || '')).join('\n') + '\n',
+              mime: 'text/plain' },
+            { label: 'Table (JSON)', filename: 'orfs.json',
+              text: JSON.stringify(data.orfs, null, 2),
+              mime: 'application/json' },
+        ],
+        workspaceItem: {
+            type: 'sequence',
+            name: 'ORFs · ' + data.orf_count + ' hits',
+            data: fasta,
+            meta: { source: 'orf_finder', min_length: data.min_length },
+        },
+    });
 }
 
 function showORFDetails(index) {
@@ -189,16 +238,36 @@ document.getElementById('createFeatureForm').addEventListener('submit', function
 });
 
 function displayCreatedFeature(feature) {
-    const resultsDiv = document.getElementById('createResults');
-    let html = '<div class="alert alert-success">Feature created successfully!</div>';
-    html += '<div class="card"><div class="card-body">';
-    html += `<p><strong>Type:</strong> ${feature.type}</p>`;
-    html += `<p><strong>Location:</strong> ${feature.start}..${feature.end} (${feature.strand} strand)</p>`;
-    html += `<p><strong>Length:</strong> ${feature.length} bp</p>`;
-    html += '<p><strong>Extracted Sequence:</strong></p>';
-    html += `<textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    const tiles = [
+        { label: 'Type',   value: feature.type },
+        { label: 'Length', value: feature.length + ' bp' },
+        { label: 'Strand', value: feature.strand },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    const summary = tilesHtml +
+        `<p class="mb-1"><strong>Location:</strong> ${feature.start}..${feature.end} (${feature.strand} strand)</p>` +
+        `<p class="mb-1"><strong>Sequence:</strong></p>` +
+        `<textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('createResults', {
+            title: 'Created Feature',
+            meta: `${feature.type} · ${feature.length} bp`,
+            summary: summary,
+            raw: feature.sequence,
+            copyText: feature.sequence,
+            workspaceItem: { type: 'sequence', name: `${feature.type} ${feature.start}..${feature.end}`, data: feature.sequence, meta: { kind: 'dna' } },
+            downloads: [
+                { label: 'FASTA', filename: 'feature.fasta', text: `>${feature.type}_${feature.start}_${feature.end}\n${feature.sequence}`, mime: 'text/plain' },
+                { label: 'JSON',  filename: 'feature.json',  text: JSON.stringify(feature, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('createResults').innerHTML = summary;
+    }
 }
 
 // Parse GenBank Tab
@@ -239,15 +308,22 @@ document.getElementById('parseForm').addEventListener('submit', function(e) {
 });
 
 function displayParsedFeatures(data) {
-    const resultsDiv = document.getElementById('parseResults');
-    let html = `<div class="alert alert-info small">Parsed ${data.feature_count} features from ${data.record_id}</div>`;
-    html += `<p class="small"><strong>Description:</strong> ${data.record_description}</p>`;
-    html += `<p class="small"><strong>Sequence Length:</strong> ${data.sequence_length} bp</p>`;
+    const featureTypes = [...new Set(data.features.map(f => f.type))];
+    const tiles = [
+        { label: 'Features',     value: data.feature_count },
+        { label: 'Feature Types', value: featureTypes.length },
+        { label: 'Sequence',     value: data.sequence_length.toLocaleString() + ' bp' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
-    html += '<div class="accordion" id="featuresAccordion">';
+    const header = `<p class="small mb-2"><strong>${data.record_id}</strong> — ${data.record_description}</p>`;
+
+    let accordion = '<div class="accordion" id="featuresAccordion">';
     data.features.forEach((feat, index) => {
         const isFirst = index === 0;
-        html += `<div class="accordion-item">
+        accordion += `<div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#feat${index}">
                     ${feat.type} (${feat.start}..${feat.end}, ${feat.strand_symbol})
@@ -257,25 +333,38 @@ function displayParsedFeatures(data) {
                 <div class="accordion-body small">
                     <p><strong>Location:</strong> ${feat.start}..${feat.end} (${feat.length} bp)</p>
                     <p><strong>Strand:</strong> ${feat.strand_symbol}</p>`;
-
         if (Object.keys(feat.qualifiers).length > 0) {
-            html += '<p><strong>Qualifiers:</strong></p><ul>';
+            accordion += '<p><strong>Qualifiers:</strong></p><ul>';
             for (const [key, value] of Object.entries(feat.qualifiers)) {
-                html += `<li><strong>${key}:</strong> ${value}</li>`;
+                accordion += `<li><strong>${key}:</strong> ${value}</li>`;
             }
-            html += '</ul>';
+            accordion += '</ul>';
         }
-
         if (feat.sequence) {
-            html += `<p><strong>Sequence (first 100 bp):</strong></p>`;
-            html += `<code class="small">${feat.sequence}</code>`;
+            accordion += `<p><strong>Sequence (first 100 bp):</strong></p><code class="small">${feat.sequence}</code>`;
         }
-
-        html += '</div></div></div>';
+        accordion += '</div></div></div>';
     });
-    html += '</div>';
+    accordion += '</div>';
 
-    resultsDiv.innerHTML = html;
+    const tsv = ['type\tstart\tend\tlength\tstrand'];
+    data.features.forEach(f => tsv.push([f.type, f.start, f.end, f.length, f.strand_symbol].join('\t')));
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('parseResults', {
+            title: 'Features Parse',
+            meta: `${data.record_id} · ${data.feature_count} features`,
+            summary: tilesHtml + header + accordion,
+            raw: JSON.stringify(data.features, null, 2),
+            workspaceItem: { type: 'features', name: `${data.record_id} features (${data.feature_count})`, data: data.features },
+            downloads: [
+                { label: 'TSV',  filename: 'features.tsv',  text: tsv.join('\n'), mime: 'text/tab-separated-values' },
+                { label: 'JSON', filename: 'features.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('parseResults').innerHTML = tilesHtml + header + accordion;
+    }
 }
 
 // Extract Feature Tab
@@ -322,21 +411,46 @@ document.getElementById('extractForm').addEventListener('submit', function(e) {
 });
 
 function displayExtractedFeature(feature) {
-    const resultsDiv = document.getElementById('extractResults');
-    let html = '<div class="alert alert-success">Feature extracted successfully!</div>';
-    html += '<div class="card"><div class="card-body">';
-    html += `<p><strong>Location:</strong> ${feature.start}..${feature.end} (${feature.strand} strand)</p>`;
-    html += `<p><strong>Length:</strong> ${feature.length} bp</p>`;
-    html += '<p><strong>Extracted Sequence:</strong></p>';
-    html += `<textarea class="form-control sequence-display mb-2" rows="3" readonly>${feature.sequence}</textarea>`;
+    const tiles = [
+        { label: 'Start',  value: feature.start },
+        { label: 'End',    value: feature.end },
+        { label: 'Length', value: feature.length + ' bp' },
+        { label: 'Strand', value: feature.strand },
+    ];
+    if (feature.protein) tiles.push({ label: 'Protein', value: feature.protein_length + ' AA' });
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
+    let summary = tilesHtml +
+        '<p class="mb-1"><strong>Extracted Sequence:</strong></p>' +
+        `<textarea class="form-control sequence-display mb-2" rows="3" readonly>${feature.sequence}</textarea>`;
     if (feature.protein) {
-        html += `<p><strong>Protein Translation (${feature.protein_length} aa):</strong></p>`;
-        html += `<textarea class="form-control sequence-display" rows="2" readonly>${feature.protein}</textarea>`;
+        summary += `<p class="mb-1"><strong>Protein Translation (${feature.protein_length} aa):</strong></p>` +
+            `<textarea class="form-control sequence-display" rows="2" readonly>${feature.protein}</textarea>`;
     }
 
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    const downloads = [
+        { label: 'FASTA (DNA)', filename: 'feature.fasta', text: `>feature_${feature.start}_${feature.end}\n${feature.sequence}`, mime: 'text/plain' },
+    ];
+    if (feature.protein) {
+        downloads.push({ label: 'FASTA (protein)', filename: 'feature-protein.fasta', text: `>feature_protein\n${feature.protein}`, mime: 'text/plain' });
+    }
+    downloads.push({ label: 'JSON', filename: 'feature.json', text: JSON.stringify(feature, null, 2), mime: 'application/json' });
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('extractResults', {
+            title: 'Extracted Feature',
+            meta: `${feature.start}..${feature.end} · ${feature.length} bp`,
+            summary: summary,
+            raw: feature.sequence,
+            copyText: feature.sequence,
+            workspaceItem: { type: 'sequence', name: `Feature ${feature.start}..${feature.end} (${feature.length} bp)`, data: feature.sequence, meta: { kind: 'dna' } },
+            downloads: downloads,
+        });
+    } else {
+        document.getElementById('extractResults').innerHTML = summary;
+    }
 }
 
 // Compound Location Tab
@@ -396,20 +510,37 @@ document.getElementById('compoundForm').addEventListener('submit', function(e) {
 });
 
 function displayCompoundFeature(feature) {
-    const resultsDiv = document.getElementById('compoundResults');
-    let html = '<div class="alert alert-success">Compound feature created successfully!</div>';
-    html += '<div class="card"><div class="card-body">';
-    html += `<p><strong>Parts:</strong> ${feature.parts} segments</p>`;
-    html += `<p><strong>Total Length:</strong> ${feature.total_length} bp</p>`;
-    html += '<p><strong>Locations:</strong></p><ul>';
+    const tiles = [
+        { label: 'Segments',     value: feature.parts },
+        { label: 'Total Length', value: feature.total_length + ' bp' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    let locs = '<p class="mb-1"><strong>Locations:</strong></p><ul>';
     feature.locations.forEach(loc => {
-        html += `<li>${loc.start}..${loc.end} (${loc.strand > 0 ? '+' : '-'})</li>`;
+        locs += `<li>${loc.start}..${loc.end} (${loc.strand > 0 ? '+' : '-'})</li>`;
     });
-    html += '</ul>';
-    html += '<p><strong>Joined Sequence:</strong></p>';
-    html += `<textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
+    locs += '</ul>';
+    const textarea = `<p class="mb-1"><strong>Joined Sequence:</strong></p><textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('compoundResults', {
+            title: 'Compound Feature',
+            meta: `${feature.parts} segments · ${feature.total_length} bp`,
+            summary: tilesHtml + locs + textarea,
+            raw: feature.sequence,
+            copyText: feature.sequence,
+            workspaceItem: { type: 'sequence', name: `Compound feature (${feature.total_length} bp)`, data: feature.sequence, meta: { kind: 'dna' } },
+            downloads: [
+                { label: 'FASTA', filename: 'compound.fasta', text: `>compound_${feature.parts}_parts\n${feature.sequence}`, mime: 'text/plain' },
+                { label: 'JSON',  filename: 'compound.json',  text: JSON.stringify(feature, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('compoundResults').innerHTML = tilesHtml + locs + textarea;
+    }
 }
 
 // Annotate Tab
@@ -507,16 +638,37 @@ document.getElementById('annotateForm').addEventListener('submit', function(e) {
 });
 
 function displayAnnotatedSequence(data) {
-    const resultsDiv = document.getElementById('annotateResults');
-    let html = `<div class="alert alert-success">Generated GenBank file with ${data.feature_count} features!</div>`;
-    html += '<div class="card"><div class="card-body">';
-    html += `<p><strong>ID:</strong> ${data.summary.id} | <strong>Length:</strong> ${data.summary.length} bp</p>`;
-    html += '<p><strong>GenBank Output:</strong></p>';
-    html += `<textarea class="form-control" rows="10" readonly>${data.genbank}</textarea>`;
-    html += '<button class="btn btn-primary mt-2" data-action="downloadGenBank">Download GenBank File</button>';
-    html += '</div></div>';
-    resultsDiv.innerHTML = html;
     window.currentGenBank = data.genbank;
+
+    const tiles = [
+        { label: 'Features', value: data.feature_count },
+        { label: 'ID',       value: data.summary.id },
+        { label: 'Length',   value: data.summary.length + ' bp' },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    const summary = tilesHtml +
+        `<p class="mb-1"><strong>GenBank Output:</strong></p>` +
+        `<textarea class="form-control" rows="10" readonly>${data.genbank}</textarea>`;
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('annotateResults', {
+            title: 'Annotated Sequence',
+            meta: `${data.summary.id} · ${data.feature_count} features`,
+            summary: summary,
+            raw: data.genbank,
+            copyText: data.genbank,
+            workspaceItem: { type: 'genbank', name: `${data.summary.id} (${data.feature_count} features)`, data: data.genbank },
+            downloads: [
+                { label: 'GenBank', filename: 'annotated_sequence.gb', text: data.genbank, mime: 'text/plain' },
+                { label: 'JSON',    filename: 'annotated_sequence.json', text: JSON.stringify(data, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        document.getElementById('annotateResults').innerHTML = summary;
+    }
 }
 
 function downloadGenBank() {

@@ -135,11 +135,45 @@ function displayParseResults(records, count) {
     });
 
     html += '</div>';
-    resultsDiv.innerHTML = html;
+
+    const totalSeqs = records.reduce((s, r) => s + (r.sequence_count || 0), 0);
+    const totalTissues = records.reduce((s, r) => s + (r.tissue_count || 0), 0);
+    const tiles = [
+        { label: 'Clusters', value: count },
+        { label: 'Sequences', value: totalSeqs },
+        { label: 'Tissues', value: totalTissues },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
+
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('parseResults', {
+            title: 'UniGene Parse',
+            meta: `${count} cluster${count === 1 ? '' : 's'}`,
+            summary: tilesHtml + html,
+            raw: JSON.stringify(records, null, 2),
+            workspaceItem: { type: 'unigene', name: `UniGene (${count} clusters)`, data: records },
+            downloads: [
+                { label: 'JSON', filename: 'unigene.json', text: JSON.stringify(records, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + html;
+    }
 }
 
 function displayReadResults(record) {
     const resultsDiv = document.getElementById('readResults');
+
+    const tiles = [
+        { label: 'Sequences', value: record.sequence_count },
+        { label: 'Tissues',   value: record.tissue_count },
+        { label: 'Protein Sim.', value: record.protein_similarities.length },
+    ];
+    const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
+        `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
+    ).join('') + '</div>';
 
     let html = `
         <div class="card mb-2">
@@ -314,7 +348,20 @@ function displayReadResults(record) {
         </div>
     `;
 
-    resultsDiv.innerHTML = html;
+    if (typeof ResultsCard !== 'undefined') {
+        ResultsCard.mount('readResults', {
+            title: 'UniGene Record',
+            meta: `${record.cluster_id} · ${record.gene_symbol}`,
+            summary: tilesHtml + html,
+            raw: JSON.stringify(record, null, 2),
+            workspaceItem: { type: 'unigene-record', name: `${record.cluster_id} ${record.gene_symbol}`, data: record },
+            downloads: [
+                { label: 'JSON', filename: `${record.cluster_id}.json`, text: JSON.stringify(record, null, 2), mime: 'application/json' },
+            ],
+        });
+    } else {
+        resultsDiv.innerHTML = tilesHtml + html;
+    }
 }
 
 function loadParseExample() {

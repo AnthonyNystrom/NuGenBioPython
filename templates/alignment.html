@@ -614,63 +614,54 @@ document.getElementById('alignmentForm').addEventListener('submit', function(e) 
 });
 
 function displayAlignment(alignment, score, statistics) {
-    const resultsDiv = document.getElementById('alignmentResults');
     const scoreBadge = document.getElementById('alignmentScore');
     const exportBtn = document.getElementById('exportBtn');
+    if (scoreBadge) {
+        scoreBadge.textContent = `Score: ${score.toFixed(2)}`;
+        scoreBadge.style.display = 'inline-block';
+    }
+    if (exportBtn) exportBtn.style.display = 'inline-block';
 
-    scoreBadge.textContent = `Score: ${score.toFixed(2)}`;
-    scoreBadge.style.display = 'inline-block';
-    exportBtn.style.display = 'inline-block';
-
-    // Tabbed view: Formatted (color-coded) + Raw BioPython text
     const F = window.NuGenFormatters;
-    const escAlign = (window.NuGenUtils && window.NuGenUtils.escapeHtml) || (s => String(s));
     const formattedHtml = F && F.formatPairwiseAlignment ? F.formatPairwiseAlignment(alignment) : '';
-    const rawHtml =
-        '<pre class="mb-0 p-3 border rounded bg-light" style="font-family: monospace; font-size: 14px; line-height: 1.4; max-height: 500px; overflow:auto;">' +
-        escAlign(alignment.split('\n').filter(l => l.trim()).join('\n')) +
-        '</pre>';
-    let html = '<div class="alignment-display">';
-    html += '<h6 class="mb-3"><i class="fas fa-eye"></i> Pairwise Alignment</h6>';
-    html += ResultsPanel.tabs([
-        { id: 'fmt', title: 'Formatted', content: formattedHtml, active: true },
-        { id: 'raw', title: 'Raw', content: rawHtml },
-    ], { prefix: 'align' });
 
-    // Add alignment statistics
-    html += '<div class="row mt-3 g-3">';
-    html += '<div class="col-md-3">';
-    html += '<div class="text-center p-3 border rounded bg-white">';
-    html += `<h6 class="text-primary mb-1 small">Alignment Score</h6>`;
-    html += `<h4 class="mb-0">${score.toFixed(2)}</h4>`;
-    html += '</div>';
-    html += '</div>';
+    // Stat tiles for Summary
+    const summary =
+        '<div class="rc-stats">' +
+        '<div class="rc-stat"><div class="rc-stat-label">Score</div>' +
+            '<div class="rc-stat-value">' + score.toFixed(2) + '</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Identity</div>' +
+            '<div class="rc-stat-value">' + statistics.identity_percent.toFixed(1) + '%</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Gaps</div>' +
+            '<div class="rc-stat-value">' + statistics.gap_percent.toFixed(1) + '%</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-label">Length</div>' +
+            '<div class="rc-stat-value">' + statistics.alignment_length + '</div></div>' +
+        '</div>';
 
-    html += '<div class="col-md-3">';
-    html += '<div class="text-center p-3 border rounded bg-white">';
-    html += `<h6 class="text-success mb-1 small">Identity</h6>`;
-    html += `<h4 class="mb-0">${statistics.identity_percent.toFixed(1)}%</h4>`;
-    html += '</div>';
-    html += '</div>';
+    // Raw: cleaned BioPython alignment text
+    const rawText = alignment.split('\n').filter(l => l.trim()).join('\n');
 
-    html += '<div class="col-md-3">';
-    html += '<div class="text-center p-3 border rounded bg-white">';
-    html += `<h6 class="text-warning mb-1 small">Gaps</h6>`;
-    html += `<h4 class="mb-0">${statistics.gap_percent.toFixed(1)}%</h4>`;
-    html += '</div>';
-    html += '</div>';
-
-    html += '<div class="col-md-3">';
-    html += '<div class="text-center p-3 border rounded bg-white">';
-    html += `<h6 class="text-info mb-1 small">Alignment Length</h6>`;
-    html += `<h4 class="mb-0">${statistics.alignment_length}</h4>`;
-    html += '</div>';
-    html += '</div>';
-
-    html += '</div>';
-    html += '</div>';
-
-    resultsDiv.innerHTML = html;
+    ResultsCard.mount('alignmentResults', {
+        title: 'Pairwise Alignment',
+        meta:  '<span class="meta">Score ' + score.toFixed(2) +
+               ' · ' + statistics.identity_percent.toFixed(1) + '% identity</span>',
+        summary:  summary,
+        details:  formattedHtml,    // color-coded alignment view (from formatters.js)
+        raw:      rawText,
+        copyText: rawText,
+        downloads: [
+            { label: 'Alignment (.txt)', filename: 'alignment.txt', text: rawText, mime: 'text/plain' },
+            { label: 'Stats (.json)',    filename: 'alignment_stats.json',
+              text: JSON.stringify({ score: score, statistics: statistics }, null, 2),
+              mime: 'application/json' },
+        ],
+        workspaceItem: {
+            type: 'alignment',
+            name: 'Pairwise (' + statistics.identity_percent.toFixed(1) + '% id)',
+            data: rawText,
+            meta: { score: score, statistics: statistics },
+        },
+    });
 }
 
 function loadSequenceFile(seqNum) {
