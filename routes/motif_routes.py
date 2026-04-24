@@ -307,30 +307,30 @@ def generate_sequence_logo(m, use_information_content=True):
             }
 
             fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            fig.patch.set_alpha(0.0)
+            ax.set_facecolor('none')
             logomaker.Logo(
                 df, ax=ax,
                 color_scheme=color_scheme,
                 baseline_width=0.0,
                 show_spines=False,
             )
-            ax.set_xlabel('Position', fontsize=9, color='#334155')
+            ax.set_xlabel('Position', fontsize=9, color='#64748b')
             ax.set_ylabel('Bits' if use_information_content else 'Frequency',
-                          fontsize=9, color='#334155')
+                          fontsize=9, color='#64748b')
             ax.set_xticks(range(len(m)))
             ax.set_xticklabels([str(i + 1) for i in range(len(m))])
-            ax.tick_params(axis='both', labelsize=8, colors='#64748b')
+            ax.tick_params(axis='both', labelsize=8, colors='#94a3b8')
             ax.set_ylim(0, 2.05 if use_information_content else 1.02)
-            ax.spines['left'].set_color('#94a3b8')
-            ax.spines['bottom'].set_color('#94a3b8')
+            ax.spines['left'].set_color('#cbd5e1')
+            ax.spines['bottom'].set_color('#cbd5e1')
             ax.spines['left'].set_linewidth(0.6)
             ax.spines['bottom'].set_linewidth(0.6)
-            ax.set_title('Sequence Logo', fontsize=11, fontweight='600',
-                         color='#0f172a', pad=10, loc='left')
 
             from io import StringIO as _SIO
             buf = _SIO()
             fig.savefig(buf, format='svg', bbox_inches='tight',
-                        facecolor='white', pad_inches=0.2)
+                        facecolor='none', transparent=True, pad_inches=0.2)
             plt.close(fig)
             return 'data:image/svg+xml;base64,' + \
                 base64.b64encode(buf.getvalue().encode('utf-8')).decode()
@@ -342,6 +342,8 @@ def generate_sequence_logo(m, use_information_content=True):
             colors = {'A': '#059669', 'C': '#2563eb',
                       'G': '#ca8a04', 'T': '#dc2626'}
             fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            fig.patch.set_alpha(0.0)
+            ax.set_facecolor('none')
             for i in range(len(m)):
                 base_freqs = [(b, pwm[b][i]) for b in alphabet_list]
                 base_freqs.sort(key=lambda x: x[1])
@@ -351,28 +353,26 @@ def generate_sequence_logo(m, use_information_content=True):
                         continue
                     h = freq * ic_per_pos[i] if use_information_content else freq
                     ax.bar(i, h, bottom=bottom, color=colors[base],
-                           width=0.9, edgecolor='white', linewidth=0.5)
+                           width=0.9, edgecolor='none', linewidth=0)
                     if h > 0.18:
                         ax.text(i, bottom + h / 2, base,
                                 ha='center', va='center', fontsize=13,
                                 fontweight='700', color='white')
                     bottom += h
-            ax.set_xlabel('Position', fontsize=9, color='#334155')
+            ax.set_xlabel('Position', fontsize=9, color='#64748b')
             ax.set_ylabel('Bits' if use_information_content else 'Frequency',
-                          fontsize=9, color='#334155')
+                          fontsize=9, color='#64748b')
             ax.set_xticks(range(len(m)))
             ax.set_xticklabels([str(i + 1) for i in range(len(m))])
-            ax.tick_params(axis='both', labelsize=8, colors='#64748b')
+            ax.tick_params(axis='both', labelsize=8, colors='#94a3b8')
             ax.set_ylim(0, 2.05 if use_information_content else 1.02)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
-            ax.spines['left'].set_color('#94a3b8')
-            ax.spines['bottom'].set_color('#94a3b8')
-            ax.set_title('Sequence Logo', fontsize=11, fontweight='600',
-                         color='#0f172a', pad=10, loc='left')
+            ax.spines['left'].set_color('#cbd5e1')
+            ax.spines['bottom'].set_color('#cbd5e1')
             buf = BytesIO()
             fig.savefig(buf, format='png', bbox_inches='tight',
-                        facecolor='white', dpi=150, pad_inches=0.2)
+                        facecolor='none', transparent=True, dpi=150, pad_inches=0.2)
             plt.close(fig)
             return 'data:image/png;base64,' + \
                 base64.b64encode(buf.getvalue()).decode()
