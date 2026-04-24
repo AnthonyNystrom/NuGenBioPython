@@ -2,11 +2,7 @@
 
 {% block title %}KEGG Database - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #keggTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #keggTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1"><i class="fas fa-project-diagram"></i> KEGG Database</h2>
@@ -15,21 +11,21 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex" id="keggTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+            <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
                 <i class="fas fa-search d-block mb-1"></i><small>Search</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">
+            <button class="nav-link" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">
                 <i class="fas fa-list d-block mb-1"></i><small>List Database</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
+            <button class="nav-link" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
                 <i class="fas fa-link d-block mb-1"></i><small>Link Entries</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
+            <button class="nav-link" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
                 <i class="fas fa-exchange-alt d-block mb-1"></i><small>Convert IDs</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
                 <i class="fas fa-info-circle d-block mb-1"></i><small>Database Info</small>
             </button>
         </div>
@@ -67,10 +63,10 @@
                                             <input type="text" class="form-control form-control-sm" id="searchQuery" placeholder="e.g., MAPK, cancer" required>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="searchBtn">
                                         <i class="fas fa-search me-2"></i>Search
                                     </button>
-                                    {{ load_example_btn("loadSearchExample") }}
+                                    {{ load_example_pair("loadSearchExample", "loadSearchExampleComplex", simple_label="Cancer", complex_label="Metabolism") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -126,10 +122,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="listBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="listBtn">
                                         <i class="fas fa-list me-2"></i>List Entries
                                     </button>
-                                    {{ load_example_btn("loadListExample") }}
+                                    {{ load_example_pair("loadListExample", "loadListExampleComplex", simple_label="Default", complex_label="Human pathways") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -184,7 +180,7 @@
                                             <input type="text" class="form-control form-control-sm" id="linkSourceId" placeholder="e.g., hsa:5594">
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="linkBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="linkBtn">
                                         <i class="fas fa-link me-2"></i>Find Links
                                     </button>
                                     {{ load_example_btn("loadLinkExample") }}
@@ -242,7 +238,7 @@
                                             <input type="text" class="form-control form-control-sm" id="convertIds" placeholder="hsa:5594">
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="convertBtn">
                                         <i class="fas fa-exchange-alt me-2"></i>Convert
                                     </button>
                                     {{ load_example_btn("loadConvertExample") }}
@@ -293,7 +289,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mt-2" id="infoBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mt-2" id="infoBtn">
                                         <i class="fas fa-info-circle me-2"></i>Get Database Info
                                     </button>
                                 </form>
@@ -321,18 +317,18 @@
     </div>
 </div>
 
-<div class="modal fade" id="entryModal" tabindex="-1">
+<div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="entryModalLabel">Entry Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="entryModalContent">
                 <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn-app-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

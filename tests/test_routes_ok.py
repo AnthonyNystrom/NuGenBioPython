@@ -90,6 +90,140 @@ def test_r3_hub_uses_segmented_control(client):
         assert 'data-bs-toggle="tab"' in body
 
 
+def test_overhaul_d1_no_legacy_css(client):
+    """D1 demolition: legacy CSS files must not exist and must not be linked."""
+    body = client.get("/").data
+    assert b"/static/css/custom.css" not in body
+    assert b"/static/css/gradient-buttons.css" not in body
+    assert b"/static/css/performance-fix.css" not in body
+    assert b"/static/css/shell.css" not in body
+    assert b"/static/css/components.css" not in body
+    # Served files must 404 or return empty
+    for css in ("custom.css", "gradient-buttons.css", "performance-fix.css",
+                "shell.css", "components.css"):
+        r = client.get("/static/css/" + css)
+        assert r.status_code == 404, f"/static/css/{css} should be deleted"
+
+
+def test_overhaul_d2_no_gradient_buttons(client):
+    """D2: no template or JS should reference gradient-btn-* classes.
+    Walk all served pages + the two JS files that emit button HTML."""
+    routes = ["/", "/sequence", "/alignment", "/features", "/structure",
+              "/restriction", "/blast", "/phylogeny", "/patterns"]
+    for url in routes:
+        body = client.get(url).data
+        for legacy in (b"gradient-btn-primary", b"gradient-btn-secondary",
+                       b"gradient-btn-info", b"gradient-btn-success",
+                       b"gradient-btn-warning", b"gradient-btn-outline",
+                       b"gradient-btn-small"):
+            assert legacy not in body, f"legacy {legacy!r} in {url}"
+    for js in ("database.js", "kegg.js"):
+        r = client.get("/static/js/" + js)
+        assert b"gradient-btn-" not in r.data, f"legacy class in {js}"
+
+
+def test_overhaul_d3_split_pane_primitive(client):
+    """D3: split-pane primitive lives in app.css and /sequence is an exemplar."""
+    app_css = client.get("/static/css/app.css").data
+    assert b".tool-page" in app_css
+    assert b".tool-input-pane" in app_css
+    assert b".tool-results-pane" in app_css
+
+    seq = client.get("/sequence").data
+    assert b'class="tool-page"' in seq
+    assert b'class="tool-input-pane"' in seq
+    assert b'class="tool-results-pane"' in seq
+    assert b'class="tool-page-mobile-tabs"' in seq
+
+
+def test_overhaul_d4_app_alerts_toast(client):
+    """D4: #app-alerts toast region is on every page; utils.js targets it."""
+    body = client.get("/").data
+    assert b'id="app-alerts"' in body
+    assert b'aria-live="polite"' in body
+
+    utils = client.get("/static/js/utils.js").data
+    # showAlert must target app-alerts, no longer query .card-body.p-4
+    assert b"app-alerts" in utils
+    assert b".card-body.p-4" not in utils
+
+
+def test_overhaul_d5_no_legacy_tab_chrome(client):
+    """D5: no template retains bg-gradient card-header or the inline
+    <style>#XxxTabs overrides, or the text-white tab-button class soup."""
+    for url in ["/sequence", "/alignment", "/blast", "/structure",
+                "/restriction", "/phylogeny", "/patterns"]:
+        body = client.get(url).data
+        assert b"card-header bg-gradient" not in body, f"{url} has legacy gradient header"
+        assert b"text-white border-0 py-3" not in body, f"{url} has legacy tab-button classes"
+
+
+def test_overhaul_d6_sidebar_sub_tools(client):
+    """D6: the sidebar surfaces sub-tools under each hub, and active tool
+    highlights the parent hub AND the sub-tool with aria-current=page."""
+    # Dashboard: no sub-tool active, but the sidebar contains several sub links
+    body = client.get("/").data
+    assert b'class="nav-sub"' in body
+    assert b'class="nav-sublink' in body
+    # Visit /alignment — its sub-link should be aria-current=page
+    al = client.get("/alignment").data.decode()
+    assert 'aria-current="page"' in al
+    # And the Compare parent hub should ALSO be highlighted (active class on parent)
+    import re
+    # the matching nav-link active line
+    hub_active_line = re.search(r'class="nav-link active"[^>]*>\s*<i[^>]*>[^<]*</i>\s*<span>(Compare)</span>', al)
+    assert hub_active_line, "Compare hub not highlighted on /alignment"
+
+
+def test_overhaul_d17_dark_mode(client):
+    """D17: tokens.css defines the dark theme and topbar has a toggle."""
+    tokens = client.get("/static/css/tokens.css").data
+    assert b'html[data-theme="dark"]' in tokens
+    body = client.get("/").data
+    assert b'id="topbarThemeBtn"' in body
+    # Inline FOUC-prevention script that applies saved/preferred theme
+    assert b"nug-theme" in body
+    assert b'data-theme' in body
+
+
+def test_overhaul_d18_results_row_marker(client):
+    """D18: primary hub tool pages have .results-row on their result row."""
+    # Sample one from each of the three hub dirs
+    for url, marker in [
+        ("/alignment", b"alignmentResults"),
+        ("/blast", b"blastResults"),
+        ("/motifs", b"searchResults"),
+        ("/popgen", b"popgenResults"),
+        ("/clustering", b"clusteringCard"),
+        ("/phylo", b"treeInfo"),
+    ]:
+        body = client.get(url).data
+        assert marker in body, f"{url}: missing {marker}"
+        # the row carrying that id should have the class applied
+        assert b"results-row" in body, f"{url}: no .results-row marker"
+
+
+def test_overhaul_d19_blast_inline_alignment(client):
+    """D19: BLAST view-alignment renders inline (no tab-jump)."""
+    js = client.get("/compare").data
+    assert b"blastInlineAlignment" in js
+
+
+def test_overhaul_d7_dashboard(client):
+    """D7: dashboard is a tool grid + workspace recent + external-data list +
+    quickstart. No gradient hero. No 'Core Tools' / 'Comparison & Evolution' section headers."""
+    body = client.get("/").data
+    assert b'class="dashboard"' in body
+    assert b'class="tool-grid"' in body
+    assert b'class="tool-tile"' in body
+    assert b'class="quickstart"' in body
+    assert b'id="dashWorkspace"' in body
+    # Old layout markers must be gone
+    assert b"display-4" not in body
+    assert b"Core Tools</h" not in body
+    assert b"Comparison & Evolution" not in body
+
+
 def test_polish_a11y_skip_link_and_main(client):
     """Polish-2: skip-to-main-content link is the first focusable element,
     and the content region is a real <main> with role=main."""
@@ -303,8 +437,8 @@ def test_r1_shell_structure(client):
     assert b'>Phylogeny<' in body
     assert b'>External data<' in body
     assert b'nav-section-header' not in body  # section headers removed
-    # shell.css linked after components.css
-    assert b'/static/css/shell.css' in body
+    # app.css is now the single source of truth (D1 demolition)
+    assert b'/static/css/app.css' in body
 
 
 def test_r1_sidebar_activates_correct_hub(client):
@@ -341,26 +475,34 @@ def test_structure_3d_viewer_wired(client):
 
 
 def test_base_template_loads_design_tokens(client):
-    """tokens.css and components.css must be linked, and served non-empty.
-    Guards Phase 1 of the redesign: anyone removing these breaks the token
-    cascade and regresses the sidebar-leak fix."""
+    """tokens.css and app.css must be linked, and served non-empty.
+    D1 demolition: app.css is now the single visual source of truth —
+    custom.css / gradient-buttons.css / performance-fix.css / shell.css /
+    components.css are deleted. Anyone re-introducing them or removing
+    tokens.css / app.css breaks the cascade."""
     resp = client.get("/")
     body = resp.data
     assert b"/static/css/tokens.css" in body
-    assert b"/static/css/components.css" in body
+    assert b"/static/css/app.css" in body
+    # Legacy CSS files must NOT be linked
+    assert b"/static/css/custom.css" not in body
+    assert b"/static/css/gradient-buttons.css" not in body
+    assert b"/static/css/performance-fix.css" not in body
+    assert b"/static/css/shell.css" not in body
+    assert b"/static/css/components.css" not in body
 
     tokens = client.get("/static/css/tokens.css")
     assert tokens.status_code == 200
     assert b"--slate-" in tokens.data
     assert b"--color-primary" in tokens.data
 
-    components = client.get("/static/css/components.css")
-    assert components.status_code == 200
-    # The sidebar-nav rules are defined in custom.css (root-cause scoping);
-    # components.css only provides the low-specificity fallback for other
-    # .nav-link usages. Check that the selector RULE isn't in components.
-    assert b".sidebar-nav .nav-link {" not in components.data
-    assert b":where(body) .nav-link" in components.data
+    app_css = client.get("/static/css/app.css")
+    assert app_css.status_code == 200
+    # Core component classes must be present in the consolidated file
+    assert b".app-topbar" in app_css.data
+    assert b".sidebar-nav" in app_css.data
+    assert b".results-card" in app_css.data
+    assert b".segmented-control" in app_css.data
 
 
 @pytest.mark.parametrize("url,hub,expected_tab", HUB_TAB_PRESELECTION)

@@ -6,6 +6,7 @@ from Bio.Blast import NCBIWWW, NCBIXML
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from utils.request_helpers import remote_timeout
 
 
 def extract_sequence_from_file(file_content, file_format='fasta'):
@@ -64,15 +65,15 @@ def run_ncbi_blast(sequence, program='blastn', database='nt', **kwargs):
     # Clean sequence
     sequence = sequence.strip().replace(' ', '').replace('\n', '')
 
-    # Run BLAST
-    result_handle = NCBIWWW.qblast(
-        program=program,
-        database=database,
-        sequence=sequence,
-        **kwargs
-    )
-
-    return result_handle.read()
+    # Run BLAST — 180s ceiling matches the frontend URL_TIMEOUT_MS
+    with remote_timeout(180):
+        result_handle = NCBIWWW.qblast(
+            program=program,
+            database=database,
+            sequence=sequence,
+            **kwargs
+        )
+        return result_handle.read()
 
 
 def parse_blast_xml(blast_xml):

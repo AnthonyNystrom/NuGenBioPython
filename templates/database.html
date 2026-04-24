@@ -2,15 +2,7 @@
 
 {% block title %}Database & Search - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #databaseTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #databaseTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1">
@@ -21,25 +13,25 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex" id="databaseTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+            <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
                 <i class="fas fa-search d-block mb-1"></i>
                 <small>Search</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="global-tab" data-bs-toggle="tab" data-bs-target="#global" type="button">
+            <button class="nav-link" id="global-tab" data-bs-toggle="tab" data-bs-target="#global" type="button">
                 <i class="fas fa-globe d-block mb-1"></i>
                 <small>Global Query</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fetch-tab" data-bs-toggle="tab" data-bs-target="#fetch" type="button">
+            <button class="nav-link" id="fetch-tab" data-bs-toggle="tab" data-bs-target="#fetch" type="button">
                 <i class="fas fa-download d-block mb-1"></i>
                 <small>Fetch Records</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
+            <button class="nav-link" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button">
                 <i class="fas fa-link d-block mb-1"></i>
                 <small>Related Records</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
+            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
                 <i class="fas fa-info-circle d-block mb-1"></i>
                 <small>Database Info</small>
             </button>
@@ -116,10 +108,10 @@
                                         <input type="email" class="form-control form-control-sm" id="email" placeholder="your@email.com" required>
                                         <div class="form-text"><i class="fas fa-exclamation-triangle text-warning"></i> NCBI requires email for API access</div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="searchBtn">
                                         <i class="fas fa-search me-2"></i>Search Database
                                     </button>
-                                    {{ load_example_btn("loadExampleSearch") }}
+                                    {{ load_example_pair("loadExampleSearch", "loadExampleSearchComplex", simple_label="CRISPR", complex_label="Full MeSH query") }}
                                 </form>
                             </div>
                         </div>
@@ -181,7 +173,7 @@
                                         <label for="globalEmail" class="form-label small">Email Address</label>
                                         <input type="email" class="form-control form-control-sm" id="globalEmail" placeholder="your@email.com" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="globalQueryBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="globalQueryBtn">
                                         <i class="fas fa-search me-2"></i>Search All Databases
                                     </button>
                                 </form>
@@ -246,7 +238,7 @@
                                         <label for="fetchEmail" class="form-label small">Email Address</label>
                                         <input type="email" class="form-control form-control-sm" id="fetchEmail" placeholder="your@email.com" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="fetchBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="fetchBtn">
                                         <i class="fas fa-download me-2"></i>Fetch Records
                                     </button>
                                 </form>
@@ -274,7 +266,7 @@
                         <div class="card">
                             <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 small"><i class="fas fa-file-code"></i> Fetched Records</h6>
-                                <button type="button" class="gradient-btn-small" id="downloadFetchedBtn" style="display:none;" data-action="downloadFetchedRecords">
+                                <button type="button" class="btn-app-secondary btn-app-sm" id="downloadFetchedBtn" style="display:none;" data-action="downloadFetchedRecords">
                                     <i class="fas fa-download me-1"></i>Download
                                 </button>
                             </div>
@@ -322,7 +314,7 @@
                                         <label for="linkEmail" class="form-label small">Email Address</label>
                                         <input type="email" class="form-control form-control-sm" id="linkEmail" placeholder="your@email.com" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="linkBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="linkBtn">
                                         <i class="fas fa-link me-2"></i>Find Related Records
                                     </button>
                                 </form>
@@ -383,7 +375,7 @@
                                         <label for="infoEmail" class="form-label small">Email Address</label>
                                         <input type="email" class="form-control form-control-sm" id="infoEmail" placeholder="your@email.com" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="infoBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="infoBtn">
                                         <i class="fas fa-info-circle me-2"></i>Get Database Info
                                     </button>
                                 </form>
@@ -440,8 +432,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="gradient-btn-primary" id="downloadRecordBtn">
+                <button type="button" class="btn-app-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn-app-primary" id="downloadRecordBtn">
                     <i class="fas fa-download me-2"></i>Download
                 </button>
             </div>

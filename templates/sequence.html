@@ -2,26 +2,20 @@
 
 {% block title %}Sequence Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #toolsTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #toolsTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
-<div class="row mb-2">
-    <div class="col-12">
-        <h2 class="text-primary mb-1">
-            <i class="fas fa-dna"></i> Sequence Analysis
-        </h2>
-    </div>
-</div>
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
+<div class="tool-page">
+    <header class="tool-page-header">
+        <h2><i class="fas fa-dna"></i> Sequence Analysis</h2>
+        <span class="tool-page-subtitle">GC, translate, reverse-complement, and more</span>
+    </header>
 
-<div class="row">
-    <!-- Left Panel: Input & Tools -->
-    <div class="col-md-5">
+    <div class="tool-page-mobile-tabs" role="tablist">
+        <button type="button" class="btn-app-secondary active" data-tool-pane="input">Input</button>
+        <button type="button" class="btn-app-secondary" data-tool-pane="results">Results</button>
+    </div>
+
+    <div class="tool-page-body">
+        <div class="tool-input-pane">
         <div class="card mb-2">
             <div class="card-header py-2 bg-primary text-white">
                 <h6 class="mb-0 small"><i class="fas fa-edit"></i> Sequence Input</h6>
@@ -33,13 +27,13 @@
                         <option value="rna">RNA</option>
                         <option value="protein">Protein</option>
                     </select>
-                    {{ load_example_btn("loadExample", size="small", extra="mb-3") }}
+                    {{ load_example_pair("loadExample", "loadExampleComplex", simple_label="Short DNA", complex_label="Human TP53 exon") }}
                     <textarea class="form-control sequence-display mb-3" id="sequenceInput" rows="5"
                             placeholder="Enter sequence..." ></textarea>
-                    <button type="submit" class="gradient-btn-primary w-100" id="analyzeBtn">
+                    <button type="submit" class="btn-app-primary w-100" id="analyzeBtn">
                         <i class="fas fa-search me-2"></i>Analyze
                     </button>
-                    <button type="button" class="gradient-btn-small w-100 mt-2" id="saveToWorkspaceBtn"
+                    <button type="button" class="btn-app-secondary btn-app-sm w-100 mt-2" id="saveToWorkspaceBtn"
                             title="Save this sequence to the workspace">
                         <i class="fas fa-layer-group me-2"></i>Save to workspace
                     </button>
@@ -66,25 +60,25 @@
 
         <!-- Tabbed Tools Interface -->
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-gradient p-0 border-0" >
+            <div class="card-header" >
                 <div class="d-flex" id="toolsTabs" role="tablist">
-                    <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" >
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" >
                         <i class="fas fa-star d-block mb-1" ></i>
                         <small >Basic</small>
                     </button>
-                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" >
+                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" >
                         <i class="fas fa-tools d-block mb-1" ></i>
                         <small >Advanced</small>
                     </button>
-                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="dna-tab" data-bs-toggle="tab" data-bs-target="#dna" type="button" >
+                    <button class="nav-link" id="dna-tab" data-bs-toggle="tab" data-bs-target="#dna" type="button" >
                         <i class="fas fa-flask d-block mb-1" ></i>
                         <small >DNA Tools</small>
                     </button>
-                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" >
+                    <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" >
                         <i class="fas fa-search d-block mb-1" ></i>
                         <small >Search</small>
                     </button>
-                    <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="utils-tab" data-bs-toggle="tab" data-bs-target="#utils" type="button" >
+                    <button class="nav-link" id="utils-tab" data-bs-toggle="tab" data-bs-target="#utils" type="button" >
                         <i class="fas fa-cog d-block mb-1" ></i>
                         <small >Utils</small>
                     </button>
@@ -96,13 +90,13 @@
                     <div class="tab-pane fade show active" id="basic" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" data-action="sixFrameTranslation" id="sixFrameBtn">
+                                <button type="button" class="btn-app-primary w-100" data-action="sixFrameTranslation" id="sixFrameBtn">
                                     <i class="fas fa-exchange-alt me-3"></i>
                                     <span>6-Frame Translation</span>
                                 </button>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" data-action="proteinAnalysis" id="protParamBtn">
+                                <button type="button" class="btn-app-secondary w-100" data-action="proteinAnalysis" id="protParamBtn">
                                     <i class="fas fa-microscope me-3"></i>
                                     <span>Protein Analysis (ProtParam)</span>
                                 </button>
@@ -117,13 +111,13 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Transcription</h6>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-info w-100" onclick="transcribe('transcribe')">
+                                <button type="button" class="btn-app-secondary w-100" onclick="transcribe('transcribe')">
                                     <i class="fas fa-arrow-right d-block mb-2"></i>
                                     <small>DNA → RNA</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-success w-100" onclick="transcribe('back_transcribe')">
+                                <button type="button" class="btn-app-secondary w-100" onclick="transcribe('back_transcribe')">
                                     <i class="fas fa-arrow-left d-block mb-2"></i>
                                     <small>RNA → DNA</small>
                                 </button>
@@ -132,7 +126,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">GC Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-warning w-100" data-action="advancedGCAnalysis">
+                                <button type="button" class="btn-app-secondary w-100" data-action="advancedGCAnalysis">
                                     <i class="fas fa-chart-line me-3"></i>
                                     <span>GC Skew & GC123</span>
                                 </button>
@@ -141,13 +135,13 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Protein Conversion</h6>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-outline w-100" onclick="proteinConvert('to_three')">
+                                <button type="button" class="btn-app-ghost w-100" onclick="proteinConvert('to_three')">
                                     <i class="fas fa-text-width d-block mb-2"></i>
                                     <small>1→3 Letter</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-outline w-100" onclick="proteinConvert('to_one')">
+                                <button type="button" class="btn-app-ghost w-100" onclick="proteinConvert('to_one')">
                                     <i class="fas fa-compress d-block mb-2"></i>
                                     <small>3→1 Letter</small>
                                 </button>
@@ -156,7 +150,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Advanced Protein Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" data-action="advancedProteinAnalysis" id="advProtParamBtn">
+                                <button type="button" class="btn-app-secondary w-100" data-action="advancedProteinAnalysis" id="advProtParamBtn">
                                     <i class="fas fa-atom me-3"></i>
                                     <span>Molar Extinction & Charge</span>
                                 </button>
@@ -165,7 +159,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Molecular Weight</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" data-action="molecularWeightAdvanced" id="molWeightBtn">
+                                <button type="button" class="btn-app-primary w-100" data-action="molecularWeightAdvanced" id="molWeightBtn">
                                     <i class="fas fa-weight me-3"></i>
                                     <span>MW Variations (ss/ds DNA/RNA)</span>
                                 </button>
@@ -180,7 +174,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Melting Temperature</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-info w-100" data-action="calculateMeltingTemp" id="meltingTempBtn">
+                                <button type="button" class="btn-app-secondary w-100" data-action="calculateMeltingTemp" id="meltingTempBtn">
                                     <i class="fas fa-thermometer-half me-3"></i>
                                     <span>Calculate Tm</span>
                                 </button>
@@ -193,7 +187,7 @@
                                 <input type="number" class="form-control mb-2" id="minOrfLength" value="75" min="30" step="3">
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-success w-100" data-action="findORFs" id="orfBtn">
+                                <button type="button" class="btn-app-secondary w-100" data-action="findORFs" id="orfBtn">
                                     <i class="fas fa-dna me-3"></i>
                                     <span>Find ORFs</span>
                                 </button>
@@ -202,7 +196,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Codon Analysis</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-warning w-100" data-action="analyzeCodonUsage" id="codonBtn">
+                                <button type="button" class="btn-app-secondary w-100" data-action="analyzeCodonUsage" id="codonBtn">
                                     <i class="fas fa-chart-pie me-3"></i>
                                     <span>Codon Usage</span>
                                 </button>
@@ -211,7 +205,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Checksums</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-outline w-100" data-action="calculateChecksums" id="checksumBtn">
+                                <button type="button" class="btn-app-ghost w-100" data-action="calculateChecksums" id="checksumBtn">
                                     <i class="fas fa-fingerprint me-3"></i>
                                     <span>Calculate Checksums</span>
                                 </button>
@@ -220,7 +214,7 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Reference Data</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" data-action="showReferenceData" id="refDataBtn">
+                                <button type="button" class="btn-app-primary w-100" data-action="showReferenceData" id="refDataBtn">
                                     <i class="fas fa-book me-3"></i>
                                     <span>Codon Tables & IUPAC</span>
                                 </button>
@@ -245,7 +239,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-secondary w-100" data-action="searchSequence">
+                                <button type="button" class="btn-app-secondary w-100" data-action="searchSequence">
                                     <i class="fas fa-search me-3"></i>
                                     <span>Search Sequence</span>
                                 </button>
@@ -260,19 +254,19 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Sequence Manipulation</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="gradient-btn-primary w-100" onclick="manipulateSequence('ungap')">
+                                <button type="button" class="btn-app-primary w-100" onclick="manipulateSequence('ungap')">
                                     <i class="fas fa-eraser me-3"></i>
                                     <span>Remove Gaps</span>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-info w-100" onclick="manipulateSequence('upper')">
+                                <button type="button" class="btn-app-secondary w-100" onclick="manipulateSequence('upper')">
                                     <i class="fas fa-font d-block mb-2"></i>
                                     <small>UPPERCASE</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="gradient-btn-success w-100" onclick="manipulateSequence('lower')">
+                                <button type="button" class="btn-app-secondary w-100" onclick="manipulateSequence('lower')">
                                     <i class="fas fa-font d-block mb-2"></i>
                                     <small>lowercase</small>
                                 </button>
@@ -282,24 +276,20 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Right Panel: Results -->
-    <div class="col-md-7">
-        <div class="card" >
-            <div class="card-header py-2 bg-success text-white sticky-top">
-                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Results</h6>
-            </div>
-            <div class="card-body p-3" id="resultsArea">
+        </div><!-- /.tool-input-pane -->
+
+        <div class="tool-results-pane">
+            <div id="resultsArea">
                 <div class="text-center text-muted py-5">
-                    <i class="fas fa-arrow-left fa-3x mb-3 opacity-25"></i>
-                    <p>Enter a sequence and run analysis</p>
+                    <i class="fas fa-chart-bar fa-3x mb-3 opacity-25"></i>
+                    <p class="mb-1">Enter a sequence and run analysis</p>
                     <small>Results will appear here</small>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        </div><!-- /.tool-results-pane -->
+    </div><!-- /.tool-page-body -->
+</div><!-- /.tool-page -->
 
 <!-- Compact Feature Reference -->
 <div class="row mt-2">

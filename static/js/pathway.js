@@ -28,7 +28,7 @@ function addReactant() {
                    value="1" min="1" max="10">
         </div>
         <div class="col-md-3">
-            <button type="button" class="btn btn-sm btn-outline-danger w-100"
+            <button type="button" class="btn-app-sm btn-app-danger w-100"
                     onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
@@ -53,7 +53,7 @@ function addProduct() {
                    value="1" min="1" max="10">
         </div>
         <div class="col-md-3">
-            <button type="button" class="btn btn-sm btn-outline-danger w-100"
+            <button type="button" class="btn-app-sm btn-app-danger w-100"
                     onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
@@ -73,7 +73,7 @@ function addCatalyst() {
                    placeholder="Enzyme/Catalyst name">
         </div>
         <div class="col-md-3">
-            <button type="button" class="btn btn-sm btn-outline-danger w-100"
+            <button type="button" class="btn-app-sm btn-app-danger w-100"
                     onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
@@ -174,7 +174,7 @@ function updateReactionsList() {
                 <div class="card-body p-2">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h6 class="mb-0 small"><i class="fas fa-flask"></i> ${rxn.name}</h6>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeReaction(${idx})">
+                        <button class="btn-app-sm btn-app-danger" onclick="removeReaction(${idx})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -202,14 +202,18 @@ function removeReaction(idx) {
 }
 
 function clearReactions() {
-    pathwayReactions = [];
+    pathwayReactions.length = 0;
     updateReactionsList();
 }
+// Expose for examples_complex.js (complex glycolysis loader needs the array).
+window.pathwayReactions = pathwayReactions;
+window.clearReactions = clearReactions;
+window.updateReactionsList = updateReactionsList;
 
 function loadReactionExample() {
     clearReactions();
 
-    pathwayReactions = [
+    [
         {
             name: 'Glucose Phosphorylation',
             reactants: {'Glucose': -1, 'ATP': -1},
@@ -234,7 +238,7 @@ function loadReactionExample() {
             catalysts: ['Phosphofructokinase'],
             reversible: false
         }
-    ];
+    ].forEach(function (r) { pathwayReactions.push(r); });
 
     updateReactionsList();
 }
@@ -264,12 +268,12 @@ function analyzeSystem() {
             displaySystemAnalysis(data.analysis);
             currentSystem = data.analysis;
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('analyzeSystemBtn', '<i class="fas fa-calculator"></i> Analyze System');
-        showAlert('Request failed', 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -343,12 +347,12 @@ function analyzeNetwork() {
             displayNetworkAnalysis(data.analysis);
             currentNetwork = data.analysis;
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('analyzeNetworkBtn', '<i class="fas fa-project-diagram"></i> Analyze Network');
-        showAlert('Request failed', 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -477,12 +481,12 @@ function generateVisualization() {
         if (data.success) {
             displayVisualization(data.visualization);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('generateVizBtn', '<i class="fas fa-eye"></i> Generate Visualization');
-        showAlert('Request failed', 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -552,11 +556,11 @@ function exportPathway(format) {
 
             showAlert(`Pathway exported as ${format.toUpperCase()}`, 'success');
         } else {
-            showAlert('Export failed: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
-        showAlert('Export request failed', 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 

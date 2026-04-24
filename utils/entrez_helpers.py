@@ -5,6 +5,11 @@ from Bio import Entrez
 from io import StringIO
 import xml.etree.ElementTree as ET
 
+from utils.request_helpers import remote_timeout
+
+# Entrez ceiling — NCBI usually responds in <5s but large queries can run longer.
+_ENTREZ_TIMEOUT = 30
+
 
 def search_entrez(database, term, email, retmax=20, retstart=0,
                   sort='relevance', date_from=None, date_to=None, field=None):
@@ -39,15 +44,16 @@ def search_entrez(database, term, email, retmax=20, retstart=0,
         search_term += f"[{field}]"
 
     # Perform search
-    handle = Entrez.esearch(
-        db=database,
-        term=search_term,
-        retmax=retmax,
-        retstart=retstart,
-        sort=sort
-    )
-    results = Entrez.read(handle)
-    handle.close()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        handle = Entrez.esearch(
+            db=database,
+            term=search_term,
+            retmax=retmax,
+            retstart=retstart,
+            sort=sort
+        )
+        results = Entrez.read(handle)
+        handle.close()
 
     return results
 
@@ -70,9 +76,10 @@ def fetch_summaries(database, id_list, email):
         return []
 
     ids = ','.join([str(i) for i in id_list])
-    handle = Entrez.esummary(db=database, id=ids)
-    summaries = Entrez.read(handle)
-    handle.close()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        handle = Entrez.esummary(db=database, id=ids)
+        summaries = Entrez.read(handle)
+        handle.close()
 
     return summaries
 
@@ -90,9 +97,10 @@ def global_query(term, email):
     """
     Entrez.email = email
 
-    handle = Entrez.egquery(term=term)
-    results = Entrez.read(handle)
-    handle.close()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        handle = Entrez.egquery(term=term)
+        results = Entrez.read(handle)
+        handle.close()
 
     # Parse results
     db_stats = []
@@ -130,15 +138,15 @@ def fetch_records(database, id_list, email, rettype='fasta', retmode='text'):
 
     ids = ','.join([str(i) for i in id_list])
 
-    handle = Entrez.efetch(
-        db=database,
-        id=ids,
-        rettype=rettype,
-        retmode=retmode
-    )
-
-    records = handle.read()
-    handle.close()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        handle = Entrez.efetch(
+            db=database,
+            id=ids,
+            rettype=rettype,
+            retmode=retmode
+        )
+        records = handle.read()
+        handle.close()
 
     # Convert bytes to string if needed
     if isinstance(records, bytes):
@@ -162,13 +170,14 @@ def find_related_records(record_id, from_db, to_db, email):
     """
     Entrez.email = email
 
-    handle = Entrez.elink(
-        dbfrom=from_db,
-        db=to_db,
-        id=record_id
-    )
-    results = Entrez.read(handle)
-    handle.close()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        handle = Entrez.elink(
+            dbfrom=from_db,
+            db=to_db,
+            id=record_id
+        )
+        results = Entrez.read(handle)
+        handle.close()
 
     # Extract linked IDs
     linked_ids = []
@@ -194,15 +203,16 @@ def get_database_info(database, email):
     """
     Entrez.email = email
 
-    if database:
-        # Get info for specific database
-        handle = Entrez.einfo(db=database)
-    else:
-        # Get list of all databases
-        handle = Entrez.einfo()
+    with remote_timeout(_ENTREZ_TIMEOUT):
+        if database:
+            # Get info for specific database
+            handle = Entrez.einfo(db=database)
+        else:
+            # Get list of all databases
+            handle = Entrez.einfo()
 
-    results = Entrez.read(handle)
-    handle.close()
+        results = Entrez.read(handle)
+        handle.close()
 
     return results
 

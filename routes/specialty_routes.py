@@ -99,6 +99,65 @@ Ind3_5, 0101 0101 0101
 """
 
 
+def get_example_data_complex():
+    """Larger, biologically realistic example — 4 populations × 10 loci."""
+    loci = [f'Locus{i}' for i in range(1, 11)]
+    def pop(tag, pattern):
+        rows = []
+        for n in range(1, 9):  # 8 individuals per pop
+            geno = ' '.join(pattern(n, i) for i in range(10))
+            rows.append(f'{tag}_{n}, {geno}')
+        return '\n'.join(rows)
+    # Four populations with divergent allele frequencies to give meaningful F-stats.
+    p1 = pop('P1A', lambda n, i: '0101' if (n + i) % 3 else '0102')
+    p2 = pop('P2A', lambda n, i: '0202' if (n + i) % 2 else '0201')
+    p3 = pop('P3A', lambda n, i: '0103' if (n + i) % 4 else '0301')
+    p4 = pop('P4A', lambda n, i: '0404' if (n + i) % 3 else '0403')
+    return (
+        'Complex PopGen example - 4 populations x 10 loci\n'
+        + '\n'.join(loci)
+        + '\nPOP\n' + p1
+        + '\nPOP\n' + p2
+        + '\nPOP\n' + p3
+        + '\nPOP\n' + p4
+        + '\n'
+    )
+
+
+@bp.route('/popgen/load_example_complex', methods=['POST'])
+def load_popgen_example_complex():
+    """Load a larger 4-pops × 10-loci PopGen example for the 'Complex' button."""
+    try:
+        if not PopGen:
+            return jsonify({'success': False, 'error': 'PopGen module not available'})
+
+        from Bio.PopGen import GenePop
+        from io import StringIO
+
+        record = GenePop.read(StringIO(get_example_data_complex()))
+        results = {
+            'title': getattr(record, 'comment_line', 'GenePop Data'),
+            'loci': getattr(record, 'loci_list', []),
+            'populations': [
+                {
+                    'name': f'Population_{i+1}',
+                    'individuals': len(pop) if pop else 0
+                }
+                for i, pop in enumerate(getattr(record, 'populations', []))
+            ],
+            'statistics': {
+                'total_populations': len(getattr(record, 'populations', [])),
+                'total_loci': len(getattr(record, 'loci_list', [])),
+                'total_individuals': sum(
+                    len(p) if p else 0 for p in getattr(record, 'populations', [])
+                ),
+            }
+        }
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @bp.route('/popgen/load_example', methods=['POST'])
 def load_popgen_example():
     """Load example PopGen data without file upload - hardcoded, no file needed"""

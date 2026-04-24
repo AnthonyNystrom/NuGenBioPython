@@ -62,7 +62,7 @@ def create_motif():
         # Generate sequence logo
         logo_base64 = generate_sequence_logo(m)
         if logo_base64:
-            info['logo'] = f'data:image/png;base64,{logo_base64}'
+            info['logo'] = logo_base64
 
         return jsonify({
             'success': True,
@@ -110,7 +110,7 @@ def upload_motif():
         # Generate logo
         logo_base64 = generate_sequence_logo(m)
         if logo_base64:
-            info['logo'] = f'data:image/png;base64,{logo_base64}'
+            info['logo'] = logo_base64
 
         return jsonify({
             'success': True,
@@ -189,9 +189,9 @@ def compare_motifs_route():
         logo2 = generate_sequence_logo(m2)
 
         if logo1:
-            info1['logo'] = f'data:image/png;base64,{logo1}'
+            info1['logo'] = logo1
         if logo2:
-            info2['logo'] = f'data:image/png;base64,{logo2}'
+            info2['logo'] = logo2
 
         return jsonify({
             'success': True,
@@ -245,7 +245,7 @@ def get_motif_info_route():
         # Generate logo
         logo_base64 = generate_sequence_logo(m)
         if logo_base64:
-            info['logo'] = f'data:image/png;base64,{logo_base64}'
+            info['logo'] = logo_base64
 
         return jsonify({
             'success': True,
@@ -256,85 +256,126 @@ def get_motif_info_route():
 
 
 def generate_sequence_logo(m, use_information_content=True):
-    """
-    Generate sequence logo with information content
+    """Generate a proper scaled-glyph sequence logo.
 
-    Args:
-        m: Motif object
-        use_information_content: Use IC for letter heights
+    Uses the `logomaker` library when available so each letter glyph is
+    scaled by its information-content contribution (the standard Schneider
+    & Stephens 1990 convention). Falls back to a stacked bar chart with
+    lettered segments if logomaker isn't installed.
 
-    Returns:
-        Base64 encoded PNG image
+    Returns: SVG data URL string (or PNG fallback on the bar path).
     """
     try:
         pwm = m.counts.normalize(pseudocounts=0.5)
         alphabet_list = ['A', 'C', 'G', 'T']
-        colors = {'A': '#228B22', 'C': '#4169E1', 'G': '#FFA500', 'T': '#DC143C'}
 
-        # Calculate information content per position
+        # IC per position (bits, uniform 0.25 background)
         ic_per_pos = []
         for i in range(len(m)):
-            ic = 0
+            ic = 0.0
             for base in alphabet_list:
                 p = pwm[base][i]
                 if p > 0:
-                    ic += p * np.log2(p / 0.25)  # Assuming uniform background
-            ic_per_pos.append(ic)
+                    ic += p * np.log2(p / 0.25)
+            ic_per_pos.append(max(0.0, ic))
 
-        # Set figure size based on motif length
-        width = max(8, min(20, len(m) * 0.6))
-        fig, ax = plt.subplots(figsize=(width, 4))
+        # Figure width: ~0.55 in per position but bounded. Height fixed at
+        # 2.6 in — enough for 2-bit y-axis without wasting space.
+        width = max(6, min(22, 0.55 * len(m) + 2))
+        height = 2.8
 
-        # Create stacked bar chart
-        positions = np.arange(len(m))
+        try:
+            import logomaker
+            # logomaker consumes a pandas DataFrame with positions as rows
+            # and letters as columns. Values are the per-letter information
+            # content (freq * IC).
+            import pandas as pd
+            rows = []
+            for i in range(len(m)):
+                row = {}
+                for base in alphabet_list:
+                    freq = pwm[base][i]
+                    row[base] = freq * ic_per_pos[i] if use_information_content else freq
+                rows.append(row)
+            df = pd.DataFrame(rows)
 
-        for i in range(len(m)):
-            # Sort bases by frequency for this position
-            base_freqs = [(base, pwm[base][i]) for base in alphabet_list]
-            base_freqs.sort(key=lambda x: x[1])
+            color_scheme = {
+                'A': '#059669',  # green
+                'C': '#2563eb',  # blue
+                'G': '#ca8a04',  # gold
+                'T': '#dc2626',  # red
+            }
 
-            bottom = 0
-            for base, freq in base_freqs:
-                if freq > 0.01:  # Only show significant frequencies
-                    if use_information_content:
-                        height = freq * ic_per_pos[i]
-                    else:
-                        height = freq
+            fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            logomaker.Logo(
+                df, ax=ax,
+                color_scheme=color_scheme,
+                baseline_width=0.0,
+                show_spines=False,
+            )
+            ax.set_xlabel('Position', fontsize=9, color='#334155')
+            ax.set_ylabel('Bits' if use_information_content else 'Frequency',
+                          fontsize=9, color='#334155')
+            ax.set_xticks(range(len(m)))
+            ax.set_xticklabels([str(i + 1) for i in range(len(m))])
+            ax.tick_params(axis='both', labelsize=8, colors='#64748b')
+            ax.set_ylim(0, 2.05 if use_information_content else 1.02)
+            ax.spines['left'].set_color('#94a3b8')
+            ax.spines['bottom'].set_color('#94a3b8')
+            ax.spines['left'].set_linewidth(0.6)
+            ax.spines['bottom'].set_linewidth(0.6)
+            ax.set_title('Sequence Logo', fontsize=11, fontweight='600',
+                         color='#0f172a', pad=10, loc='left')
 
-                    ax.bar(i, height, bottom=bottom, color=colors[base],
-                          width=0.9, edgecolor='white', linewidth=0.5)
+            from io import StringIO as _SIO
+            buf = _SIO()
+            fig.savefig(buf, format='svg', bbox_inches='tight',
+                        facecolor='white', pad_inches=0.2)
+            plt.close(fig)
+            return 'data:image/svg+xml;base64,' + \
+                base64.b64encode(buf.getvalue().encode('utf-8')).decode()
 
-                    # Add letter in center of bar if tall enough
-                    if height > 0.15:
-                        ax.text(i, bottom + height/2, base,
-                               ha='center', va='center', fontsize=14,
-                               fontweight='bold', color='white')
+        except ImportError:
+            # Fallback: stacked bar chart with lettered segments — better
+            # contrast than the previous version (dark letter on white
+            # boxes instead of white letter on saturated color).
+            colors = {'A': '#059669', 'C': '#2563eb',
+                      'G': '#ca8a04', 'T': '#dc2626'}
+            fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            for i in range(len(m)):
+                base_freqs = [(b, pwm[b][i]) for b in alphabet_list]
+                base_freqs.sort(key=lambda x: x[1])
+                bottom = 0
+                for base, freq in base_freqs:
+                    if freq <= 0.01:
+                        continue
+                    h = freq * ic_per_pos[i] if use_information_content else freq
+                    ax.bar(i, h, bottom=bottom, color=colors[base],
+                           width=0.9, edgecolor='white', linewidth=0.5)
+                    if h > 0.18:
+                        ax.text(i, bottom + h / 2, base,
+                                ha='center', va='center', fontsize=13,
+                                fontweight='700', color='white')
+                    bottom += h
+            ax.set_xlabel('Position', fontsize=9, color='#334155')
+            ax.set_ylabel('Bits' if use_information_content else 'Frequency',
+                          fontsize=9, color='#334155')
+            ax.set_xticks(range(len(m)))
+            ax.set_xticklabels([str(i + 1) for i in range(len(m))])
+            ax.tick_params(axis='both', labelsize=8, colors='#64748b')
+            ax.set_ylim(0, 2.05 if use_information_content else 1.02)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#94a3b8')
+            ax.spines['bottom'].set_color('#94a3b8')
+            ax.set_title('Sequence Logo', fontsize=11, fontweight='600',
+                         color='#0f172a', pad=10, loc='left')
+            buf = BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight',
+                        facecolor='white', dpi=150, pad_inches=0.2)
+            plt.close(fig)
+            return 'data:image/png;base64,' + \
+                base64.b64encode(buf.getvalue()).decode()
 
-                    bottom += height
-
-        # Style the plot
-        ax.set_xlabel('Position', fontsize=12, fontweight='bold')
-        if use_information_content:
-            ax.set_ylabel('Information Content (bits)', fontsize=12, fontweight='bold')
-            ax.set_ylim(0, 2.1)
-        else:
-            ax.set_ylabel('Frequency', fontsize=12, fontweight='bold')
-            ax.set_ylim(0, 1.1)
-
-        ax.set_title('Sequence Logo', fontsize=14, fontweight='bold', pad=15)
-        ax.set_xticks(positions)
-        ax.set_xticklabels([str(i+1) for i in positions])
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
-
-        # Save to base64
-        img_buffer = BytesIO()
-        plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150, facecolor='white')
-        img_buffer.seek(0)
-        logo_base64 = base64.b64encode(img_buffer.getvalue()).decode()
-        plt.close()
-
-        return logo_base64
-    except Exception as e:
+    except Exception:
         return None

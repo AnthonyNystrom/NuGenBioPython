@@ -79,12 +79,12 @@ document.getElementById('orfForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayORFs(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('orfBtn', '<i class="fas fa-search me-2"></i>Find ORFs');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -129,7 +129,7 @@ function displayORFs(data) {
             '<td>' + orf.frame + '</td>' +
             '<td>' + orf.strand + '</td>' +
             '<td>' + orf.protein_length + ' aa</td>' +
-            '<td><button class="btn btn-sm btn-outline-primary" data-action="showORFDetails" data-action-args="[' + index + ']">View</button></td>' +
+            '<td><button class="btn-app-sm btn-app-secondary" data-action="showORFDetails" data-action-args="[' + index + ']">View</button></td>' +
         '</tr>';
     });
     details += '</tbody></table></div>';
@@ -228,12 +228,12 @@ document.getElementById('createFeatureForm').addEventListener('submit', function
         if (data.success) {
             displayCreatedFeature(data.feature);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('createBtn', '<i class="fas fa-plus me-2"></i>Create Feature');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -298,12 +298,12 @@ document.getElementById('parseForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayParsedFeatures(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('parseBtn', '<i class="fas fa-file-import me-2"></i>Parse Features');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -401,12 +401,12 @@ document.getElementById('extractForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayExtractedFeature(data.feature);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('extractBtn', '<i class="fas fa-cut me-2"></i>Extract Feature');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -500,12 +500,12 @@ document.getElementById('compoundForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayCompoundFeature(data.compound_feature);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('compoundBtn', '<i class="fas fa-layer-group me-2"></i>Create Compound Feature');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -628,12 +628,12 @@ document.getElementById('annotateForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayAnnotatedSequence(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('annotateSubmitBtn', '<i class="fas fa-file-export me-2"></i>Generate GenBank File');
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 

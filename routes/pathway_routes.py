@@ -4,10 +4,17 @@ Supports: Reaction, System, Network, MultiGraph
 """
 from flask import Blueprint, request, jsonify
 import base64
+import math
 from io import BytesIO
 import json
 
+import matplotlib.patches as mpatches
+
 from dependencies import Pathway, plt, np
+from utils.plot_helpers import (
+    ROLE_COLORS, EDGE_COLOR, TITLE_COLOR, LABEL_COLOR,
+    figure_to_svg_data_url, set_title,
+)
 
 bp = Blueprint('pathway', __name__, url_prefix='/api')
 
@@ -172,68 +179,130 @@ def visualize_pathway():
         if not reactions_data:
             return jsonify({'success': False, 'error': 'No reactions provided'})
 
-        # Build network graph for visualization
         import networkx as nx
 
         G = nx.DiGraph()
-
-        # Add nodes and edges
         for rxn_data in reactions_data:
             for reactant in rxn_data['reactants'].keys():
-                G.add_node(reactant, node_type='species')
-
+                G.add_node(reactant)
             for product in rxn_data['products'].keys():
-                G.add_node(product, node_type='species')
-
-            # Add edges
+                G.add_node(product)
             for reactant in rxn_data['reactants'].keys():
                 for product in rxn_data['products'].keys():
                     G.add_edge(reactant, product,
-                             reaction=rxn_data['name'],
-                             reversible=rxn_data['reversible'])
+                               reaction=rxn_data['name'],
+                               reversible=rxn_data.get('reversible', False))
 
-        # Create visualization
-        plt.figure(figsize=(12, 8))
-        pos = nx.spring_layout(G, k=2, iterations=50)
+        if G.number_of_nodes() == 0:
+            return jsonify({'success': False,
+                            'error': 'No species extracted from reactions'})
 
-        # Draw nodes
-        node_colors = []
+        # Classify nodes
+        node_roles = {}
         for node in G.nodes():
-            in_degree = G.in_degree(node)
-            out_degree = G.out_degree(node)
-
-            if in_degree == 0 and out_degree > 0:
-                node_colors.append('lightgreen')  # Source
-            elif out_degree == 0 and in_degree > 0:
-                node_colors.append('lightcoral')  # Sink
+            in_deg = G.in_degree(node)
+            out_deg = G.out_degree(node)
+            if in_deg == 0 and out_deg > 0:
+                node_roles[node] = 'source'
+            elif out_deg == 0 and in_deg > 0:
+                node_roles[node] = 'sink'
             else:
-                node_colors.append('lightblue')  # Intermediate
+                node_roles[node] = 'intermediate'
 
-        nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=3000, alpha=0.9)
-        nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold')
+        # Pick a layout that matches graph size. Kamada-Kawai gives cleaner
+        # results for small-to-medium graphs; spring scales better past ~40
+        # nodes. Graphviz "dot" would be ideal for flow diagrams but needs a
+        # native binary, so we avoid that dependency.
+        n = G.number_of_nodes()
+        try:
+            if n <= 40:
+                pos = nx.kamada_kawai_layout(G)
+            else:
+                pos = nx.spring_layout(G, k=1.5 / math.sqrt(n),
+                                       iterations=80, seed=42)
+        except Exception:
+            pos = nx.spring_layout(G, seed=42)
 
-        # Draw edges
-        nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True,
-                              arrowsize=20, arrowstyle='->', width=2, alpha=0.6)
+        # Figure size scales with node count; wider for more nodes, taller
+        # for tall paths.
+        fig_w = max(9, min(20, 6 + math.sqrt(n) * 1.5))
+        fig_h = max(6, min(14, 4 + math.sqrt(n) * 1.1))
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
 
-        plt.title('Pathway Network Visualization', fontsize=16, fontweight='bold')
-        plt.axis('off')
-        plt.tight_layout()
+        # Node sizes grow with label length so text fits.
+        max_label = max((len(str(node)) for node in G.nodes()), default=8)
+        node_size = max(1400, min(4200, 380 * max_label))
 
-        # Save to buffer
-        img_buffer = BytesIO()
-        plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150, facecolor='white')
-        img_buffer.seek(0)
-        img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
-        plt.close()
+        # Draw edges first so nodes sit on top. Bent edges help readability
+        # on dense graphs.
+        node_colors = [ROLE_COLORS[node_roles[n]] for n in G.nodes()]
+        # Curve bidirectional pairs in opposite directions to avoid overlap.
+        bidirectional = set()
+        for u, v in G.edges():
+            if G.has_edge(v, u) and (v, u) not in bidirectional:
+                bidirectional.add((u, v))
+
+        for u, v, attrs in G.edges(data=True):
+            rad = 0.15 if (u, v) in bidirectional or (v, u) in bidirectional else 0.05
+            nx.draw_networkx_edges(
+                G, pos, edgelist=[(u, v)], ax=ax,
+                edge_color='#94a3b8',
+                arrows=True, arrowsize=14, arrowstyle='-|>',
+                width=1.3, alpha=0.75,
+                connectionstyle=f'arc3,rad={rad}',
+                node_size=node_size,
+            )
+
+        nx.draw_networkx_nodes(
+            G, pos, ax=ax,
+            node_color=node_colors,
+            node_size=node_size,
+            edgecolors=EDGE_COLOR, linewidths=0.8, alpha=0.95,
+        )
+        nx.draw_networkx_labels(
+            G, pos, ax=ax,
+            font_size=9, font_color='white', font_weight='600',
+        )
+
+        # Edge labels: only when graph is small enough for them to be legible.
+        if G.number_of_edges() <= 20:
+            edge_labels = {(u, v): d.get('reaction', '') for u, v, d in G.edges(data=True)}
+            nx.draw_networkx_edge_labels(
+                G, pos, ax=ax, edge_labels=edge_labels,
+                font_size=7, font_color=LABEL_COLOR,
+                bbox=dict(boxstyle='round,pad=0.15',
+                          fc='white', ec='none', alpha=0.85),
+            )
+
+        # Legend
+        legend_items = []
+        for role, color in [('source', ROLE_COLORS['source']),
+                            ('intermediate', ROLE_COLORS['intermediate']),
+                            ('sink', ROLE_COLORS['sink'])]:
+            if any(r == role for r in node_roles.values()):
+                legend_items.append(
+                    mpatches.Patch(facecolor=color, edgecolor=EDGE_COLOR,
+                                   linewidth=0.5, label=role.title()))
+        if legend_items:
+            ax.legend(handles=legend_items, loc='upper left',
+                      frameon=False, fontsize=9, labelcolor=LABEL_COLOR)
+
+        set_title(ax, 'Pathway Network', pad=14)
+        # Extra margin so node labels at the extremes don't clip.
+        ax.margins(0.18)
+        ax.set_axis_off()
+
+        graph_image = figure_to_svg_data_url(fig)
 
         return jsonify({
             'success': True,
             'visualization': {
-                'graph_image': f'data:image/png;base64,{img_base64}',
+                'graph_image': graph_image,
                 'node_count': G.number_of_nodes(),
                 'edge_count': G.number_of_edges(),
-                'graph_type': 'Directed Graph'
+                'graph_type': 'Directed Graph',
+                'sources': [n for n, r in node_roles.items() if r == 'source'],
+                'sinks': [n for n, r in node_roles.items() if r == 'sink'],
             }
         })
 

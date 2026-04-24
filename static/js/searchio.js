@@ -24,7 +24,7 @@ document.getElementById('parseForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayParseResults(data.results, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -117,7 +117,7 @@ document.getElementById('readForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayReadResults(data.result);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -195,7 +195,7 @@ document.getElementById('indexForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayIndexResults(data.results);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -266,7 +266,7 @@ document.getElementById('convertForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayConvertResults(data.result);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -335,7 +335,7 @@ document.getElementById('filterForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayFilterResults(data.results, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -422,7 +422,7 @@ document.getElementById('writeForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             displayWriteResults(data.result);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -473,7 +473,7 @@ function loadFormats() {
         if (data.success) {
             displayFormats(data.formats);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
@@ -877,6 +877,6 @@ function loadWriteExample() {
         .catch(error => {
             hideLoading('writeBtn', '<i class="fas fa-file-export me-2"></i>Write Output');
             document.getElementById('writeResults').innerHTML =
-                `<div class="alert alert-danger small mb-0">Error: ${error.message}</div>`;
+                `<div class="alert alert-danger small mb-0">${escapeHtml(friendlyError(error, 'server'))}</div>`;
         });
 }

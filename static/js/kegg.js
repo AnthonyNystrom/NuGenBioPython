@@ -22,12 +22,12 @@ document.getElementById('searchForm').addEventListener('submit', function(e) {
             document.getElementById('searchCount').textContent = data.count + ' results';
             document.getElementById('searchCount').style.display = 'inline-block';
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'kegg'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('searchBtn', '<i class="fas fa-search me-2"></i>Search KEGG');
-        showAlert('Error: ' + error);
+        showAlert(friendlyError(error, 'kegg'), 'warning');
     });
 });
 
@@ -39,7 +39,7 @@ function displaySearchResults(results, count) {
     }
     _keggRenderTableCard('searchResults', 'KEGG Search', results, count,
         ['ID', 'Definition', 'Actions'],
-        r => [`<code>${r.id}</code>`, r.definition || '', `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`]);
+        r => [`<code>${r.id}</code>`, r.definition || '', `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`]);
 }
 
 function loadSearchExample() {
@@ -68,12 +68,12 @@ document.getElementById('listForm').addEventListener('submit', function(e) {
             document.getElementById('listCount').textContent = data.displayed + ' of ' + data.total + ' entries';
             document.getElementById('listCount').style.display = 'inline-block';
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'kegg'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('listBtn', '<i class="fas fa-list me-2"></i>List Entries');
-        showAlert('Error: ' + error);
+        showAlert(friendlyError(error, 'kegg'), 'warning');
     });
 });
 
@@ -85,7 +85,7 @@ function displayListResults(results, total, displayed) {
     }
     _keggRenderTableCard('listResults', 'KEGG List', results, displayed,
         ['ID', 'Definition', 'Actions'],
-        r => [`<code>${r.id}</code>`, r.definition || 'N/A', `<button class="btn btn-sm gradient-btn-info" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`],
+        r => [`<code>${r.id}</code>`, r.definition || 'N/A', `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`],
         `${displayed} of ${total}`);
 }
 
@@ -149,12 +149,12 @@ document.getElementById('linkForm').addEventListener('submit', function(e) {
             document.getElementById('linkCount').textContent = data.count + ' links';
             document.getElementById('linkCount').style.display = 'inline-block';
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'kegg'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('linkBtn', '<i class="fas fa-link me-2"></i>Find Links');
-        showAlert('Error: ' + error);
+        showAlert(friendlyError(error, 'kegg'), 'warning');
     });
 });
 
@@ -167,7 +167,7 @@ function displayLinkResults(results, count) {
     _keggRenderTableCard('linkResults', 'KEGG Links', results, count,
         ['Source', 'Target', 'Actions'],
         r => [`<code>${r.source}</code>`, `<code>${r.target}</code>`,
-              `<button class="btn btn-sm btn-outline-primary" onclick="viewEntry('${r.target}')"><i class="fas fa-eye"></i></button>`]);
+              `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.target}')"><i class="fas fa-eye"></i></button>`]);
 }
 
 function loadLinkExample() {
@@ -196,12 +196,12 @@ document.getElementById('convertForm').addEventListener('submit', function(e) {
             document.getElementById('convertCount').textContent = data.count + ' conversions';
             document.getElementById('convertCount').style.display = 'inline-block';
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'kegg'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('convertBtn', '<i class="fas fa-exchange-alt me-2"></i>Convert IDs');
-        showAlert('Error: ' + error);
+        showAlert(friendlyError(error, 'kegg'), 'warning');
     });
 });
 
@@ -238,12 +238,12 @@ document.getElementById('infoForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayInfoResults(data.info, data.database);
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'kegg'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('infoBtn', '<i class="fas fa-info-circle me-2"></i>Get Database Info');
-        showAlert('Error: ' + error);
+        showAlert(friendlyError(error, 'kegg'), 'warning');
     });
 });
 
@@ -278,11 +278,13 @@ function viewEntry(entryId) {
         if (data.success) {
             displayEntryInModal(data);
         } else {
-            document.getElementById('entryModalContent').innerHTML = '<div class="alert alert-danger">Error: ' + data.error + '</div>';
+            document.getElementById('entryModalContent').innerHTML =
+                '<div class="alert alert-danger">' + escapeHtml(friendlyError(data.error, 'kegg')) + '</div>';
         }
     })
     .catch(error => {
-        document.getElementById('entryModalContent').innerHTML = '<div class="alert alert-danger">Error: ' + error + '</div>';
+        document.getElementById('entryModalContent').innerHTML =
+            '<div class="alert alert-danger">' + escapeHtml(friendlyError(error, 'kegg')) + '</div>';
     });
 }
 

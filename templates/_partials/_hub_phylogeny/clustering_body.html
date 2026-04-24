@@ -1,4 +1,4 @@
-{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-3">
     <div class="col-12">
         <h2 class="text-info">
@@ -142,10 +142,10 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-3" id="clusterBtn">
+                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-3" id="clusterBtn">
                         <i class="fas fa-project-diagram"></i> Perform Clustering
                     </button>
-                    {{ load_example_btn("loadClusteringExample", label="Load Example", icon_spacing="") }}
+                    {{ load_example_pair("loadClusteringExample", "loadClusteringExampleComplex", simple_label="4×3 matrix", complex_label="10×5 gene expr.") }}
                 </form>
             </div>
         </div>
@@ -191,7 +191,7 @@
     </div>
 </div>
 
-<div class="row mt-3">
+<div class="row mt-3 results-row">
     <div class="col-12" id="clusteringCard"></div>
 </div>
 

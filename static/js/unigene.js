@@ -32,12 +32,12 @@ document.getElementById('parseForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayParseResults(data.records, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'unigene'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('parseBtn', '<i class="fas fa-list me-2"></i>Parse Records');
-        showAlert('Error parsing file: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'unigene'), 'danger');
     });
 });
 
@@ -68,12 +68,12 @@ document.getElementById('readForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayReadResults(data.record);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'unigene'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('readBtn', '<i class="fas fa-book-open me-2"></i>Read Record');
-        showAlert('Error reading file: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'unigene'), 'danger');
     });
 });
 
@@ -441,12 +441,12 @@ STS         ACC=G34567; UNISTS=34567
         if (data.success) {
             displayParseResults(data.records, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'unigene'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('parseBtn', '<i class="fas fa-list me-2"></i>Parse Records');
-        showAlert('Error loading example: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'unigene'), 'danger');
     });
 }
 
@@ -498,11 +498,11 @@ STS         ACC=G12345; UNISTS=12345
         if (data.success) {
             displayReadResults(data.record);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'unigene'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('readBtn', '<i class="fas fa-book-open me-2"></i>Read Record');
-        showAlert('Error loading example: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'unigene'), 'danger');
     });
 }

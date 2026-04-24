@@ -2,11 +2,7 @@
 
 {% block title %}SwissProt/UniProt Parser - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #swissprotTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #swissprotTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-warning mb-1"><i class="fas fa-university"></i> SwissProt/UniProt Parser</h2>
@@ -15,12 +11,12 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;">
+    <div class="card-header" >
         <div class="d-flex" id="swissprotTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+            <button class="nav-link active" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
                 <i class="fas fa-list d-block mb-1"></i><small>Parse Multiple</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
+            <button class="nav-link" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
                 <i class="fas fa-book-open d-block mb-1"></i><small>Read Single</small>
             </button>
         </div>
@@ -49,10 +45,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="parseBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-2" id="parseBtn">
                                         <i class="fas fa-list me-2"></i>Parse Records
                                     </button>
-                                    {{ load_example_btn("loadParseExample") }}
+                                    {{ load_example_pair("loadParseExample", "loadParseExampleComplex", simple_label="Single record", complex_label="Multi-record (ALB + HBB)") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -88,7 +84,7 @@
                                         <label class="form-label small mb-0">SwissProt File (Single Record)</label>
                                         <input type="file" class="form-control form-control-sm" id="readFile" accept=".dat,.swiss,.sp">
                                     </div>
-                                    <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="readBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-2" id="readBtn">
                                         <i class="fas fa-book-open me-2"></i>Read Record
                                     </button>
                                     {{ load_example_btn("loadReadExample") }}

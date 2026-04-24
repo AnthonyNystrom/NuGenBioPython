@@ -2,11 +2,7 @@
 
 {% block title %}Pathway Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #pathwayTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #pathwayTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 
 <div class="row mb-2">
     <div class="col-12">
@@ -18,24 +14,24 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="pathwayTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link active"
                     id="reactions-tab" data-bs-toggle="tab" data-bs-target="#reactions" type="button">
                 <i class="fas fa-flask d-block mb-1"></i>
                 <small>Reaction Builder</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button">
                 <i class="fas fa-cogs d-block mb-1"></i>
                 <small>System Analysis</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="network-tab" data-bs-toggle="tab" data-bs-target="#network" type="button">
                 <i class="fas fa-network-wired d-block mb-1"></i>
                 <small>Network Analysis</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button">
                 <i class="fas fa-eye d-block mb-1"></i>
                 <small>Visualization</small>
@@ -65,7 +61,7 @@
                                         <div class="col-md-6">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label small mb-0"><strong>Reactants</strong></label>
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                <button type="button" class="btn-app-sm btn-app-secondary"
                                                         data-action="addReactant">
                                                     <i class="fas fa-plus"></i> Add
                                                 </button>
@@ -80,7 +76,7 @@
                                         <div class="col-md-6">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label class="form-label small mb-0"><strong>Products</strong></label>
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                <button type="button" class="btn-app-sm btn-app-secondary"
                                                         data-action="addProduct">
                                                     <i class="fas fa-plus"></i> Add
                                                 </button>
@@ -96,7 +92,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Catalysts (Optional)</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addCatalyst">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
@@ -116,11 +112,11 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-plus"></i> Add Reaction to System
                                     </button>
-                                    {{ load_example_btn("loadReactionExample", label="Load Example", extra="mb-2", icon_spacing="") }}
-                                    <button type="button" class="gradient-btn-small w-100"
+                                    {{ load_example_pair("loadReactionExample", "loadReactionExampleComplex", simple_label="3 reactions", complex_label="Glycolysis (8 rxns)") }}
+                                    <button type="button" class="btn-app-secondary btn-app-sm w-100"
                                             data-action="clearReactions">
                                         <i class="fas fa-trash"></i> Clear All Reactions
                                     </button>
@@ -156,7 +152,7 @@
                         <div class="card mb-3">
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Analyze the complete reaction system using Bio.Pathway.System</p>
-                                <button type="button" class="gradient-btn-primary"
+                                <button type="button" class="btn-app-primary"
                                         data-action="analyzeSystem" id="analyzeSystemBtn">
                                     <i class="fas fa-calculator"></i> Analyze System
                                 </button>
@@ -191,7 +187,7 @@
                         <div class="card mb-3">
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Analyze network structure using Bio.Pathway.Network - identify sources, sinks, and interactions</p>
-                                <button type="button" class="gradient-btn-primary"
+                                <button type="button" class="btn-app-primary"
                                         data-action="analyzeNetwork" id="analyzeNetworkBtn">
                                     <i class="fas fa-project-diagram"></i> Analyze Network
                                 </button>
@@ -226,7 +222,7 @@
                         <div class="card mb-3">
                             <div class="card-body p-3 text-center">
                                 <p class="mb-3">Generate pathway visualization using Bio.Pathway.MultiGraph</p>
-                                <button type="button" class="gradient-btn-primary"
+                                <button type="button" class="btn-app-primary"
                                         data-action="generateVisualization" id="generateVizBtn">
                                     <i class="fas fa-eye"></i> Generate Visualization
                                 </button>
@@ -255,19 +251,19 @@
                                 <p class="small mb-3">Export pathway in various formats:</p>
 
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-primary btn-sm"
+                                    <button class="btn-app-secondary btn-app-sm"
                                             onclick="exportPathway('json')">
                                         <i class="fas fa-file-code"></i> Export as JSON
                                     </button>
-                                    <button class="btn btn-outline-success btn-sm"
+                                    <button class="btn-app-secondary btn-app-sm"
                                             onclick="exportPathway('graphml')">
                                         <i class="fas fa-project-diagram"></i> Export as GraphML
                                     </button>
-                                    <button class="btn btn-outline-info btn-sm"
+                                    <button class="btn-app-secondary btn-app-sm"
                                             onclick="exportPathway('dot')">
                                         <i class="fas fa-circle-notch"></i> Export as DOT
                                     </button>
-                                    <button class="btn btn-outline-secondary btn-sm"
+                                    <button class="btn-app-secondary btn-app-sm"
                                             onclick="exportPathway('txt')">
                                         <i class="fas fa-file-alt"></i> Export as Text
                                     </button>

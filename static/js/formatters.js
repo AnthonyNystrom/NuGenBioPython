@@ -327,7 +327,7 @@
         if (sequence) {
             const chunks = sequence.match(/.{1,60}/g) || [];
             html += '<details><summary><strong>Sequence</strong> <span class="text-muted small">(' + sequence.length + ' bp/aa)</span></summary>';
-            html += '<pre class="mt-2 p-2 border rounded small" style="max-height:400px; overflow:auto; font-size:11px; background:#f8fafc; line-height:1.4;">' +
+            html += '<pre class="code-block mt-2" style="max-height:400px; overflow:auto; font-size:11px; line-height:1.4;">' +
                 esc(chunks.join('\n')) + '</pre></details>';
         }
 
@@ -351,13 +351,13 @@
             out.push(PADDING.repeat(Math.max(0, pad)) + node);
             pad += indent;
         });
-        // Color tags
+        // Color tags (classes resolve to theme-aware colors in app.css)
         const colored = out.map(function (line) {
             return esc(line)
-                .replace(/&lt;(\/?\w[\w:-]*)/g, '&lt;<span style="color:#0284c7">$1</span>')
-                .replace(/(\w+)=&quot;([^&]*)&quot;/g, '<span style="color:#b45309">$1</span>=<span style="color:#15803d">&quot;$2&quot;</span>');
+                .replace(/&lt;(\/?\w[\w:-]*)/g, '&lt;<span class="xml-tag">$1</span>')
+                .replace(/(\w+)=&quot;([^&]*)&quot;/g, '<span class="xml-attr">$1</span>=<span class="xml-value">&quot;$2&quot;</span>');
         }).join('\n');
-        return '<pre class="p-3 border rounded small" style="max-height:500px; overflow:auto; font-size:11px; background:#f8fafc; line-height:1.4">' + colored + '</pre>';
+        return '<pre class="code-block" style="max-height:500px; overflow:auto; font-size:11px; line-height:1.4">' + colored + '</pre>';
     }
 
     // --- FASTA / sequence-text records ----------------------------------
@@ -462,10 +462,10 @@
         const joinedQ = query.join('');
         const width = 60;
         let html = '<div class="mb-2 small text-muted">Legend: ' +
-            '<span style="background:#d1fae5;padding:0 4px;border-radius:2px">match</span> ' +
-            '<span style="background:#fee2e2;padding:0 4px;border-radius:2px">mismatch</span> ' +
-            '<span style="background:#e5e7eb;padding:0 4px;border-radius:2px">gap</span></div>';
-        html += '<pre class="p-3 border rounded small font-monospace" style="max-height:500px; overflow:auto; background:#ffffff; line-height:1.4">';
+            '<span class="align-match">match</span> ' +
+            '<span class="align-mismatch">mismatch</span> ' +
+            '<span class="align-gap">gap</span></div>';
+        html += '<pre class="code-block font-monospace" style="max-height:500px; overflow:auto; line-height:1.4">';
         for (let pos = 0; pos < joinedT.length; pos += width) {
             const tChunk = joinedT.slice(pos, pos + width);
             const qChunk = joinedQ.slice(pos, pos + width);
@@ -474,12 +474,12 @@
             for (let i = 0; i < tChunk.length; i++) {
                 const tc = tChunk[i];
                 const qc = qChunk[i] || ' ';
-                let bg = '';
-                if (tc === '-' || qc === '-') bg = '#e5e7eb';
-                else if (tc === qc) bg = '#d1fae5';
-                else bg = '#fee2e2';
-                tRow += '<span style="background:' + bg + '">' + esc(tc) + '</span>';
-                qRow += '<span style="background:' + bg + '">' + esc(qc) + '</span>';
+                let cls = '';
+                if (tc === '-' || qc === '-') cls = 'align-gap';
+                else if (tc === qc) cls = 'align-match';
+                else cls = 'align-mismatch';
+                tRow += '<span class="' + cls + '">' + esc(tc) + '</span>';
+                qRow += '<span class="' + cls + '">' + esc(qc) + '</span>';
             }
             const label = String(pos + 1).padStart(6, ' ');
             html += esc(label) + ' ' + tRow + '\n' + '       ' + qRow + '\n\n';

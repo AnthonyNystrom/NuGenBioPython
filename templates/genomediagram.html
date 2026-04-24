@@ -2,11 +2,7 @@
 
 {% block title %}Genome Diagrams - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #genomeDiagramTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #genomeDiagramTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 
 <div class="row mb-2">
     <div class="col-12">
@@ -18,29 +14,29 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="genomeDiagramTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link active"
                     id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button">
                 <i class="fas fa-chart-area d-block mb-1"></i>
                 <small>Basic Diagram</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="multitrack-tab" data-bs-toggle="tab" data-bs-target="#multitrack" type="button">
                 <i class="fas fa-layer-group d-block mb-1"></i>
                 <small>Multi-Track</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="datatracks-tab" data-bs-toggle="tab" data-bs-target="#datatracks" type="button">
                 <i class="fas fa-chart-line d-block mb-1"></i>
                 <small>Data Tracks</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
                 <i class="fas fa-magic d-block mb-1"></i>
                 <small>Advanced</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button">
                 <i class="fas fa-download d-block mb-1"></i>
                 <small>Export</small>
@@ -107,7 +103,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Genomic Features</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addFeature">
                                                 <i class="fas fa-plus"></i> Add Feature
                                             </button>
@@ -117,11 +113,11 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createBasicDiagramBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="createBasicDiagramBtn">
                                         <i class="fas fa-chart-area"></i> Create Diagram
                                     </button>
-                                    {{ load_example_btn("loadBasicExample", label="Load Example", extra="mb-2", icon_spacing="") }}
-                                    <button type="button" class="gradient-btn-small w-100"
+                                    {{ load_example_pair("loadBasicExample", "loadBasicExampleComplexGenome", simple_label="Short", complex_label="pUC19 plasmid (12 features)") }}
+                                    <button type="button" class="btn-app-secondary btn-app-sm w-100"
                                             data-action="clearFeatures">
                                         <i class="fas fa-trash"></i> Clear Features
                                     </button>
@@ -210,7 +206,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Tracks</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addTrack">
                                                 <i class="fas fa-plus"></i> Add Track
                                             </button>
@@ -220,11 +216,11 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createMultiTrackBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="createMultiTrackBtn">
                                         <i class="fas fa-layer-group"></i> Create Multi-Track Diagram
                                     </button>
                                     {{ load_example_btn("loadMultiTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
-                                    <button type="button" class="gradient-btn-small w-100"
+                                    <button type="button" class="btn-app-secondary btn-app-sm w-100"
                                             data-action="clearTracks">
                                         <i class="fas fa-trash"></i> Clear Tracks
                                     </button>
@@ -292,7 +288,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Data Graphs</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addDataGraph">
                                                 <i class="fas fa-plus"></i> Add Graph
                                             </button>
@@ -302,11 +298,11 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createDataTracksBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="createDataTracksBtn">
                                         <i class="fas fa-chart-line"></i> Create Data Tracks
                                     </button>
                                     {{ load_example_btn("loadDataTrackExample", label="Load Example", extra="mb-2", icon_spacing="") }}
-                                    <button type="button" class="gradient-btn-small w-100"
+                                    <button type="button" class="btn-app-secondary btn-app-sm w-100"
                                             data-action="clearDataGraphs">
                                         <i class="fas fa-trash"></i> Clear Graphs
                                     </button>
@@ -373,7 +369,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>Features (with sigils, strands, labels)</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addAdvancedFeature">
                                                 <i class="fas fa-plus"></i> Add Feature
                                             </button>
@@ -388,7 +384,7 @@
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <label class="form-label small mb-0"><strong>CrossLinks (connect features across tracks)</strong></label>
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn-app-sm btn-app-secondary"
                                                     data-action="addCrossLink">
                                                 <i class="fas fa-plus"></i> Add CrossLink
                                             </button>
@@ -398,11 +394,11 @@
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="createAdvancedBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="createAdvancedBtn">
                                         <i class="fas fa-magic"></i> Create Advanced Diagram
                                     </button>
-                                    {{ load_example_btn("loadAdvancedExample", label="Load Example", extra="mb-2", icon_spacing="") }}
-                                    <button type="button" class="gradient-btn-small w-100"
+                                    {{ load_example_pair("loadAdvancedExample", "loadAdvancedExampleComplexGenome", simple_label="Minimal", complex_label="E.coli operons (17 features)") }}
+                                    <button type="button" class="btn-app-secondary btn-app-sm w-100"
                                             onclick="clearAdvancedFeatures(); clearCrossLinks()">
                                         <i class="fas fa-trash"></i> Clear All
                                     </button>
@@ -440,16 +436,16 @@
                                 <p class="small mb-3">Export the current diagram in various formats:</p>
 
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-outline-primary" onclick="exportDiagram('png')" id="exportBtn">
+                                    <button class="btn-app-secondary" onclick="exportDiagram('png')" id="exportBtn">
                                         <i class="fas fa-file-image"></i> Export as PNG
                                     </button>
-                                    <button class="btn btn-outline-success" onclick="exportDiagram('svg')">
+                                    <button class="btn-app-secondary" onclick="exportDiagram('svg')">
                                         <i class="fas fa-vector-square"></i> Export as SVG (Vector)
                                     </button>
-                                    <button class="btn btn-outline-danger" onclick="exportDiagram('pdf')">
+                                    <button class="btn-app-danger" onclick="exportDiagram('pdf')">
                                         <i class="fas fa-file-pdf"></i> Export as PDF
                                     </button>
-                                    <button class="btn btn-outline-secondary" onclick="exportDiagram('eps')">
+                                    <button class="btn-app-secondary" onclick="exportDiagram('eps')">
                                         <i class="fas fa-file-code"></i> Export as EPS (PostScript)
                                     </button>
                                 </div>

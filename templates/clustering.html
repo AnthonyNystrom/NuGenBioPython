@@ -2,7 +2,7 @@
 
 {% block title %}Clustering Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-3">
     <div class="col-12">
         <h2 class="text-info">
@@ -146,10 +146,10 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="gradient-btn-info w-100 mb-2 mt-3" id="clusterBtn">
+                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-3" id="clusterBtn">
                         <i class="fas fa-project-diagram"></i> Perform Clustering
                     </button>
-                    {{ load_example_btn("loadClusteringExample", label="Load Example", icon_spacing="") }}
+                    {{ load_example_pair("loadClusteringExample", "loadClusteringExampleComplex", simple_label="4×3 matrix", complex_label="10×5 gene expr.") }}
                 </form>
             </div>
         </div>
@@ -763,7 +763,7 @@ function displayClusterVisualization(results, method, sampleNames = []) {
                         <div class="p-3">
                             <div style="max-height: 200px; overflow-y: auto;">
                                 ${samples.map((s, i) => `
-                                    <div class="d-flex align-items-center py-1 ${i > 0 ? 'border-top' : ''}" style="border-color: rgba(0,0,0,0.05) !important;">
+                                    <div class="d-flex align-items-center py-1 ${i > 0 ? 'border-top' : ''}" style="border-color: var(--color-border) !important;">
                                         <span class="text-muted me-2" style="font-size: 11px; min-width: 20px;">${s.index}</span>
                                         <span style="font-size: 13px; font-weight: 500;">${s.name}</span>
                                     </div>

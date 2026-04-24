@@ -65,13 +65,13 @@ function handleFileUpload(event, targetTextareaId, infoId) {
 
             showAlert(`File loaded: ${data.filename} (${info.length.toLocaleString()} bp)`, 'success');
         } else {
-            infoDiv.innerHTML = `<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${data.error}</small>`;
-            showAlert('Error loading file: ' + data.error, 'danger');
+            infoDiv.innerHTML = `<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${escapeHtml(friendlyError(data.error, 'server'))}</small>`;
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         infoDiv.innerHTML = `<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Upload failed</small>`;
-        showAlert('Upload error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -117,12 +117,12 @@ function loadBasicEnzymeList() {
             availableEnzymes = data.enzymes;
             displayBasicEnzymeCheckboxes(data.enzymes);
         } else {
-            showAlert('Failed to load enzymes: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
             loadFallbackEnzymes();
         }
     })
     .catch(error => {
-        showAlert('Error loading restriction enzymes: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
         loadFallbackEnzymes();
     });
 }
@@ -230,13 +230,27 @@ function handleBasicAnalysis(e) {
             lastSequence = sequence;
             displayBasicResults(data.analysis, sequence.length);
             document.getElementById('exportBasicBtn').style.display = 'block';
+            // D20 flattening: prime the Map tab with the same sequence + enzymes
+            // so jumping to Map view is one click (no re-entry). Same for Advanced.
+            const mapSeq = document.getElementById('mapSequence');
+            const mapEnz = document.getElementById('mapEnzymes');
+            if (mapSeq && !mapSeq.value.trim()) mapSeq.value = sequence;
+            if (mapEnz && !mapEnz.value.trim()) mapEnz.value = checkedEnzymes.join(', ');
+            const advSeq = document.getElementById('advancedSequence');
+            if (advSeq && !advSeq.value.trim()) advSeq.value = sequence;
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
+                ResultsCard.showError('basicResults', { title: 'Restriction analysis failed', message: data.error });
+            }
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('basicAnalyzeBtn', '<i class="fas fa-cut me-2"></i>Analyze Restriction Sites');
-        showAlert('Network error: ' + error.message, 'danger');
+        if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
+            ResultsCard.showError('basicResults', { title: 'Request failed', message: friendlyError(error, 'server') });
+        }
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -433,12 +447,12 @@ function handleAdvancedAnalysis(e) {
         if (data.success) {
             displayAdvancedResults(data.result);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('advancedAnalyzeBtn', '<i class="fas fa-filter me-2"></i>Run Advanced Analysis');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -534,11 +548,11 @@ function loadEnzymeBrowser() {
         if (data.success) {
             displayEnzymeBrowser(data.enzymes);
         } else {
-            resultsDiv.innerHTML = `<p class="text-danger small">Error: ${data.error}</p>`;
+            resultsDiv.innerHTML = `<p class="text-danger small">${escapeHtml(friendlyError(data.error, 'server'))}</p>`;
         }
     })
     .catch(error => {
-        resultsDiv.innerHTML = `<p class="text-danger small">Error: ${error.message}</p>`;
+        resultsDiv.innerHTML = `<p class="text-danger small">${escapeHtml(friendlyError(error, 'server'))}</p>`;
     });
 }
 
@@ -575,11 +589,11 @@ function showEnzymeDetails(enzymeName) {
         if (data.success) {
             displayEnzymeDetails(data.enzyme);
         } else {
-            showAlert('Error loading enzyme details: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
-        showAlert('Error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -672,29 +686,35 @@ function handleMapGeneration(e) {
         hideLoading('generateMapBtn', '<i class="fas fa-map me-2"></i>Generate Restriction Map');
 
         if (data.success) {
-            displayRestrictionMap(data.analysis, sequence.length);
+            displayRestrictionMap(data.analysis, sequence.length, data.map);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('generateMapBtn', '<i class="fas fa-map me-2"></i>Generate Restriction Map');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
-function displayRestrictionMap(analysis, sequenceLength) {
+function displayRestrictionMap(analysis, sequenceLength, mapSvg) {
     const mapDiv = document.getElementById('mapVisualization');
 
-    // Create linear restriction map
+    // Prefer the server-rendered vector map (collision-free label packing,
+    // proper scale axis). If absent, fall back to the legacy HTML map.
     let html = '<div class="restriction-map">';
+    if (mapSvg) {
+        html += `<img src="${mapSvg}" alt="Restriction map" class="img-fluid" `
+             + `style="width:100%; height:auto; border:1px solid var(--color-border, #e2e8f0); `
+             + `border-radius:6px; background:#fff;">`;
+    } else {
     html += `<h6 class="small mb-3">Linear Restriction Map (${sequenceLength} bp)</h6>`;
 
     // Draw scale
     html += '<div style="position: relative; height: 100px; margin-bottom: 20px;">';
 
     // Main sequence line
-    html += '<div style="position: absolute; top: 50px; left: 0; right: 0; height: 3px; background: #333;"></div>';
+    html += '<div style="position: absolute; top: 50px; left: 0; right: 0; height: 3px; background: var(--color-text);"></div>';
 
     // Start and end markers
     html += '<div style="position: absolute; top: 45px; left: 0; font-size: 10px;">0 bp</div>';
@@ -745,6 +765,7 @@ function displayRestrictionMap(analysis, sequenceLength) {
 
     html += '</div>';
     html += '</div>';
+    }  // end else (legacy HTML map)
 
     html += '</div>';
     mapDiv.innerHTML = html;
@@ -831,11 +852,11 @@ function handleCompatibleEnds(e) {
         if (data.success) {
             displayCompatibleResults(data.compatible_pairs);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 
@@ -921,7 +942,7 @@ function exportResults(results, format) {
         showAlert(`Results exported as ${format.toUpperCase()}`, 'success');
     })
     .catch(error => {
-        showAlert('Export failed: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 }
 

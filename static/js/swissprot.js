@@ -32,12 +32,12 @@ document.getElementById('parseForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayParseResults(data.records, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'uniprot'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('parseBtn', '<i class="fas fa-list me-2"></i>Parse Records');
-        showAlert('Error parsing file: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'uniprot'), 'danger');
     });
 });
 
@@ -68,12 +68,12 @@ document.getElementById('readForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayReadResults(data.record);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'uniprot'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('readBtn', '<i class="fas fa-book-open me-2"></i>Read Record');
-        showAlert('Error reading file: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'uniprot'), 'danger');
     });
 });
 
@@ -181,11 +181,15 @@ function displayParseResults(records, count) {
                         ${record.comments && record.comments.length > 0 ? `
                             <hr class="my-2">
                             <p class="small mb-1"><strong>Comments (${record.comments.length}):</strong></p>
-                            ${record.comments.slice(0, 3).map(comment => `
-                                <div class="alert alert-info p-2 mb-1 small">
-                                    ${comment}
-                                </div>
-                            `).join('')}
+                            ${record.comments.slice(0, 3).map(comment => {
+                                const s = String(comment);
+                                const m = s.match(/^([A-Z][A-Z0-9 _-]*?):\s*([\s\S]*)$/);
+                                const type = m ? m[1] : 'NOTE';
+                                const text = m ? m[2] : s;
+                                return `<div class="alert alert-info p-2 mb-1 small">
+                                    <strong>${type}:</strong> ${text}
+                                </div>`;
+                            }).join('')}
                             ${record.comments.length > 3 ? `
                                 <p class="text-muted small mb-0">+${record.comments.length - 3} more comments</p>
                             ` : ''}
@@ -312,11 +316,15 @@ function displayReadResults(record) {
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Comments (${record.comments.length}):</strong></p>
                     <div style="max-height: 300px; overflow-y: auto;">
-                        ${record.comments.map(comment => `
-                            <div class="alert alert-info p-2 mb-1 small">
-                                <strong>${comment.type}:</strong> ${comment.text}
-                            </div>
-                        `).join('')}
+                        ${record.comments.map(comment => {
+                            const s = String(comment);
+                            const m = s.match(/^([A-Z][A-Z0-9 _-]*?):\s*([\s\S]*)$/);
+                            const type = m ? m[1] : 'NOTE';
+                            const text = m ? m[2] : s;
+                            return `<div class="alert alert-info p-2 mb-1 small">
+                                <strong>${type}:</strong> ${text}
+                            </div>`;
+                        }).join('')}
                     </div>
                 ` : ''}
 
@@ -458,12 +466,12 @@ SQ   SEQUENCE   142 AA;  15258 MW;  88E7BFD45F7D5B54 CRC64;
         if (data.success) {
             displayParseResults(data.records, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'uniprot'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('parseBtn', '<i class="fas fa-list me-2"></i>Parse Records');
-        showAlert('Error loading example: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'uniprot'), 'danger');
     });
 }
 
@@ -536,11 +544,11 @@ SQ   SEQUENCE   378 AA;  42851 MW;  61FE8C26B13BAC23 CRC64;
         if (data.success) {
             displayReadResults(data.record);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'uniprot'), 'warning');
         }
     })
     .catch(error => {
         hideLoading('readBtn', '<i class="fas fa-book-open me-2"></i>Read Record');
-        showAlert('Error loading example: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'uniprot'), 'danger');
     });
 }

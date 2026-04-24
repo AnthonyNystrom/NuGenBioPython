@@ -26,6 +26,11 @@ def configure_app(app):
     app.config['SECRET_KEY'] = _resolve_secret_key()
     app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', 'uploads')
     app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
+    # D24: cache static assets for 1 hour in dev, 1 day in prod. Browsers
+    # still revalidate via Last-Modified, so edits still appear on reload.
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = int(
+        os.environ.get('STATIC_MAX_AGE', '86400' if os.environ.get('FLASK_ENV') == 'production' else '3600')
+    )
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 

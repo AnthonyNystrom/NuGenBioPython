@@ -7,6 +7,11 @@ from Bio import Phylo, AlignIO
 from Bio.Phylo.TreeConstruction import DistanceCalculator, DistanceTreeConstructor
 import matplotlib.pyplot as plt
 
+from utils.plot_helpers import (
+    figure_to_svg_data_url, style_axes, set_title,
+    TITLE_COLOR, LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
+)
+
 
 def parse_tree_from_string(tree_string, tree_format):
     """Parse a tree from a string"""
@@ -35,55 +40,71 @@ def tree_to_string(tree, tree_format):
     return output.getvalue()
 
 
+def _tree_figure_size(tree):
+    """Size the figure based on terminal count and longest label so tip
+    labels don't clip. Width grows with label length; height with taxa."""
+    terminals = tree.get_terminals()
+    n = max(1, len(terminals))
+    max_label = max((len(t.name or '') for t in terminals), default=8)
+    # Height: enough vertical space for each tip (~0.25 in per tip), capped.
+    height = max(4.5, min(28, 2.4 + n * 0.28))
+    # Width: base 9 in, plus ~0.07 in per char of the longest label.
+    width = max(9, min(22, 9 + max_label * 0.07))
+    return width, height
+
+
 def visualize_tree(tree, show_confidence=False, branch_labels=None,
                    label_colors=None, do_show=False, axes=None,
-                   label_func=None):
-    """
-    Create a visualization of the phylogenetic tree
+                   label_func=None, figsize=None):
+    """Draw a phylogenetic tree with app-consistent styling.
 
-    Args:
-        tree: Phylo tree object
-        show_confidence: Show confidence values on branches
-        branch_labels: Dictionary of branch labels
-        label_colors: Dictionary of label colors
-        do_show: Show matplotlib plot
-        axes: Matplotlib axes object
-        label_func: Function to customize terminal labels
+    Unlike the stock Phylo.draw wrapper, this auto-sizes the figure for the
+    number of taxa and the longest tip label, so wide trees and dense trees
+    both render without clipping.
     """
+    owns_figure = axes is None
     if axes is None:
-        fig, axes = plt.subplots(figsize=(12, 8))
+        w, h = figsize or _tree_figure_size(tree)
+        fig, axes = plt.subplots(figsize=(w, h), dpi=100)
 
-    # Build draw parameters
     draw_params = {
         'axes': axes,
         'do_show': do_show,
-        'show_confidence': show_confidence
+        'show_confidence': show_confidence,
     }
-
-    # Only add optional parameters if they're not None
     if branch_labels is not None:
         draw_params['branch_labels'] = branch_labels
     if label_func is not None:
         draw_params['label_func'] = label_func
 
-    # Draw the tree
     Phylo.draw(tree, **draw_params)
+
+    # Clean up BioPython's default styling — it sets a heavy title and
+    # thick axes that don't match the app.
+    axes.set_title('')
+    axes.set_xlabel('Branch length', fontsize=9, color=LABEL_COLOR)
+    axes.set_ylabel('')
+    # BioPython's Phylo.draw leaves integer y-axis ticks (1, 2, 3 ...)
+    # for clade indices — not useful to a reader. Hide them.
+    axes.set_yticks([])
+    style_axes(axes, hide=('top', 'right', 'left'))
+    axes.margins(x=0.02, y=0.02)
+
+    # Recolor BioPython's default black tip labels and branch labels to
+    # match the rest of the app. This walks the Text artists in the axes.
+    for txt in axes.texts:
+        # Tip labels sit at the right edge; apply a consistent size/color.
+        txt.set_color(LABEL_COLOR)
+        if txt.get_fontsize() and txt.get_fontsize() > 12:
+            txt.set_fontsize(10)
 
     return axes.get_figure()
 
 
 def tree_to_image_base64(tree, **kwargs):
-    """Convert tree to base64 encoded image"""
+    """Convert tree to SVG data URL (vector — scales cleanly in browsers)."""
     fig = visualize_tree(tree, **kwargs)
-
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150)
-    img_buffer.seek(0)
-
-    img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
-    plt.close(fig)
-
-    return f'data:image/png;base64,{img_base64}'
+    return figure_to_svg_data_url(fig)
 
 
 def get_tree_info(tree):

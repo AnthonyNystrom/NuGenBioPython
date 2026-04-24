@@ -3,14 +3,6 @@
 {% block title %}File I/O (SeqIO) - NuGenBioPython{% endblock %}
 
 {% block content %}{% from "_partials/_section_card.html" import card_header %}
-<style>
-    #seqioTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #seqioTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
 
 <div class="row mb-2">
     <div class="col-12">
@@ -22,29 +14,29 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="seqioTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+            <button class="nav-link active" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
                 <i class="fas fa-upload d-block mb-1"></i>
                 <small>Parse & Convert</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
+            <button class="nav-link" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
                 <i class="fas fa-filter d-block mb-1"></i>
                 <small>Filter & Sort</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">
+            <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">
                 <i class="fas fa-chart-bar d-block mb-1"></i>
                 <small>Statistics</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="fastq-tab" data-bs-toggle="tab" data-bs-target="#fastq" type="button">
+            <button class="nav-link" id="fastq-tab" data-bs-toggle="tab" data-bs-target="#fastq" type="button">
                 <i class="fas fa-dna d-block mb-1"></i>
                 <small>FASTQ/Quality</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="slice-tab" data-bs-toggle="tab" data-bs-target="#slice" type="button">
+            <button class="nav-link" id="slice-tab" data-bs-toggle="tab" data-bs-target="#slice" type="button">
                 <i class="fas fa-cut d-block mb-1"></i>
                 <small>Slice/Extract</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
                 <i class="fas fa-tools d-block mb-1"></i>
                 <small>Advanced</small>
             </button>
@@ -122,29 +114,29 @@
                                             <i class="fas fa-info-circle"></i> Supports .gz compressed files
                                         </small>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="parseBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="parseBtn">
                                         <i class="fas fa-file-import me-2"></i> Parse File
                                     </button>
                                     <div class="mt-3">
                                         <h6 class="text-muted mb-2 small text-uppercase" style="font-size: 11px; letter-spacing: 1px;">Load Sample Files</h6>
                                         <div class="row g-2">
                                             <div class="col-6">
-                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('fasta')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('fasta')">
                                                     <i class="fas fa-flask me-1"></i> FASTA
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('genbank')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('genbank')">
                                                     <i class="fas fa-flask me-1"></i> GenBank
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('fastq')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('fastq')">
                                                     <i class="fas fa-flask me-1"></i> FASTQ
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="gradient-btn-small w-100" onclick="loadExample('embl')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('embl')">
                                                     <i class="fas fa-flask me-1"></i> EMBL
                                                 </button>
                                             </div>
@@ -178,7 +170,7 @@
                                             <option value="tab">Tab-separated</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="gradient-btn-secondary w-100" id="convertBtn" disabled>
+                                    <button type="submit" class="btn-app-secondary w-100" id="convertBtn" disabled>
                                         <i class="fas fa-exchange-alt me-2"></i> Convert Format
                                     </button>
                                 </form>
@@ -249,7 +241,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mt-3" id="filterBtn" disabled>
+                                    <button type="submit" class="btn-app-primary w-100 mt-3" id="filterBtn" disabled>
                                         <i class="fas fa-filter me-2"></i> Apply Filter
                                     </button>
                                 </form>
@@ -277,7 +269,7 @@
                                             <option value="true">Descending</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="gradient-btn-secondary w-100" id="sortBtn" disabled>
+                                    <button type="submit" class="btn-app-secondary w-100" id="sortBtn" disabled>
                                         <i class="fas fa-sort me-2"></i> Sort Sequences
                                     </button>
                                 </form>
@@ -308,7 +300,7 @@
                         <div class="card mb-3">
                             {{ card_header("Calculate Statistics", icon="fa-calculator") }}
                             <div class="card-body py-2">
-                                <button class="gradient-btn-primary w-100" id="calculateStatsBtn" disabled>
+                                <button class="btn-app-primary w-100" id="calculateStatsBtn" disabled>
                                     <i class="fas fa-chart-bar me-2"></i> Calculate Statistics
                                 </button>
                                 <small class="text-muted d-block mt-2">
@@ -352,13 +344,13 @@
                                             <option value="fastq-solexa">FASTQ-Solexa</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="fastqBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="fastqBtn">
                                         <i class="fas fa-upload me-2"></i> Parse FASTQ
                                     </button>
                                     <div class="mt-2 text-center">
                                         <small class="text-muted">OR</small>
                                     </div>
-                                    <button type="button" class="gradient-btn-secondary w-100 mt-2" id="useParsedBtn" disabled data-action="useAlreadyParsedSequences">
+                                    <button type="button" class="btn-app-secondary w-100 mt-2" id="useParsedBtn" disabled data-action="useAlreadyParsedSequences">
                                         <i class="fas fa-arrow-left me-2"></i> Use Parsed Sequences
                                     </button>
                                     <small class="text-muted d-block mt-2">
@@ -418,7 +410,7 @@
                                     <small class="text-muted d-block mt-2">
                                         <i class="fas fa-info-circle"></i> Leave end empty to extract to sequence end
                                     </small>
-                                    <button type="submit" class="gradient-btn-primary w-100 mt-3" id="sliceBtn" disabled>
+                                    <button type="submit" class="btn-app-primary w-100 mt-3" id="sliceBtn" disabled>
                                         <i class="fas fa-cut me-2"></i> Extract Subsequences
                                     </button>
                                 </form>
@@ -471,7 +463,7 @@
                                             <option value="intron">Introns</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="extractBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="extractBtn">
                                         <i class="fas fa-th-list me-2"></i> Extract Features
                                     </button>
                                 </form>
@@ -508,7 +500,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100" id="batchBtn">
+                                    <button type="submit" class="btn-app-primary w-100" id="batchBtn">
                                         <i class="fas fa-sync-alt me-2"></i> Batch Convert
                                     </button>
                                 </form>
@@ -1053,8 +1045,8 @@ function displayConvertedResult(converted, format) {
         tabsHtml +
         '</div>' +
         '<div class="modal-footer">' +
-        '<button type="button" class="gradient-btn-secondary" data-bs-dismiss="modal">Close</button>' +
-        '<button type="button" class="gradient-btn-primary" data-download-format>' +
+        '<button type="button" class="btn-app-secondary" data-bs-dismiss="modal">Close</button>' +
+        '<button type="button" class="btn-app-primary" data-download-format>' +
         '<i class="fas fa-download"></i> Download' +
         '</button>' +
         '</div>' +
@@ -1130,7 +1122,7 @@ LLILILLLLLLALLSPDMLGDPDNHMPADPLNTPLHIKPEWYFLFAYAILRSVPNKLGGVLALFLSIVIL
 LCLYTHIGRNIYYGSYLYSETWNTGIMLLLITMATAFMGYVLPWGQMSFWGATVITNLFSAIPYIGTNLV
 EWIWGGFSVDKATLNRFFAFHFILPFTMVALAGVHLTFLHETGSNNPLGLTSDSDKIPFHPYYTIKDFLG
 LLILILLLLLLALLSPDMLGDPDNHMPADPLNTPLHIKPEWYFLFAYAILRSVPNKLGGVLALFLSIVIL`,
-        'genbank': `LOCUS       AF177870                1395 bp    DNA     linear   PLN 28-MAY-1999
+        'genbank': `LOCUS       AF177870                 120 bp    DNA     linear   PLN 28-MAY-1999
 DEFINITION  Oryza sativa (japonica cultivar-group) maturase K (matK) gene,
             partial cds; chloroplast.
 ACCESSION   AF177870
@@ -1142,15 +1134,15 @@ SOURCE      Oryza sativa (japonica cultivar-group)
             Spermatophyta; Magnoliophyta; Liliopsida; Poales; Poaceae; BEP
             clade; Ehrhartoideae; Oryzeae; Oryza.
 FEATURES             Location/Qualifiers
-     source          1..1395
+     source          1..120
                      /organism="Oryza sativa"
                      /organelle="plastid:chloroplast"
                      /mol_type="genomic DNA"
                      /cultivar="japonica"
                      /db_xref="taxon:4530"
-     gene            <1..>1395
+     gene            <1..>120
                      /gene="matK"
-     CDS             <1..>1395
+     CDS             <1..>120
                      /gene="matK"
                      /codon_start=1
                      /transl_table=11
@@ -1167,15 +1159,14 @@ GATTTGGGGTTCAAAGCAGTATCGATCAAATAGTAAATCCATTTGTTCAACTCACAGTTT
 GATCGATCGATCGATCGATCGATCGATC
 +
 IIIIIIIIIIIIIIIIIIIIIIIIIIII`,
-        'embl': `ID   AB000263; SV 1; linear; genomic DNA; STD; PLN; 1362 BP.
+        'embl': `ID   AB000263; SV 1; linear; genomic DNA; STD; PLN; 120 BP.
 XX
 AC   AB000263;
 XX
 DT   23-NOV-1997 (Rel. 53, Created)
 DT   12-MAY-2000 (Rel. 64, Last updated, Version 4)
 XX
-DE   Oryza sativa gene for chloroplast RNA polymerase alpha subunit, complete
-DE   cds.
+DE   Oryza sativa gene for chloroplast RNA polymerase alpha subunit (partial).
 XX
 KW   rpoA gene; chloroplast RNA polymerase alpha subunit.
 XX
@@ -1186,13 +1177,16 @@ OC   Ehrhartoideae; Oryzeae; Oryza.
 XX
 FH   Key             Location/Qualifiers
 FH
-FT   source          1..1362
+FT   source          1..120
 FT                   /organism="Oryza sativa"
 FT                   /cultivar="Nipponbare"
 FT                   /organelle="plastid:chloroplast"
 FT                   /mol_type="genomic DNA"
-SQ   Sequence 1362 BP; 408 A; 314 C; 316 G; 324 T; 0 other;
-     atggcttcta ttaaagatgc taattcaatt atagcaattg cttataatat aaatgatagt`
+XX
+SQ   Sequence 120 BP; 37 A; 24 C; 26 G; 33 T; 0 other;
+     atggcttcta ttaaagatgc taattcaatt atagcaattg cttataatat aaatgatagt        60
+     aataataatt atatattata gaaaaatttg aagaaaatgc taaatgatga gaaatatact       120
+//`
     };
 
     const formatSelect = document.getElementById('fileFormat');

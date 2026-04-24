@@ -22,6 +22,7 @@ from routes import biodata_routes
 from routes import advanced_routes
 from routes import specialty_routes
 from routes import pathway_routes
+from routes import status_routes
 
 
 def register_blueprints(app):
@@ -69,3 +70,4 @@ def register_blueprints(app):
     app.register_blueprint(advanced_routes.bp)
     app.register_blueprint(specialty_routes.bp)
     app.register_blueprint(pathway_routes.bp)
+    app.register_blueprint(status_routes.status_bp)

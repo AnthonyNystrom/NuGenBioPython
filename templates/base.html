@@ -6,17 +6,27 @@
     <title>{% block title %}NuGenBioPython{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {# Bootstrap CSS removed — our app.css implements every class we use.
+       Bootstrap was overriding --bs-body-color with #212529 and leaking
+       light-mode defaults into dark mode. The JS bundle still loads below
+       so data-bs-* toggles continue to drive tabs/modals/dropdowns. #}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"
           integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <link href="{{ url_for('static', filename='css/tokens.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/gradient-buttons.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/performance-fix.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/components.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/shell.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+    {# D12: prefetch JS so browser starts downloading during HTML parse. #}
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script defer src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/formatters.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/workspace.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/results_card.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/topbar_search.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/examples_complex.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/service_status.js') }}"></script>
     <style>
         /* Preload-flash prevention only — all other styling lives in
            tokens.css + components.css + shell.css. */
@@ -30,6 +40,17 @@
         .nav-link.active { transition: none !important; }
     </style>
     <script>
+        // D17: apply saved theme BEFORE any paint to avoid FOUC.
+        // Default is dark — users can flip to light via the topbar toggle.
+        (function () {
+            try {
+                var saved = localStorage.getItem('nug-theme');
+                var theme = saved || 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (_) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
         // Disable transitions on page load to prevent flashing
         document.documentElement.classList.add('preload');
         window.addEventListener('load', function() {
@@ -267,6 +288,7 @@
     <!-- Main Content -->
     <div class="main-container">
         <main class="main-content" id="main-content" role="main" tabindex="-1">
+            <div id="app-alerts" aria-live="polite" aria-atomic="true"></div>
             {% block content %}{% endblock %}
 
             <!-- Footer -->
@@ -292,13 +314,66 @@
         </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/formatters.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/workspace.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/results_card.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/topbar_search.js') }}"></script>
+    <script>
+        // D17: dark-mode toggle in topbar.
+        (function () {
+            var btn = document.getElementById('topbarThemeBtn');
+            if (!btn) return;
+            function updateIcon() {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                var icon = btn.querySelector('i');
+                if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+                btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+            }
+            updateIcon();
+            btn.addEventListener('click', function () {
+                var cur = document.documentElement.getAttribute('data-theme') || 'light';
+                var next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                try { localStorage.setItem('nug-theme', next); } catch (_) {}
+                updateIcon();
+            });
+            // React to system theme changes when user hasn't explicitly chosen
+            var mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+            if (mql && mql.addEventListener) {
+                mql.addEventListener('change', function (e) {
+                    if (!localStorage.getItem('nug-theme')) {
+                        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+                        updateIcon();
+                    }
+                });
+            }
+        })();
+    </script>
+    <script>
+        // Tool split-pane mobile tabs. On narrow viewports the split collapses
+        // to a single pane; the mobile-tabs row switches which one is visible.
+        (function () {
+            const tabs = document.querySelector('.tool-page-mobile-tabs');
+            const body = document.querySelector('.tool-page-body');
+            if (!tabs || !body) return;
+            tabs.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-tool-pane]');
+                if (!btn) return;
+                tabs.querySelectorAll('[data-tool-pane]').forEach(function (b) {
+                    b.classList.toggle('active', b === btn);
+                });
+                body.classList.toggle('show-results', btn.dataset.toolPane === 'results');
+            });
+            // Auto-switch to results pane when a ResultsCard mounts.
+            const resultsPane = body.querySelector('.tool-results-pane');
+            if (!resultsPane) return;
+            new MutationObserver(function () {
+                if (window.matchMedia('(max-width: 900px)').matches &&
+                    resultsPane.querySelector('.results-card')) {
+                    body.classList.add('show-results');
+                    tabs.querySelectorAll('[data-tool-pane]').forEach(function (b) {
+                        b.classList.toggle('active', b.dataset.toolPane === 'results');
+                    });
+                }
+            }).observe(resultsPane, { childList: true, subtree: true });
+        })();
+    </script>
     <script>
         // Mobile navigation toggle. No-op on desktop since the hamburger is
         // hidden by CSS there.

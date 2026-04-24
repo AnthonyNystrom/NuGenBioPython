@@ -11,7 +11,18 @@ document.getElementById('entrezForm').addEventListener('submit', function(e) {
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo = document.getElementById('dateTo').value;
 
-    if (!term || !email) {
+    if (!term) {
+        showAlert('Enter a search term first.', 'warning');
+        return;
+    }
+    if (!email) {
+        showAlert('NCBI requires an email address on every Entrez request — this lets them contact you if your usage triggers a rate-limit issue. Enter your email above to continue.', 'warning');
+        const emailEl = document.getElementById('email');
+        if (emailEl) emailEl.focus();
+        return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+        showAlert('Email looks invalid. Please enter a real email address — NCBI requires it for Entrez requests.', 'warning');
         return;
     }
 
@@ -44,7 +55,7 @@ document.getElementById('entrezForm').addEventListener('submit', function(e) {
         if (data.success) {
             displaySearchResults(data.results, data.count, database);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'warning');
         }
     })
     .catch(error => {
@@ -90,7 +101,7 @@ function displaySearchResults(results, count, database) {
                     <td><small>${result.date || ''}</small></td>`;
         }
         html += `<td>
-                <button class="btn btn-sm gradient-btn-info" onclick="viewFullRecord('${result.id}', '${database}')">
+                <button class="btn-app-sm btn-app-secondary" onclick="viewFullRecord('${result.id}', '${database}')">
                     <i class="fas fa-eye"></i> View
                 </button>
             </td>`;
@@ -143,7 +154,7 @@ document.getElementById('globalQueryForm').addEventListener('submit', function(e
         if (data.success) {
             displayGlobalResults(data.results);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'warning');
         }
     })
     .catch(error => {
@@ -221,7 +232,7 @@ document.getElementById('fetchForm').addEventListener('submit', function(e) {
             window.fetchedData = {data: data.data, format: data.format};
             document.getElementById('downloadFetchedBtn').style.display = 'inline-block';
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'warning');
         }
     })
     .catch(error => {
@@ -299,7 +310,7 @@ document.getElementById('linkForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayLinkedRecords(data.results, data.count);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'warning');
         }
     })
     .catch(error => {
@@ -370,7 +381,7 @@ document.getElementById('infoForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayDatabaseInfo(data.database || data.databases, database);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'warning');
         }
     })
     .catch(error => {
@@ -503,7 +514,7 @@ function viewFullRecord(recordId, database) {
 }
 
 function displayRecordInModal(recordData, database, recordId) {
-    const raw = `<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">${escapeHtml(recordData)}</pre>`;
+    const raw = `<pre class="code-block" style="max-height: 500px; overflow-y: auto; font-size: 11px; margin: 0;">${escapeHtml(recordData)}</pre>`;
     ResultsPanel.render('recordModalContent', [
         { id: 'raw', title: 'Raw Data', content: raw, active: true },
         { id: 'fmt', title: 'Formatted', content: formatRecordData(recordData, database) },

@@ -26,12 +26,12 @@ document.getElementById('codonForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayCodonResults(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('codonBtn', '<i class="fas fa-exchange-alt me-2"></i>Translate');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -122,12 +122,12 @@ document.getElementById('iupacLookupForm').addEventListener('submit', function(e
         if (data.success) {
             displayIUPACLookup(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('iupacBtn', '<i class="fas fa-search me-2"></i>Lookup');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -224,12 +224,12 @@ document.getElementById('proteinConvertForm').addEventListener('submit', functio
         if (data.success) {
             displayProteinConvert(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('proteinBtn', '<i class="fas fa-exchange-alt me-2"></i>Convert');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 
@@ -292,12 +292,12 @@ document.getElementById('weightForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayMolecularWeight(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('weightBtn', '<i class="fas fa-calculator me-2"></i>Calculate');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'server'), 'danger');
     });
 });
 

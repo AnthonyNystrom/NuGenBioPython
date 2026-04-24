@@ -2,16 +2,122 @@
 Routes for restriction enzyme analysis
 """
 import logging
+import math
 
 from flask import Blueprint, request, jsonify, send_file
 from io import StringIO, BytesIO
 import csv
 import json
 
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
 from dependencies import Seq, Restriction, SeqIO
+from utils.plot_helpers import (
+    PALETTE, LABEL_COLOR, MUTED_COLOR, AXIS_COLOR, GRID_COLOR,
+    figure_to_svg_data_url, set_title, fmt_bp, nice_ticks,
+)
 
 log = logging.getLogger(__name__)
 bp = Blueprint('restriction', __name__, url_prefix='/api')
+
+
+# Distinct, accessible colors for up to ~10 enzymes. Cycles afterward.
+_ENZYME_COLORS = [
+    '#2563eb', '#dc2626', '#059669', '#ea580c', '#7c3aed',
+    '#0891b2', '#ca8a04', '#db2777', '#0d9488', '#92400e',
+]
+
+
+def render_restriction_map(analysis, sequence_length):
+    """Render a linear restriction map as an SVG data URL.
+
+    `analysis` is the {enzyme: {...}} dict returned by restriction_analyze.
+    Draws the sequence as a baseline with color-coded tick marks per enzyme.
+    Labels are staggered across vertical rows to avoid collisions on crowded
+    maps — this is the main advantage over the client-side HTML version.
+    """
+    enzymes = [(name, r) for name, r in analysis.items()
+               if isinstance(r, dict) and not r.get('error')
+               and r.get('cut_positions')]
+    if not enzymes or sequence_length <= 0:
+        return None
+
+    # All cuts, with their source enzyme + color
+    cuts = []
+    for i, (name, r) in enumerate(enzymes):
+        color = _ENZYME_COLORS[i % len(_ENZYME_COLORS)]
+        for pos in r['cut_positions']:
+            cuts.append({'pos': int(pos), 'enzyme': name, 'color': color})
+    cuts.sort(key=lambda c: c['pos'])
+
+    # Figure dimensions — width fixed, height depends on how many label rows
+    # we need to avoid collisions.
+    fig_w = 14
+    # Estimate characters per label ~ 8. Use sequence_length as the x-extent
+    # to decide whether labels collide.
+    min_gap = sequence_length * 0.05  # ~5% of the span per label slot
+    label_rows = 1
+    occupancy = [[]]
+    for c in cuts:
+        name_w = max(len(c['enzyme']) * sequence_length * 0.008, min_gap)
+        x_lo = c['pos'] - name_w / 2
+        x_hi = c['pos'] + name_w / 2
+        row = 0
+        while row < len(occupancy):
+            if all(x_hi < s or x_lo > e for s, e in occupancy[row]):
+                break
+            row += 1
+        if row == len(occupancy):
+            occupancy.append([])
+            label_rows = len(occupancy)
+        occupancy[row].append((x_lo, x_hi))
+        c['label_row'] = row
+
+    # Height: base + extra row per stacked label (~0.25in per row)
+    fig_h = max(2.6, 2.0 + label_rows * 0.28)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
+
+    # Baseline — a thick rounded bar for the sequence
+    bar_y = 0
+    bar_h = 0.18
+    ax.add_patch(Rectangle((0, bar_y - bar_h / 2), sequence_length, bar_h,
+                           facecolor='#f1f5f9', edgecolor=AXIS_COLOR,
+                           linewidth=0.6, zorder=2))
+
+    # Tick marks per cut
+    tick_half = 0.35
+    for c in cuts:
+        ax.plot([c['pos'], c['pos']],
+                [bar_y - tick_half, bar_y + tick_half],
+                color=c['color'], linewidth=1.4, zorder=3)
+        # Label above the tick
+        row_offset = 0.55 + c['label_row'] * 0.35
+        label_y = bar_y + tick_half + row_offset
+        ax.plot([c['pos'], c['pos']], [bar_y + tick_half, label_y - 0.12],
+                color=c['color'], linewidth=0.5, alpha=0.5, zorder=2)
+        ax.text(c['pos'], label_y,
+                f"{c['enzyme']}\n{c['pos']:,}",
+                ha='center', va='bottom', fontsize=7.5,
+                color=c['color'], zorder=4)
+
+    # Axis — position scale below the bar
+    ticks = nice_ticks(sequence_length)
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([fmt_bp(t) for t in ticks])
+    ax.set_xlim(-sequence_length * 0.02, sequence_length * 1.02)
+    ax.set_ylim(bar_y - tick_half - 0.6, bar_y + tick_half + 0.4 + label_rows * 0.35)
+    ax.set_yticks([])
+    for spine in ('top', 'right', 'left'):
+        ax.spines[spine].set_visible(False)
+    ax.spines['bottom'].set_color(AXIS_COLOR)
+    ax.spines['bottom'].set_linewidth(0.6)
+    ax.tick_params(axis='x', labelsize=8, colors=MUTED_COLOR, length=3, pad=2)
+    ax.xaxis.grid(True, color=GRID_COLOR, linewidth=0.5, zorder=0)
+    ax.set_xlabel('Position (bp)', fontsize=9, color=LABEL_COLOR, labelpad=4)
+    set_title(ax, f'Restriction Map · {sequence_length:,} bp', pad=10)
+
+    return figure_to_svg_data_url(fig)
 
 
 @bp.route('/restriction/analyze', methods=['POST'])
@@ -84,7 +190,8 @@ def restriction_analyze():
             except AttributeError:
                 results[enzyme_name] = {'error': f'Enzyme {enzyme_name} not found'}
 
-        return jsonify({'success': True, 'analysis': results})
+        map_svg = render_restriction_map(results, len(sequence))
+        return jsonify({'success': True, 'analysis': results, 'map': map_svg})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

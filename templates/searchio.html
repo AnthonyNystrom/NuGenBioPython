@@ -2,11 +2,7 @@
 
 {% block title %}SearchIO Parser - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #searchioTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #searchioTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1"><i class="fas fa-search"></i> SearchIO Parser</h2>
@@ -15,27 +11,27 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex" id="searchioTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+            <button class="nav-link active" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
                 <i class="fas fa-file-import d-block mb-1"></i><small>Parse</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
+            <button class="nav-link" id="read-tab" data-bs-toggle="tab" data-bs-target="#read" type="button">
                 <i class="fas fa-book-open d-block mb-1"></i><small>Read</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="index-tab" data-bs-toggle="tab" data-bs-target="#index" type="button">
+            <button class="nav-link" id="index-tab" data-bs-toggle="tab" data-bs-target="#index" type="button">
                 <i class="fas fa-database d-block mb-1"></i><small>Index</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
+            <button class="nav-link" id="convert-tab" data-bs-toggle="tab" data-bs-target="#convert" type="button">
                 <i class="fas fa-exchange-alt d-block mb-1"></i><small>Convert</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
+            <button class="nav-link" id="filter-tab" data-bs-toggle="tab" data-bs-target="#filter" type="button">
                 <i class="fas fa-filter d-block mb-1"></i><small>Filter</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="write-tab" data-bs-toggle="tab" data-bs-target="#write" type="button">
+            <button class="nav-link" id="write-tab" data-bs-toggle="tab" data-bs-target="#write" type="button">
                 <i class="fas fa-file-export d-block mb-1"></i><small>Write</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="formats-tab" data-bs-toggle="tab" data-bs-target="#formats" type="button">
+            <button class="nav-link" id="formats-tab" data-bs-toggle="tab" data-bs-target="#formats" type="button">
                 <i class="fas fa-list-alt d-block mb-1"></i><small>Formats</small>
             </button>
         </div>
@@ -65,10 +61,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="parseBtn">
                                         <i class="fas fa-file-import me-2"></i>Parse Results
                                     </button>
-                                    {{ load_example_btn("loadParseExample") }}
+                                    {{ load_example_pair("loadParseExample", "loadParseExampleComplexSearchIO", simple_label="Single hit", complex_label="Multi-query BLAST XML") }}
                                 </form>
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -114,7 +110,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="readBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="readBtn">
                                         <i class="fas fa-book-open me-2"></i>Read Result
                                     </button>
                                     {{ load_example_btn("loadReadExample") }}
@@ -168,7 +164,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="indexBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="indexBtn">
                                         <i class="fas fa-database me-2"></i>Create Index
                                     </button>
                                     {{ load_example_btn("loadIndexExample") }}
@@ -225,7 +221,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="convertBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="convertBtn">
                                         <i class="fas fa-exchange-alt me-2"></i>Convert Format
                                     </button>
                                     {{ load_example_btn("loadConvertExample") }}
@@ -283,7 +279,7 @@
                                             <input type="text" class="form-control form-control-sm" id="filterIdentity" placeholder="70">
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="filterBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="filterBtn">
                                         <i class="fas fa-filter me-2"></i>Apply Filters
                                     </button>
                                     {{ load_example_btn("loadFilterExample") }}
@@ -342,7 +338,7 @@
                                             <input type="number" class="form-control form-control-sm" id="writeMaxQueries" value="10" min="1" max="100">
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="writeBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="writeBtn">
                                         <i class="fas fa-file-export me-2"></i>Write Output
                                     </button>
                                     {{ load_example_btn("loadWriteExample") }}
@@ -373,7 +369,7 @@
                     <div class="col-md-9">
                         <div class="card">
                             <div class="card-body p-2">
-                                <button class="gradient-btn-primary w-100 mt-2" id="formatsBtn" data-action="loadFormats">
+                                <button class="btn-app-primary w-100 mt-2" id="formatsBtn" data-action="loadFormats">
                                     <i class="fas fa-list-alt me-2"></i>Load Supported Formats
                                 </button>
                                 <hr class="my-2">

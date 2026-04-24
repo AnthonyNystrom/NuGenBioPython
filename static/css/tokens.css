@@ -104,3 +104,49 @@
     --transition-fast: 120ms ease;
     --transition:      180ms ease;
 }
+
+/* ---- Dark theme (D17) -----------------------------------------------------
+   Activated by html[data-theme="dark"]. Core idea: flip the neutral scale
+   so slate-50 (lightest) becomes the DARKEST bg, and slate-900 (darkest)
+   becomes the LIGHTEST text. Accent (sky) stays recognizable but softened. */
+html[data-theme="dark"] {
+    /* Slate scale flipped — slate-50 = darkest background, slate-900 = brightest text.
+       These values are tuned for readable contrast on #0f172a / #111827 surfaces. */
+    --slate-50:  #0f172a;
+    --slate-100: #1e293b;
+    --slate-200: #334155;
+    --slate-300: #475569;
+    --slate-400: #6b7a8f;   /* was #64748b — lifted for better low-contrast edges */
+    --slate-500: #b8c2cf;   /* was #94a3b8 — labels/uppercase now clearly readable */
+    --slate-600: #d4dae2;   /* was #cbd5e1 — secondary body text */
+    --slate-700: #e8ecf1;   /* was #e2e8f0 */
+    --slate-800: #f1f5f9;
+    --slate-900: #ffffff;   /* maximum contrast for headings */
+
+    --sky-50:  #0c4a6e;
+    --sky-100: #075985;
+    --sky-300: #38bdf8;
+    --sky-500: #38bdf8;
+    --sky-600: #7dd3fc;
+    --sky-700: #bae6fd;
+
+    --color-bg:           #0b1220;
+    --color-surface:      #141c2e;   /* was #111827 — slightly lighter to separate from bg */
+    --color-border:       #2a3548;   /* was #1f2937 — visible separator */
+    --color-border-strong:#3e4b64;
+    --color-text:         #f1f5f9;   /* was #e5e7eb — brighter primary text */
+    --color-text-muted:   #b8c2cf;   /* was #9ca3af — dimmed-but-readable, matches slate-500 */
+    --color-text-inverse: #0f172a;
+
+    --color-primary:      var(--sky-300);
+    --color-primary-hover:var(--sky-500);
+    --color-primary-bg:   #082f49;
+
+    --ring-color:  rgba(56, 189, 248, 0.45);
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5),
+                 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6),
+                 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+}

@@ -2,11 +2,7 @@
 
 {% block title %}Advanced Tools - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #advancedTabs button.nav-link:hover { background: rgba(255,255,255,0.25) !important; }
-    #advancedTabs button.nav-link.active { background: rgba(255,255,255,0.15) !important; }
-</style>
+{% block content %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 
 <div class="row mb-2">
     <div class="col-12">
@@ -16,29 +12,29 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-2">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="advancedTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link active"
                     id="hmm-tab" data-bs-toggle="tab" data-bs-target="#hmm" type="button">
                 <i class="fas fa-brain d-block mb-1"></i>
                 <small>HMM</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="literature-tab" data-bs-toggle="tab" data-bs-target="#literature" type="button">
                 <i class="fas fa-book-medical d-block mb-1"></i>
                 <small>Literature</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="nexus-tab" data-bs-toggle="tab" data-bs-target="#nexus" type="button">
                 <i class="fas fa-file-code d-block mb-1"></i>
                 <small>Nexus</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="scop-tab" data-bs-toggle="tab" data-bs-target="#scop" type="button">
                 <i class="fas fa-cubes d-block mb-1"></i>
                 <small>SCOP</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold"
+            <button class="nav-link"
                     id="codon-tab" data-bs-toggle="tab" data-bs-target="#codon" type="button">
                 <i class="fas fa-align-left d-block mb-1"></i>
                 <small>Codon Align</small>
@@ -82,10 +78,10 @@
                                             <span id="hmmDescription">Sequence used to build the HMM</span>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="buildHmmBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="buildHmmBtn">
                                         <i class="fas fa-cogs"></i> Build HMM
                                     </button>
-                                    {{ load_example_btn("loadHmmExample", label="Load Example", icon_spacing="") }}
+                                    {{ load_example_pair("loadHmmExample", "loadHmmExampleComplex", simple_label="2-state", complex_label="4-state ergodic") }}
                                 </form>
 
                                 <!-- Training Section (hidden until model built) -->
@@ -96,7 +92,7 @@
                                         <input type="number" class="form-control form-control-sm" id="trainIterations"
                                                value="10" min="1" max="100">
                                     </div>
-                                    <button type="button" class="gradient-btn-info w-100 mb-2" id="trainHmmBtn" data-action="trainHMM">
+                                    <button type="button" class="btn-app-secondary w-100 mb-2" id="trainHmmBtn" data-action="trainHMM">
                                         <i class="fas fa-graduation-cap"></i> Train with Baum-Welch
                                     </button>
                                     <div id="trainingResults"></div>
@@ -110,7 +106,7 @@
                                         <textarea class="form-control form-control-sm" id="testSequence" rows="2"
                                                   placeholder="Enter sequence to decode..."></textarea>
                                     </div>
-                                    <button type="button" class="gradient-btn-success w-100 mb-2" id="decodeBtn" data-action="decodeSequence">
+                                    <button type="button" class="btn-app-secondary w-100 mb-2" id="decodeBtn" data-action="decodeSequence">
                                         <i class="fas fa-search"></i> Decode with Viterbi
                                     </button>
                                     <div id="decodingResults"></div>
@@ -193,10 +189,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="searchLiteratureBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="searchLiteratureBtn">
                                         <i class="fas fa-search"></i> Search Literature
                                     </button>
-                                    {{ load_example_btn("loadLiteratureExample", label="Load Example", icon_spacing="") }}
+                                    {{ load_example_pair("loadLiteratureExample", "loadLiteratureExampleComplex", simple_label="CRISPR", complex_label="BRCA1 MeSH 2020-2024") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="literatureResults">
@@ -245,10 +241,10 @@
                                         <textarea class="form-control form-control-sm" id="nexusData" rows="5"
                                                   placeholder="#NEXUS&#10;BEGIN DATA;&#10;..."></textarea>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseNexusBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="parseNexusBtn">
                                         <i class="fas fa-play"></i> Parse Nexus
                                     </button>
-                                    {{ load_example_btn("loadNexusExample", label="Load Example", icon_spacing="") }}
+                                    {{ load_example_pair("loadNexusExample", "loadNexusExampleComplex", simple_label="4 taxa", complex_label="8 taxa + tree") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="nexusResults">
@@ -304,10 +300,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="lookupScopBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="lookupScopBtn">
                                         <i class="fas fa-search"></i> Lookup SCOP
                                     </button>
-                                    {{ load_example_btn("loadScopExample", label="Load Example", icon_spacing="") }}
+                                    {{ load_example_pair("loadScopExample", "loadScopExampleComplex", simple_label="d1dlwa_", complex_label="d1n0wa_ superfamily") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="scopResults">
@@ -370,10 +366,10 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="alignCodonBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="alignCodonBtn">
                                         <i class="fas fa-play"></i> Align Codons
                                     </button>
-                                    {{ load_example_btn("loadCodonExample", label="Load Example", icon_spacing="") }}
+                                    {{ load_example_pair("loadCodonExample", "loadCodonExampleComplexAdv", simple_label="Short DNA", complex_label="Hemoglobin β (4 species)") }}
                                 </form>
                                 <hr class="my-2">
                                 <div id="codonResults">

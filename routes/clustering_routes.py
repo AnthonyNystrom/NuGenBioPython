@@ -3,9 +3,14 @@ Routes for clustering analysis
 """
 from flask import Blueprint, request, jsonify
 import base64
+import math
 from io import BytesIO
 
 from dependencies import np, KMeans, DBSCAN, AgglomerativeClustering, linkage, dendrogram, plt, Cluster
+from utils.plot_helpers import (
+    figure_to_svg_data_url, style_axes, set_title,
+    LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
+)
 
 bp = Blueprint('clustering', __name__, url_prefix='/api')
 
@@ -35,25 +40,57 @@ def clustering_analyze():
         elif method == 'hierarchical':
             linkage_matrix = linkage(matrix, method='ward')
 
-            # Create dendrogram
-            fig, ax = plt.subplots(figsize=(10, 6))
-            dendrogram(linkage_matrix, ax=ax)
-            ax.set_title('Hierarchical Clustering Dendrogram')
+            # Pick a color threshold that carves out the requested number of
+            # clusters. scipy's dendrogram uses `color_threshold` to color
+            # branches above/below that merge distance.
+            n = matrix.shape[0]
+            if n_clusters and n_clusters > 0 and n > n_clusters:
+                # Distance at which the tree would be cut to yield n_clusters
+                sorted_d = sorted(linkage_matrix[:, 2])
+                color_threshold = sorted_d[-(n_clusters - 1)] if n_clusters > 1 else sorted_d[-1] + 1
+            else:
+                color_threshold = None
 
-            img_buffer = BytesIO()
-            plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150)
-            img_buffer.seek(0)
-            dendro_base64 = base64.b64encode(img_buffer.getvalue()).decode()
-            plt.close()
+            # Figure size scales with leaf count. Wider for >30 samples,
+            # taller only at extreme counts (the dendrogram is naturally
+            # horizontal).
+            fig_w = max(9, min(22, 7 + math.sqrt(max(n, 1)) * 0.7))
+            fig_h = max(5, min(10, 4 + math.log2(max(n, 2)) * 0.5))
+            fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
 
-            # Get cluster labels
+            dendrogram(
+                linkage_matrix, ax=ax,
+                color_threshold=color_threshold,
+                above_threshold_color=MUTED_COLOR,
+                leaf_font_size=max(7, 10 - max(0, n - 20) * 0.05),
+                leaf_rotation=90 if n > 15 else 0,
+            )
+            if color_threshold is not None:
+                ax.axhline(y=color_threshold, color='#ef4444', linestyle='--',
+                           linewidth=0.8, alpha=0.7, zorder=1)
+                # Place label inside the axes so it isn't clipped.
+                x_right = ax.get_xlim()[1]
+                ax.text(x_right - (x_right - ax.get_xlim()[0]) * 0.01,
+                        color_threshold,
+                        f'cut → {n_clusters} clusters',
+                        va='bottom', ha='right',
+                        fontsize=8, color='#ef4444')
+
+            set_title(ax, 'Hierarchical Clustering Dendrogram', pad=10)
+            ax.set_xlabel('Sample', fontsize=9, color=LABEL_COLOR)
+            ax.set_ylabel('Distance', fontsize=9, color=LABEL_COLOR)
+            style_axes(ax)
+
+            dendro_url = figure_to_svg_data_url(fig)
+
             clustering = AgglomerativeClustering(n_clusters=n_clusters)
             labels = clustering.fit_predict(matrix)
 
             results = {
                 'labels': labels.tolist(),
                 'linkage_matrix': linkage_matrix.tolist(),
-                'dendrogram': f'data:image/png;base64,{dendro_base64}'
+                'dendrogram': dendro_url,
+                'color_threshold': color_threshold,
             }
 
         elif method == 'dbscan':

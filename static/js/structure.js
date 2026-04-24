@@ -59,7 +59,7 @@ document.getElementById('structureForm').addEventListener('submit', function(e) 
                 window.structureInfo = data.structure_info;
                 document.getElementById('advancedAnalysisBtn').disabled = false;
             } else {
-                showAlert('Error: ' + data.error, 'danger');
+                showAlert(friendlyError(data.error, 'pdb'), 'danger');
             }
         })
         .catch(error => {
@@ -103,6 +103,11 @@ function fetchFromPDB() {
             return response.text();
         })
         .then(pdbContent => {
+            // Render the structure in the 3D viewer first so the user
+            // sees something immediately while the parse call runs.
+            if (window.NuGenStructureViewer && window.NuGenStructureViewer.load) {
+                window.NuGenStructureViewer.load(pdbContent, pdbId);
+            }
             const formData = new FormData();
             const blob = new Blob([pdbContent], { type: 'text/plain' });
             const file = new File([blob], `${pdbId}.pdb`, { type: 'text/plain' });
@@ -117,30 +122,46 @@ function fetchFromPDB() {
                 window.structureInfo = data.structure_info;
                 document.getElementById('advancedAnalysisBtn').disabled = false;
             } else {
-                showAlert('Error: ' + data.error, 'danger');
+                showAlert(friendlyError(data.error, 'pdb'), 'danger');
             }
         })
         .catch(error => {
-            showAlert('Error: ' + error.message, 'danger');
+            showAlert(friendlyError(error, 'pdb'), 'danger');
         });
 }
 
 function loadExample() {
-    const samplePDB = `HEADER    INSULIN SAMPLE\nATOM      1  N   ALA A   1      20.154  16.967  10.000  1.00 20.00           N\nEND`;
-    const formData = new FormData();
-    const blob = new Blob([samplePDB], { type: 'text/plain' });
-    const file = new File([blob], 'sample.pdb', { type: 'text/plain' });
-    formData.append('file', file);
-    currentStructureFile = file;
-
-    fetch('/api/structure/parse', { method: 'POST', body: formData })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+    // The bundled sample (Crambin 1CRN, 46 residues, α-helix + β-sheet) is
+    // served from /api/structure/sample. Parse it on the server so the
+    // sidebar stats populate, and push the raw text into the 3D viewer so
+    // the canvas actually shows the structure.
+    fetch('/api/structure/sample')
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(function (text) {
+            if (window.NuGenStructureViewer && window.NuGenStructureViewer.load) {
+                window.NuGenStructureViewer.load(text, 'Crambin (1CRN) · 46 residues');
+            }
+            const blob = new Blob([text], { type: 'text/plain' });
+            const file = new File([blob], 'sample_protein.pdb', { type: 'text/plain' });
+            currentStructureFile = file;
+            const fd = new FormData();
+            fd.append('file', file);
+            return fetch('/api/structure/parse', { method: 'POST', body: fd });
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data && data.success) {
                 displayStructureInfo(data.structure_info);
                 window.structureInfo = data.structure_info;
-                document.getElementById('advancedAnalysisBtn').disabled = false;
+                const btn = document.getElementById('advancedAnalysisBtn');
+                if (btn) btn.disabled = false;
             }
+        })
+        .catch(function (e) {
+            if (window.showAlert) window.showAlert('Failed to load sample: ' + e.message, 'warning');
         });
 }
 
@@ -169,7 +190,7 @@ document.getElementById('superimposeForm').addEventListener('submit', function(e
         if (data.success) {
             displaySuperimposeResults(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
@@ -226,7 +247,7 @@ document.getElementById('geometryForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayGeometry(data.geometry);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
@@ -306,7 +327,7 @@ document.getElementById('qualityForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayQuality(data.quality);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
@@ -385,7 +406,7 @@ document.getElementById('contactsForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayContacts(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
@@ -456,7 +477,7 @@ document.getElementById('interactionsForm').addEventListener('submit', function(
         if (data.success) {
             displayInteractions(data);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
@@ -526,12 +547,12 @@ document.getElementById('dsspForm').addEventListener('submit', function(e) {
         if (data.success) {
             displayDsspResults(data.result);
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('dsspBtn', '<i class="fas fa-dna me-2"></i>Analyze Secondary Structure');
-        showAlert('Request failed');
+        showAlert(friendlyError(error, 'pdb'), 'danger');
     });
 });
 
@@ -619,12 +640,12 @@ document.getElementById('ramachandranForm').addEventListener('submit', function(
         if (data.success) {
             displayRamaResults(data);
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('ramaBtn', '<i class="fas fa-chart-scatter me-2"></i>Calculate Phi/Psi Angles');
-        showAlert('Request failed');
+        showAlert(friendlyError(error, 'pdb'), 'danger');
     });
 });
 
@@ -709,12 +730,12 @@ document.getElementById('sasaForm').addEventListener('submit', function(e) {
         if (data.success) {
             displaySasaResults(data);
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('sasaBtn', '<i class="fas fa-water me-2"></i>Calculate SASA');
-        showAlert('Request failed');
+        showAlert(friendlyError(error, 'pdb'), 'danger');
     });
 });
 
@@ -814,12 +835,12 @@ document.getElementById('selectionForm').addEventListener('submit', function(e) 
         if (data.success) {
             displaySelectionResults(data.extraction);
         } else {
-            showAlert('Error: ' + data.error);
+            showAlert(friendlyError(data.error, 'pdb'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('selectionBtn', '<i class="fas fa-crop me-2"></i>Extract Selection');
-        showAlert('Request failed');
+        showAlert(friendlyError(error, 'pdb'), 'danger');
     });
 });
 

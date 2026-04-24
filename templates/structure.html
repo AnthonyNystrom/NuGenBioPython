@@ -2,7 +2,7 @@
 
 {% block title %}Structure Analysis - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 {% set analyses = [
     {"key": "parse",        "target": "parse",        "title": "Parse",           "icon": "fa-cube"},
     {"key": "geometry",     "target": "geometry",     "title": "Geometry",        "icon": "fa-ruler"},
@@ -33,10 +33,10 @@
                     <i class="fas fa-cube text-primary me-1"></i> 3D Viewer
                     <span class="text-muted ms-2 small" id="view3dLabel">— no structure loaded</span>
                 </h6>
-                <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dLoadSample" title="Load bundled sample PDB">
+                <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dLoadSample" title="Load bundled sample PDB">
                     <i class="fas fa-flask"></i>
                 </button>
-                <label class="nug-btn-ghost nug-btn-sm mb-0" title="Upload PDB/mmCIF">
+                <label class="btn-app-ghost btn-app-sm mb-0" title="Upload PDB/mmCIF">
                     <i class="fas fa-upload"></i>
                     <input type="file" id="view3dFile" accept=".pdb,.ent,.cif,.mmcif" hidden>
                 </label>
@@ -61,16 +61,16 @@
             </div>
             <div class="card-footer d-flex flex-wrap align-items-center gap-2">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Viewer controls">
-                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
+                    <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
                         <i class="fas fa-globe"></i> <span class="d-none d-md-inline">Surface</span>
                     </button>
-                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
+                    <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
                         <i class="fas fa-sync"></i> <span class="d-none d-md-inline">Spin</span>
                     </button>
-                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dReset" title="Reset view">
+                    <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dReset" title="Reset view">
                         <i class="fas fa-expand-arrows-alt"></i> <span class="d-none d-md-inline">Reset</span>
                     </button>
-                    <button type="button" class="nug-btn-ghost nug-btn-sm" data-action="view3dDownloadPng" title="Download PNG">
+                    <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dDownloadPng" title="Download PNG">
                         <i class="fas fa-download"></i> <span class="d-none d-md-inline">PNG</span>
                     </button>
                 </div>
@@ -127,13 +127,13 @@
                                         <label class="form-label small">Or Enter PDB ID</label>
                                         <input type="text" class="form-control form-control-sm" id="pdbId" placeholder="e.g., 1BL8" maxlength="4">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseStructureBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="parseStructureBtn">
                                         <i class="fas fa-cube me-2"></i>Parse
                                     </button>
-                                    <button type="button" class="gradient-btn-secondary w-100 mb-2" data-action="fetchFromPDB">
+                                    <button type="button" class="btn-app-secondary w-100 mb-2" data-action="fetchFromPDB">
                                         <i class="fas fa-download me-2"></i>Fetch
                                     </button>
-                                    {{ load_example_btn("loadExample", size="small") }}
+                                    {{ load_example_pair("loadExample", "loadExampleComplexStructure", simple_label="Minimal PDB", complex_label="Porcine insulin (4INS)") }}
                                 </form>
                             </div>
                         </div>
@@ -178,7 +178,7 @@
                                         <label class="form-label small">Structure 2</label>
                                         <input type="file" class="form-control form-control-sm" id="superFile2" accept=".pdb">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="superimposeBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2" id="superimposeBtn">
                                         <i class="fas fa-project-diagram me-2"></i>Align Structures
                                     </button>
                                     {{ load_example_btn("loadSuperimposeExample") }}
@@ -221,7 +221,7 @@
                                         <label class="form-label small">Chain ID</label>
                                         <input type="text" class="form-control form-control-sm" id="geomChainId" value="A" maxlength="1">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="geometryBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2" id="geometryBtn">
                                         <i class="fas fa-ruler me-2"></i>Calculate Geometry
                                     </button>
                                     {{ load_example_btn("loadGeometryExample") }}
@@ -260,7 +260,7 @@
                             {{ card_header("Quality Metrics", icon="fa-check-circle") }}
                             <div class="card-body py-2">
                                 <form id="qualityForm">
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="qualityBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2" id="qualityBtn">
                                         <i class="fas fa-check-circle me-2"></i>Analyze Quality
                                     </button>
                                     {{ load_example_btn("loadQualityExample") }}
@@ -307,7 +307,7 @@
                                         <label class="form-label small">Distance Cutoff (Å)</label>
                                         <input type="number" class="form-control form-control-sm" id="contactCutoff" value="8.0" step="0.5" min="3" max="15">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="contactsBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2" id="contactsBtn">
                                         <i class="fas fa-network-wired me-2"></i>Calculate Contacts
                                     </button>
                                     {{ load_example_btn("loadContactsExample") }}
@@ -345,7 +345,7 @@
                             {{ card_header("Molecular Interactions", icon="fa-link") }}
                             <div class="card-body py-2">
                                 <form id="interactionsForm">
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2" id="interactionsBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2" id="interactionsBtn">
                                         <i class="fas fa-link me-2"></i>Detect Interactions
                                     </button>
                                     {{ load_example_btn("loadInteractionsExample") }}
@@ -387,7 +387,7 @@
                                         <label class="form-label small">Upload PDB File</label>
                                         <input type="file" class="form-control form-control-sm" id="dsspFile" accept=".pdb" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="dsspBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="dsspBtn">
                                         <i class="fas fa-dna me-2"></i>Analyze Secondary Structure
                                     </button>
                                     {{ load_example_btn("loadDsspExample") }}
@@ -436,7 +436,7 @@
                                         <label class="form-label small">Chain ID</label>
                                         <input type="text" class="form-control form-control-sm" id="ramaChainId" value="A" maxlength="1">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="ramaBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="ramaBtn">
                                         <i class="fas fa-chart-scatter me-2"></i>Calculate Phi/Psi Angles
                                     </button>
                                     {{ load_example_btn("loadRamaExample") }}
@@ -482,7 +482,7 @@
                                         <label class="form-label small">Upload PDB File</label>
                                         <input type="file" class="form-control form-control-sm" id="sasaFile" accept=".pdb" required>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="sasaBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="sasaBtn">
                                         <i class="fas fa-water me-2"></i>Calculate SASA
                                     </button>
                                     {{ load_example_btn("loadSasaExample") }}
@@ -543,7 +543,7 @@
                                             <strong>Atom:</strong> CA, CB, N, etc.
                                         </div>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="selectionBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="selectionBtn">
                                         <i class="fas fa-crop me-2"></i>Extract Selection
                                     </button>
                                     {{ load_example_btn("loadSelectionExample") }}
@@ -611,15 +611,33 @@
     let surfaceHandle = null;
     let spinOn = false;
 
+    function themedBackground() {
+        // Match the app's surface colors so the viewer doesn't punch a
+        // harsh white rectangle into the dark UI. Falls back to a neutral
+        // slate if CSS vars aren't available.
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return isDark ? '#0f172a' : '#f8fafc';
+    }
+
     function ensureViewer() {
         if (viewer) return viewer;
         viewer = $3Dmol.createViewer(container, {
-            backgroundColor: 'white',
+            backgroundColor: themedBackground(),
             antialias: true,
         });
         viewer.enableFog(true);
         return viewer;
     }
+
+    // Re-theme the viewer when the user toggles light/dark. The tokens.css
+    // theme toggle flips [data-theme]; we watch for that and repaint.
+    const themeObserver = new MutationObserver(function () {
+        if (!viewer) return;
+        viewer.setBackgroundColor(themedBackground());
+        viewer.render();
+    });
+    themeObserver.observe(document.documentElement,
+        { attributes: true, attributeFilter: ['data-theme'] });
 
     function currentStyleSpec() {
         const style = styleSel.value;
@@ -684,7 +702,7 @@
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.text();
             })
-            .then(function (t) { loadPdbText(t, 'sample_protein.pdb'); })
+            .then(function (t) { loadPdbText(t, 'Crambin (1CRN) · 46 residues'); })
             .catch(function (e) { statusEl.textContent = 'Failed to fetch sample: ' + e; });
     }
 

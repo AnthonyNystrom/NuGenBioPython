@@ -39,12 +39,12 @@ function buildHMM() {
             displayHmmResults(data.model);
             window.currentHMM = data.model;
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('buildHmmBtn', '<i class="fas fa-cogs"></i> Build HMM');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -78,12 +78,12 @@ function trainHMM() {
         if (data.success) {
             displayTrainingResults(data.training);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('trainHmmBtn', '<i class="fas fa-graduation-cap"></i> Train with Baum-Welch');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -120,12 +120,12 @@ function decodeSequence() {
         if (data.success) {
             displayDecodingResults(data.decoding);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('decodeBtn', '<i class="fas fa-search"></i> Decode with Viterbi');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -487,12 +487,12 @@ function searchLiterature() {
         if (data.success) {
             displayLiteratureResults(data.results);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('searchLiteratureBtn', '<i class="fas fa-search"></i> Search Literature');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -532,7 +532,7 @@ function displayLiteratureResults(results) {
                         </h6>
                         <a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/"
                            target="_blank"
-                           class="btn btn-sm btn-outline-primary ms-2 flex-shrink-0">
+                           class="btn-app-sm btn-app-secondary ms-2 flex-shrink-0">
                             <i class="fas fa-external-link-alt"></i>
                         </a>
                     </div>
@@ -554,12 +554,12 @@ function displayLiteratureResults(results) {
                         <div class="d-flex gap-2 flex-wrap">
                             <a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/"
                                target="_blank"
-                               class="btn btn-sm btn-outline-primary">
+                               class="btn-app-sm btn-app-secondary">
                                 <i class="fas fa-book me-1"></i> PubMed
                             </a>
                             <a href="https://scholar.google.com/scholar?q=${encodeURIComponent(article.title)}"
                                target="_blank"
-                               class="btn btn-sm btn-outline-secondary">
+                               class="btn-app-sm btn-app-secondary">
                                 <i class="fas fa-graduation-cap me-1"></i> Scholar
                             </a>
                         </div>
@@ -638,12 +638,12 @@ function parseNexus() {
         if (data.success) {
             displayNexusResults(data.parsed);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('parseNexusBtn', '<i class="fas fa-play"></i> Parse Nexus');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -791,12 +791,12 @@ function lookupSCOP() {
         if (data.success) {
             displayScopResults(data.classification);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('lookupScopBtn', '<i class="fas fa-search"></i> Lookup SCOP');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 
@@ -902,12 +902,12 @@ function alignCodons() {
         if (data.success) {
             displayCodonResults(data.alignment);
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'ncbi'), 'danger');
         }
     })
     .catch(error => {
         hideLoading('alignCodonBtn', '<i class="fas fa-play"></i> Align Codons');
-        showAlert('Network error: ' + error.message, 'danger');
+        showAlert(friendlyError(error, 'ncbi'), 'danger');
     });
 }
 

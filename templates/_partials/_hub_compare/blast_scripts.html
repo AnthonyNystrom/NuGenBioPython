@@ -36,6 +36,9 @@ document.getElementById('blastForm').addEventListener('submit', function(e) {
     formData.append('filter', document.getElementById('filterLowComplexity').checked ? 'T' : 'F');
 
     showLoading('blastBtn');
+    if (typeof ResultsCard !== 'undefined' && ResultsCard.showLoading) {
+        ResultsCard.showLoading('blastResults', { title: 'Running BLAST — this usually takes 30–90 seconds…' });
+    }
 
     fetch('/api/blast/search', {
         method: 'POST',
@@ -51,12 +54,20 @@ document.getElementById('blastForm').addEventListener('submit', function(e) {
             // Switch to results tab
             document.getElementById('results-tab').click();
         } else {
-            showAlert('Error: ' + data.error, 'danger');
+            var friendly = friendlyError(data.error, 'blast');
+            if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
+                ResultsCard.showError('blastResults', { title: 'BLAST failed', message: friendly });
+            }
+            showAlert(friendly, 'danger');
         }
     })
     .catch(error => {
         hideLoading('blastBtn', '<i class="fas fa-rocket me-2"></i> Run BLAST Search');
-        showAlert('Error running BLAST: ' + error, 'danger');
+        var friendly = friendlyError(error, 'blast');
+        if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
+            ResultsCard.showError('blastResults', { title: 'BLAST request failed', message: friendly });
+        }
+        showAlert(friendly, 'danger');
     });
 });
 
@@ -99,7 +110,7 @@ function displayResults(data) {
             <td class="text-center"><span class="badge bg-success">${displayScore}</span></td>
             <td class="small">${eValue}</td>
             <td class="text-center">${hit.identity_percent || 0}%</td>
-            <td class="text-center"><button class="btn btn-sm btn-outline-warning" onclick="window.viewBlastAlignment(${index}); return false;">
+            <td class="text-center"><button class="btn-app-sm btn-app-secondary" onclick="window.viewBlastAlignment(${index}); return false;">
                 <i class="fas fa-align-left"></i> View
             </button></td>
         </tr>`;
@@ -138,7 +149,8 @@ function displayResults(data) {
     });
 }
 
-// Make viewAlignment globally accessible
+// D19 BLAST inner-tab flattening: clicking "View" renders the detailed
+// alignment INLINE beneath the hits table so users don't tab-jump.
 window.viewBlastAlignment = function(index) {
     const results = window.blastCurrentResults || currentResults;
 
@@ -146,36 +158,69 @@ window.viewBlastAlignment = function(index) {
         showAlert('No results available. Please run a BLAST search first.', 'warning');
         return;
     }
-
     if (index >= results.length) {
         showAlert('Invalid hit index', 'danger');
         return;
     }
 
+    let slot = document.getElementById('blastInlineAlignment');
+    if (!slot) {
+        const host = document.getElementById('blastResults');
+        if (host) {
+            slot = document.createElement('div');
+            slot.id = 'blastInlineAlignment';
+            slot.style.marginTop = '12px';
+            host.appendChild(slot);
+        }
+    }
+    if (slot) {
+        slot.innerHTML = '<div class="alert alert-info mb-0"><span class="spinner-border spinner-border-sm me-2"></span>Loading alignment…</div>';
+    }
+
     fetch(`/api/blast/alignment/${index}`)
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            const alignDiv = document.getElementById('alignmentView');
-            let html = `<div class="mb-3">
-                <h6 class="text-warning"><i class="fas fa-dna"></i> ${data.hit.accession}</h6>
-                <p class="small mb-2">${data.hit.title}</p>
-                <div class="row small">
-                    <div class="col-md-3"><strong>Score:</strong> ${data.hit.score} (${data.hit.bits} bits)</div>
-                    <div class="col-md-3"><strong>E-value:</strong> ${data.hit.e_value.toExponential(2)}</div>
-                    <div class="col-md-3"><strong>Identity:</strong> ${data.hit.identities}/${data.hit.align_length} (${data.hit.identity_percent}%)</div>
-                    <div class="col-md-3"><strong>Gaps:</strong> ${data.hit.gaps}/${data.hit.align_length}</div>
+        if (!data.success) {
+            const msg = data.error || 'Unknown error';
+            if (slot) slot.innerHTML = `<div class="alert alert-danger mb-0">${msg}</div>`;
+            showAlert('Error: ' + msg, 'danger');
+            return;
+        }
+        const alignHtml = `<section class="results-card">
+            <header class="results-card-header">
+                <div class="results-card-title">
+                    <strong><i class="fas fa-dna"></i> ${data.hit.accession}</strong>
+                    <span class="results-card-meta">${data.hit.title || ''}</span>
                 </div>
+                <button type="button" class="btn-app-sm btn-app-ghost" onclick="document.getElementById('blastInlineAlignment').remove()" aria-label="Close alignment">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="results-card-body">
+                <div class="rc-stats mb-3">
+                    <div class="rc-stat"><div class="rc-stat-value">${data.hit.bits}</div><div class="rc-stat-label">Bits</div></div>
+                    <div class="rc-stat"><div class="rc-stat-value">${data.hit.e_value.toExponential(1)}</div><div class="rc-stat-label">E-value</div></div>
+                    <div class="rc-stat"><div class="rc-stat-value">${data.hit.identity_percent}%</div><div class="rc-stat-label">Identity</div></div>
+                    <div class="rc-stat"><div class="rc-stat-value">${data.hit.gaps}/${data.hit.align_length}</div><div class="rc-stat-label">Gaps</div></div>
+                </div>
+                <pre class="results-raw">${data.alignment}</pre>
             </div>
-            <pre class="bg-light p-3 small" style="font-family: monospace;">${data.alignment}</pre>`;
-
-            alignDiv.innerHTML = html;
-            document.getElementById('alignment-tab').click();
+        </section>`;
+        if (slot) {
+            slot.innerHTML = alignHtml;
+            slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
-            showAlert('Error: ' + (data.error || 'Unknown error'), 'danger');
+            // Fallback (DOM missing): old Alignment tab
+            const alignDiv = document.getElementById('alignmentView');
+            if (alignDiv) {
+                alignDiv.innerHTML = alignHtml;
+                const alignTab = document.getElementById('alignment-tab');
+                if (alignTab) alignTab.click();
+            }
         }
     })
     .catch(error => {
+        if (slot) slot.innerHTML = `<div class="alert alert-danger mb-0">Failed to load alignment: ${error.message}</div>`;
         showAlert('Error loading alignment: ' + error.message, 'danger');
     });
 };

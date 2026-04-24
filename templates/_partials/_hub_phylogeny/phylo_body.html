@@ -1,12 +1,4 @@
-{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #phyloTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #phyloTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1">
@@ -17,25 +9,25 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="phyloTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab">
+            <button class="nav-link active" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab">
                 <i class="fas fa-upload d-block mb-1"></i>
                 <small>Parse Tree</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="build-tab" data-bs-toggle="tab" data-bs-target="#build" type="button" role="tab">
+            <button class="nav-link" id="build-tab" data-bs-toggle="tab" data-bs-target="#build" type="button" role="tab">
                 <i class="fas fa-hammer d-block mb-1"></i>
                 <small>Build Tree</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="manipulate-tab" data-bs-toggle="tab" data-bs-target="#manipulate" type="button" role="tab">
+            <button class="nav-link" id="manipulate-tab" data-bs-toggle="tab" data-bs-target="#manipulate" type="button" role="tab">
                 <i class="fas fa-edit d-block mb-1"></i>
                 <small>Manipulate</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="analyze-tab" data-bs-toggle="tab" data-bs-target="#analyze" type="button" role="tab">
+            <button class="nav-link" id="analyze-tab" data-bs-toggle="tab" data-bs-target="#analyze" type="button" role="tab">
                 <i class="fas fa-search d-block mb-1"></i>
                 <small>Analyze</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+            <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
                 <i class="fas fa-download d-block mb-1"></i>
                 <small>Export</small>
             </button>
@@ -50,7 +42,7 @@
                         <div class="card mb-3">
                             {{ card_header("Phylogenetic Tree Input", icon="fa-upload") }}
                             <div class="card-body py-2">
-                                <div class="row">
+                                <div class="row results-row">
                                     <div class="col-md-6">
                                         <h6 class="text-warning mb-2 small"><i class="fas fa-file"></i> Upload Tree File</h6>
                                         <form id="treeForm" enctype="multipart/form-data">
@@ -73,10 +65,10 @@
                                                     Show confidence values
                                                 </label>
                                             </div>
-                                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="parseTreeBtn">
+                                            <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="parseTreeBtn">
                                                 <i class="fas fa-project-diagram me-2"></i> Parse Tree
                                             </button>
-                                            {{ load_example_btn("loadExampleTree", label="Load Example") }}
+                                            {{ load_example_pair("loadExampleTree", "loadExampleTreeComplex", simple_label="8 taxa", complex_label="15-taxa mammals") }}
                                         </form>
                                     </div>
 
@@ -87,10 +79,10 @@
                                             <textarea class="form-control form-control-sm" id="treeString" rows="6"
                                                     placeholder="Enter tree in Newick format, e.g., ((A,B),(C,D));"></textarea>
                                         </div>
-                                        <button type="button" class="gradient-btn-outline w-100 mb-2" data-action="parseTreeString">
+                                        <button type="button" class="btn-app-ghost w-100 mb-2" data-action="parseTreeString">
                                             <i class="fas fa-code me-2"></i> Parse String
                                         </button>
-                                        <button type="button" class="gradient-btn-small w-100" data-action="clearTreeString">
+                                        <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="clearTreeString">
                                             <i class="fas fa-eraser me-2"></i> Clear
                                         </button>
                                     </div>
@@ -169,7 +161,7 @@
                                             <option value="trans">Transition</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mt-2" id="buildTreeBtn">
+                                    <button type="submit" class="btn-app-primary w-100 mt-2" id="buildTreeBtn">
                                         <i class="fas fa-hammer me-2"></i> Build Tree
                                     </button>
                                 </form>
@@ -201,7 +193,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="pruneTree">
+                                <button class="btn-app-primary w-100" data-action="pruneTree">
                                     <i class="fas fa-cut me-2"></i> Prune
                                 </button>
                             </div>
@@ -227,7 +219,7 @@
                                         <option value="">Select outgroup...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="rerootTree">
+                                <button class="btn-app-primary w-100" data-action="rerootTree">
                                     <i class="fas fa-arrows-alt me-2"></i> Re-root
                                 </button>
                             </div>
@@ -242,7 +234,7 @@
                                         Reverse order
                                     </label>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="ladderizeTree">
+                                <button class="btn-app-primary w-100" data-action="ladderizeTree">
                                     <i class="fas fa-sort me-2"></i> Ladderize
                                 </button>
                             </div>
@@ -257,7 +249,7 @@
                                            step="0.01" placeholder="e.g., 0.1">
                                     <div class="form-text">Collapse branches shorter than threshold</div>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="collapseTree">
+                                <button class="btn-app-primary w-100" data-action="collapseTree">
                                     <i class="fas fa-compress me-2"></i> Collapse
                                 </button>
                             </div>
@@ -282,10 +274,10 @@
                         <div class="card mb-3">
                             {{ card_header("View Terminals & Clades", icon="fa-list") }}
                             <div class="card-body py-2">
-                                <button class="gradient-btn-primary w-100 mb-2" data-action="viewTerminals">
+                                <button class="btn-app-primary w-100 mb-2" data-action="viewTerminals">
                                     <i class="fas fa-leaf me-2"></i> View All Terminals
                                 </button>
-                                <button class="gradient-btn-outline w-100" data-action="viewClades">
+                                <button class="btn-app-ghost w-100" data-action="viewClades">
                                     <i class="fas fa-sitemap me-2"></i> View All Clades
                                 </button>
                                 <div id="terminalsCladesList" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
@@ -301,7 +293,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="findPath">
+                                <button class="btn-app-primary w-100" data-action="findPath">
                                     <i class="fas fa-route me-2"></i> Find Path
                                 </button>
                                 <div id="pathDisplay" class="mt-3"></div>
@@ -323,7 +315,7 @@
                                         <option value="">Select terminal...</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="findCommonAncestor">
+                                <button class="btn-app-primary w-100" data-action="findCommonAncestor">
                                     <i class="fas fa-code-branch me-2"></i> Find Common Ancestor
                                 </button>
                                 <div id="ancestorDisplay" class="mt-3"></div>
@@ -341,7 +333,7 @@
                                     <textarea class="form-control form-control-sm" id="compareTreeString" rows="4"
                                             placeholder="Enter tree in Newick format"></textarea>
                                 </div>
-                                <button class="gradient-btn-primary w-100 mb-2" data-action="compareTrees">
+                                <button class="btn-app-primary w-100 mb-2" data-action="compareTrees">
                                     <i class="fas fa-balance-scale me-2"></i> Compare Trees
                                 </button>
                                 <div id="comparisonDisplay"></div>
@@ -366,7 +358,7 @@
                                         <option value="phyloxml">PhyloXML</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-primary w-100 mb-2" data-action="exportTree">
+                                <button class="btn-app-primary w-100 mb-2" data-action="exportTree">
                                     <i class="fas fa-file-export me-2"></i> Export Tree
                                 </button>
                             </div>
@@ -383,7 +375,7 @@
                                         Show confidence values
                                     </label>
                                 </div>
-                                <button class="gradient-btn-primary w-100" data-action="updateVisualization">
+                                <button class="btn-app-primary w-100" data-action="updateVisualization">
                                     <i class="fas fa-sync me-2"></i> Update Visualization
                                 </button>
                             </div>

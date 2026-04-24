@@ -1,18 +1,51 @@
 # NuGenBioPython
 
-![NuGenBio](nugenbio.png)
+![Dashboard](docs/screenshots/01_dashboard.png)
 
 A comprehensive web interface for BioPython - providing easy access to all major BioPython modules through a modern, user-friendly interface.
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![BioPython](https://img.shields.io/badge/BioPython-1.85-green)
-![Flask](https://img.shields.io/badge/Flask-3.0%2B-red)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-![Completeness](https://img.shields.io/badge/Coverage-95%25%2B-brightgreen)
+**Python** 3.8+ · **BioPython** 1.85 · **Flask** 3.0+ · **License** MIT · **Coverage** 95%+
 
 ## Overview
 
 NuGenBioPython is a web application that makes BioPython's extensive bioinformatics toolkit accessible through an intuitive web interface. Whether you're analyzing DNA sequences, working with protein structures, or exploring phylogenetic trees, this tool provides a seamless experience for researchers and students alike.
+
+## Screenshots
+
+### Protein Structure Viewer
+3Dmol.js-powered interactive viewer with cartoon/surface/stick representations. Shown: Crambin (1CRN) rendered in spectrum coloring.
+
+![Structure viewer](docs/screenshots/02_structure_viewer.png)
+
+### Genome Diagram
+Circular and linear genome maps with arrow-shaped features, strand direction, and scale axes. Shown: pUC19 plasmid at real coordinates.
+
+![Genome diagram](docs/screenshots/03_genome_diagram.png)
+
+### Sequence Logo
+Information-content-scaled glyph logos via `logomaker`. Shown: 12-position TATA-box variant motif.
+
+![Sequence logo](docs/screenshots/04_sequence_logo.png)
+
+### Phylogenetic Tree
+Auto-sized tree rendering with taxa count & label length, vector SVG output. Shown: 15-taxa mammal phylogeny.
+
+![Phylogenetic tree](docs/screenshots/05_phylo_tree.png)
+
+### Pathway Network
+Network graph with colour-coded source / intermediate / sink nodes, legend, and curved edges for bidirectional reactions. Shown: glycolysis.
+
+![Pathway network](docs/screenshots/06_pathway_network.png)
+
+### Restriction Map
+Collision-free vector restriction map with per-enzyme colour-coded ticks and a proper position axis. Shown: 10-enzyme digest.
+
+![Restriction map](docs/screenshots/07_restriction_map.png)
+
+### Clustering Dendrogram
+Hierarchical clustering with automatic distance cut-line matching the requested cluster count.
+
+![Clustering dendrogram](docs/screenshots/08_clustering_dendrogram.png)
 
 ## 📋 Table of Contents
 - [Features](#features)

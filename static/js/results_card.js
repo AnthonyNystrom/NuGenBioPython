@@ -147,6 +147,18 @@
         if (!container) return;
         container.innerHTML = buildCard(spec);
         wire(container, spec);
+        // Auto-scroll the card into view so users never miss a result that
+        // rendered below the fold. Skip if the container is already in a
+        // split-pane results column (those are always visible side-by-side).
+        if (!container.closest('.tool-split-results, .tool-results-pane')) {
+            const card = container.querySelector('.results-card');
+            if (card && typeof card.scrollIntoView === 'function') {
+                // Delay to let layout settle
+                setTimeout(function () {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
+        }
         return container;
     }
 
@@ -198,5 +210,94 @@
             '</section>';
     }
 
-    global.ResultsCard = { mount: mount, build: buildCard, showLoading: showLoading, showError: showError };
+    // Render a consistent empty state — used by tool pages to prime the
+    // results pane with a helpful placeholder before the user runs the tool.
+    function showEmpty(containerOrId, opts) {
+        const container = typeof containerOrId === 'string'
+            ? document.getElementById(containerOrId)
+            : containerOrId;
+        if (!container) return;
+        const icon = (opts && opts.icon) || 'fa-chart-bar';
+        const title = (opts && opts.title) || 'No results yet';
+        const body = (opts && opts.body) || 'Run the tool on the left to see results here.';
+        container.innerHTML =
+            '<div class="rc-empty">' +
+                '<i class="fas ' + esc(icon) + '" aria-hidden="true"></i>' +
+                '<div class="rc-empty-title">' + esc(title) + '</div>' +
+                '<p class="rc-empty-body">' + esc(body) + '</p>' +
+            '</div>';
+    }
+
+    global.ResultsCard = { mount: mount, build: buildCard, showLoading: showLoading, showError: showError, showEmpty: showEmpty };
+
+    // D23: prime recognized results containers with a consistent empty state
+    // on page load. Containers get a placeholder only if they are currently
+    // empty / contain just a legacy "Run an analysis…" stub. Once the tool
+    // mounts real content, this is overwritten.
+    function primeEmptyStates() {
+        // Id → {icon, title, body}
+        var EMPTY_DEFAULTS = {
+            resultsArea:        { icon: 'fa-chart-bar',       title: 'No results yet',    body: 'Paste a sequence and click Analyze.' },
+            alignmentResults:   { icon: 'fa-align-center',    title: 'No alignment yet',  body: 'Enter two sequences and click Align.' },
+            blastResults:       { icon: 'fa-rocket',          title: 'No BLAST run yet',  body: 'Paste a query and click Run BLAST Search.' },
+            parseResults:       { icon: 'fa-file-alt',        title: 'No records parsed', body: 'Upload a file and click Parse.' },
+            searchResults:      { icon: 'fa-search',          title: 'No search run yet', body: 'Enter a query and click Search.' },
+            basicResults:       { icon: 'fa-cut',             title: 'No analysis yet',   body: 'Paste a sequence and click Analyze.' },
+            advancedResults:    { icon: 'fa-filter',          title: 'No results yet',    body: 'Configure filters and run.' },
+            mapResultsCard:     { icon: 'fa-map',             title: 'No map generated',  body: 'Enter a sequence + enzyme list.' },
+            compatibleResults:  { icon: 'fa-link',            title: 'No pairs yet',      body: 'Enter 2+ enzymes to find compatible ends.' },
+            popgenResults:      { icon: 'fa-users',           title: 'No data parsed',    body: 'Upload or paste a GENEPOP file.' },
+            clusteringCard:     { icon: 'fa-circle-nodes',    title: 'No clustering run', body: 'Paste a data matrix and choose a method.' },
+            treeInfo:           { icon: 'fa-tree',            title: 'No tree yet',       body: 'Parse or build a phylogenetic tree.' },
+            readResults:        { icon: 'fa-book-open',       title: 'No record read',    body: 'Upload a file and click Read.' },
+            indexResults:       { icon: 'fa-database',        title: 'No index built',    body: 'Upload a file and click Create Index.' },
+            convertResults:     { icon: 'fa-exchange-alt',    title: 'No conversion yet', body: 'Upload a file and run a format conversion.' },
+            filterResults:      { icon: 'fa-filter',          title: 'No filter applied', body: 'Upload a file and set thresholds.' },
+            writeResults:       { icon: 'fa-file-export',     title: 'No output written', body: 'Upload, pick a format, click Write.' },
+            codonResults:       { icon: 'fa-dna',             title: 'No translation',    body: 'Paste DNA and click Translate.' },
+            iupacResults:       { icon: 'fa-atom',            title: 'No lookup yet',     body: 'Enter an IUPAC code to look up.' },
+            globalResults:      { icon: 'fa-server',          title: 'No global search',  body: 'Enter a term to query every NCBI database.' },
+            linkResults:        { icon: 'fa-link',            title: 'No linked records', body: 'Enter an ID and pick source/target.' },
+            fetchResults:       { icon: 'fa-download',        title: 'No fetch yet',      body: 'Enter IDs and a format.' },
+            infoResults:        { icon: 'fa-info-circle',     title: 'No database info',  body: 'Pick a database to fetch its info.' },
+            orfResults:         { icon: 'fa-puzzle-piece',    title: 'No ORFs found yet', body: 'Paste a sequence and click Find ORFs.' },
+            extractResults:     { icon: 'fa-cut',             title: 'No feature cut',    body: 'Enter range + strand.' },
+            compoundResults:    { icon: 'fa-puzzle-piece',    title: 'No compound',       body: 'Enter sequence + locations.' },
+            annotateResults:    { icon: 'fa-file-alt',        title: 'No annotations',   body: 'Define features and generate.' },
+            contactsResults:    { icon: 'fa-network-wired',   title: 'No contacts yet',   body: 'Parse a structure first, then calculate contacts.' },
+            interactionsResults:{ icon: 'fa-link',            title: 'No interactions',   body: 'Parse a structure first.' },
+            dsspResults:        { icon: 'fa-dna',             title: 'No secondary structure', body: 'Upload a PDB and analyze.' },
+            ramaResults:        { icon: 'fa-chart-scatter',   title: 'No phi/psi yet',    body: 'Upload a PDB to compute angles.' },
+            sasaResults:        { icon: 'fa-water',           title: 'No SASA computed',  body: 'Upload a PDB to compute accessibility.' },
+            selectionResults:   { icon: 'fa-crop',            title: 'No selection yet',  body: 'Upload a PDB and define a selection.' },
+            superimposeResults: { icon: 'fa-project-diagram', title: 'No superposition',  body: 'Upload two PDBs to align.' },
+            geometryResults:    { icon: 'fa-ruler',           title: 'No geometry',       body: 'Parse a structure first.' },
+            qualityResults:     { icon: 'fa-check-circle',    title: 'No quality report', body: 'Upload a PDB to analyze quality.' },
+            systemAnalysisResults:  { icon: 'fa-sitemap',     title: 'No system analysis', body: 'Add reactions, then Analyze System.' },
+            networkAnalysisResults: { icon: 'fa-network-wired', title: 'No network analysis', body: 'Add reactions, then Analyze Network.' },
+            pathwayVisualization:   { icon: 'fa-image',       title: 'No graph yet',      body: 'Add reactions, then Generate Visualization.' },
+            hmmAnalysis:        { icon: 'fa-circle-nodes',    title: 'No model built',    body: 'Configure states and Build HMM.' },
+            trainingResults:    { icon: 'fa-graduation-cap',  title: 'No training yet',   body: 'Build a model first, then train.' },
+            decodingResults:    { icon: 'fa-search',          title: 'No decoding yet',   body: 'Build + train a model, then decode.' },
+            literatureResults:  { icon: 'fa-book',            title: 'No articles fetched', body: 'Enter a PubMed query.' },
+            nexusResults:       { icon: 'fa-file-code',       title: 'No Nexus parsed',   body: 'Upload or paste a Nexus file.' },
+            scopResults:        { icon: 'fa-sitemap',         title: 'No SCOP lookup',    body: 'Enter a SCOP ID.' },
+        };
+        Object.keys(EMPTY_DEFAULTS).forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var txt = (el.textContent || '').trim().toLowerCase();
+            var hasReal = el.querySelector('.results-card, .rc-stats, table, .accordion');
+            if (hasReal) return;
+            // Only prime if the container is empty-ish (default stub text)
+            if (txt.length > 0 && txt.length > 120) return;
+            global.ResultsCard.showEmpty(el, EMPTY_DEFAULTS[id]);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', primeEmptyStates);
+    } else {
+        primeEmptyStates();
+    }
 })(window);

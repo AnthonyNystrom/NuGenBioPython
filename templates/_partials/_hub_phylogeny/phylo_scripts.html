@@ -113,7 +113,7 @@ function displayTreeResults(data) {
         treeVisDiv.innerHTML = `
             <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree" style="max-width: 100%; height: auto;">
             <div class="mt-2">
-                <button class="gradient-btn-outline btn-sm" onclick="downloadTreeImage('${data.tree_image}')">
+                <button class="btn-app-ghost btn-app-sm" onclick="downloadTreeImage('${data.tree_image}')">
                     <i class="fas fa-download"></i> Download Image
                 </button>
             </div>
@@ -526,7 +526,7 @@ function exportTree() {
             } else {
                 html += '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>';
             }
-            html += '<button class="gradient-btn-small w-100 mt-2" data-action="copyExportedTree"><i class="fas fa-copy"></i> Copy to Clipboard</button>';
+            html += '<button class="btn-app-secondary btn-app-sm w-100 mt-2" data-action="copyExportedTree"><i class="fas fa-copy"></i> Copy to Clipboard</button>';
             const target = document.getElementById('exportedTree');
             target.innerHTML = html;
             // Safely populate every textarea in this block with the raw tree string
@@ -566,7 +566,7 @@ function updateVisualization() {
             treeVisDiv.innerHTML = `
                 <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree">
                 <div class="mt-2">
-                    <button class="gradient-btn-outline btn-sm" onclick="downloadTreeImage('${data.tree_image}')">
+                    <button class="btn-app-ghost btn-app-sm" onclick="downloadTreeImage('${data.tree_image}')">
                         <i class="fas fa-download"></i> Download Image
                     </button>
                 </div>

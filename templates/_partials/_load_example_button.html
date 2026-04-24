@@ -12,13 +12,30 @@
 #}
 {%- macro load_example_btn(onclick_fn, size="secondary", label="Example", extra="", icon="fa-flask", icon_spacing="me-2") -%}
 {%- if size == "small" -%}
-  {%- set base_class = "gradient-btn-small w-100" -%}
+  {%- set base_class = "btn-app-secondary btn-app-sm w-100" -%}
 {%- else -%}
-  {%- set base_class = "gradient-btn-secondary w-100" -%}
+  {%- set base_class = "btn-app-secondary w-100" -%}
 {%- endif -%}
 {%- set full_class = (base_class + " " + extra).strip() -%}
 {%- set icon_class = ("fas " + icon + " " + icon_spacing).strip() -%}
 <button type="button" class="{{ full_class }}" data-action="{{ onclick_fn }}">
                         <i class="{{ icon_class }}"></i>{{ label }}
                     </button>
+{%- endmacro -%}
+
+{#
+  Paired Simple + Complex example buttons. Emits two side-by-side buttons
+  that share the space of one. Used for tool sections that now provide
+  both a short "getting started" sample and a longer biologically-meaningful
+  one. The two data-action names must both exist as global JS functions.
+#}
+{%- macro load_example_pair(simple_fn, complex_fn, simple_label="Simple example", complex_label="Complex example", extra="") -%}
+<div class="load-example-pair {{ extra }}">
+    <button type="button" class="btn-app-secondary btn-app-sm" data-action="{{ simple_fn }}" title="Load a short, minimal sample">
+        <i class="fas fa-flask me-1"></i>{{ simple_label }}
+    </button>
+    <button type="button" class="btn-app-secondary btn-app-sm" data-action="{{ complex_fn }}" title="Load a larger, biologically realistic sample">
+        <i class="fas fa-flask-vial me-1"></i>{{ complex_label }}
+    </button>
+</div>
 {%- endmacro -%}

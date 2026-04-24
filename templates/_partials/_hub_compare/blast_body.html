@@ -1,12 +1,4 @@
-{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #blastTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #blastTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-warning mb-1">
@@ -17,21 +9,21 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="blastTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
+            <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
                 <i class="fas fa-search d-block mb-1"></i>
                 <small>BLAST Search</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab">
+            <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab">
                 <i class="fas fa-list d-block mb-1"></i>
                 <small>Results</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="alignment-tab" data-bs-toggle="tab" data-bs-target="#alignment" type="button" role="tab">
+            <button class="nav-link" id="alignment-tab" data-bs-toggle="tab" data-bs-target="#alignment" type="button" role="tab">
                 <i class="fas fa-align-left d-block mb-1"></i>
                 <small>Alignments</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+            <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
                 <i class="fas fa-download d-block mb-1"></i>
                 <small>Export</small>
             </button>
@@ -95,7 +87,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="row">
+                                    <div class="row results-row">
                                         <div class="col-md-4">
                                             <div class="mb-2">
                                                 <label for="eValue" class="form-label small">E-value Threshold</label>
@@ -137,10 +129,10 @@
                                         </label>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-warning w-100 mb-2 mt-2" id="blastBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-2" id="blastBtn">
                                         <i class="fas fa-rocket me-2"></i> Run BLAST Search
                                     </button>
-                                    {{ load_example_btn("loadBlastExample", label="Load Example") }}
+                                    {{ load_example_pair("loadBlastExample", "loadBlastExampleComplex", simple_label="Snippet", complex_label="Full β-globin mRNA") }}
                                 </form>
                             </div>
                         </div>
@@ -204,7 +196,7 @@
                                         <option value="text">Text</option>
                                     </select>
                                 </div>
-                                <button class="gradient-btn-warning w-100 mb-2" data-action="exportResults">
+                                <button class="btn-app-secondary w-100 mb-2" data-action="exportResults">
                                     <i class="fas fa-file-export me-2"></i> Export Results
                                 </button>
                             </div>

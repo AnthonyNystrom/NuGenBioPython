@@ -147,8 +147,8 @@
                 '<div class="ws-header d-flex align-items-center justify-content-between">' +
                     '<strong><i class="fas fa-layer-group me-2 text-primary"></i>Workspace</strong>' +
                     '<div>' +
-                        '<button type="button" class="ws-clear btn btn-link btn-sm p-0 me-3" title="Clear all">Clear</button>' +
-                        '<button type="button" class="ws-close btn btn-link btn-sm p-0" title="Close" aria-label="Close">' +
+                        '<button type="button" class="btn-app-secondary ws-clear btn-link btn-app-sm p-0 me-3" title="Clear all">Clear</button>' +
+                        '<button type="button" class="btn-app-secondary ws-close btn-link btn-app-sm p-0" title="Close" aria-label="Close">' +
                             '<i class="fas fa-times"></i>' +
                         '</button>' +
                     '</div>' +
@@ -208,7 +208,7 @@
                         '<strong><i class="fas fa-layer-group"></i> Save</strong> on the result card. ' +
                         'Saved items live here across pages so you can reuse them.' +
                     '</p>' +
-                    '<a class="btn btn-sm btn-outline-primary" href="/sequence">' +
+                    '<a class="btn-app-sm btn-app-secondary" href="/sequence">' +
                         '<i class="fas fa-play me-1"></i> Try sequence analysis' +
                     '</a>' +
                 '</div>';
@@ -238,9 +238,9 @@
                         escapeHtml(preview) +
                     '</div>' +
                     '<div class="ws-item-actions">' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 me-2" data-ws-action="copy">Copy</button>' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 me-2" data-ws-action="use">Use</button>' +
-                        '<button type="button" class="btn btn-sm btn-link p-0 text-danger" data-ws-action="remove">Remove</button>' +
+                        '<button type="button" class="btn-app-secondary btn-app-sm btn-link p-0 me-2" data-ws-action="copy">Copy</button>' +
+                        '<button type="button" class="btn-app-secondary btn-app-sm btn-link p-0 me-2" data-ws-action="use">Use</button>' +
+                        '<button type="button" class="btn-app-secondary btn-app-sm btn-link p-0 text-danger" data-ws-action="remove">Remove</button>' +
                     '</div>' +
                 '</div>';
             });

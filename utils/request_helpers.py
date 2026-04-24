@@ -5,6 +5,8 @@ standardise server-side error logging. They intentionally avoid grand
 abstractions — each call site can keep its existing try/except shape.
 """
 import logging
+import socket
+from contextlib import contextmanager
 
 from flask import jsonify, request
 
@@ -51,6 +53,24 @@ def clamp_float(value, default, *, lo=None, hi=None):
     if hi is not None and n > hi:
         return hi
     return n
+
+
+@contextmanager
+def remote_timeout(seconds):
+    """Temporarily set the default socket timeout for remote calls.
+
+    BioPython's REST/Entrez/NCBIWWW helpers use urllib under the hood and
+    don't accept a ``timeout=`` kwarg. We set the default socket timeout
+    for the duration of the call so a slow/hung external service aborts
+    instead of blocking a Flask worker indefinitely. The original timeout
+    is always restored, even on exception.
+    """
+    old = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(seconds)
+    try:
+        yield
+    finally:
+        socket.setdefaulttimeout(old)
 
 
 def error_response(exc, user_msg=None, *, context=None):

@@ -2,15 +2,7 @@
 
 {% block title %}Sequence Features - NuGenBioPython{% endblock %}
 
-{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #featuresTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #featuresTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
+{% block content %}{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1">
@@ -21,29 +13,29 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex" id="featuresTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-2 fw-bold" id="orf-tab" data-bs-toggle="tab" data-bs-target="#orf" type="button">
+            <button class="nav-link active" id="orf-tab" data-bs-toggle="tab" data-bs-target="#orf" type="button">
                 <i class="fas fa-dna d-block mb-1"></i>
                 <small>ORF Finder</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button">
+            <button class="nav-link" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button">
                 <i class="fas fa-plus-circle d-block mb-1"></i>
                 <small>Create Feature</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
+            <button class="nav-link" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button">
                 <i class="fas fa-file-alt d-block mb-1"></i>
                 <small>Parse GenBank</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="extract-tab" data-bs-toggle="tab" data-bs-target="#extract" type="button">
+            <button class="nav-link" id="extract-tab" data-bs-toggle="tab" data-bs-target="#extract" type="button">
                 <i class="fas fa-cut d-block mb-1"></i>
                 <small>Extract</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="compound-tab" data-bs-toggle="tab" data-bs-target="#compound" type="button">
+            <button class="nav-link" id="compound-tab" data-bs-toggle="tab" data-bs-target="#compound" type="button">
                 <i class="fas fa-layer-group d-block mb-1"></i>
                 <small>Compound</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-2 fw-bold" id="annotate-tab" data-bs-toggle="tab" data-bs-target="#annotate" type="button">
+            <button class="nav-link" id="annotate-tab" data-bs-toggle="tab" data-bs-target="#annotate" type="button">
                 <i class="fas fa-edit d-block mb-1"></i>
                 <small>Annotate</small>
             </button>
@@ -75,10 +67,10 @@
                                     </select>
                                 </div>
                             </div>
-                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="orfBtn">
+                            <button type="submit" class="btn-app-primary w-100 mb-2 mt-3" id="orfBtn">
                                 <i class="fas fa-search me-2"></i>Find ORFs
                             </button>
-                            {{ load_example_btn("loadORFExample", size="small") }}
+                            {{ load_example_pair("loadORFExample", "loadORFExampleComplex", simple_label="Short", complex_label="Actin-like gene") }}
                         </form>
                     </div>
                 </div>
@@ -123,7 +115,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="createBtn">
+                            <button type="submit" class="btn-app-primary w-100 mb-2 mt-3" id="createBtn">
                                 <i class="fas fa-plus me-2"></i>Create Feature
                             </button>
                             {{ load_example_btn("loadCreateExample", size="small") }}
@@ -150,7 +142,7 @@
                                     <option value="embl">EMBL</option>
                                 </select>
                             </div>
-                            <button type="submit" class="gradient-btn-primary w-100" id="parseBtn">
+                            <button type="submit" class="btn-app-primary w-100" id="parseBtn">
                                 <i class="fas fa-file-import me-2"></i>Parse Features
                             </button>
                         </form>
@@ -192,10 +184,10 @@
                                     Translate to protein
                                 </label>
                             </div>
-                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-3" id="extractBtn">
+                            <button type="submit" class="btn-app-primary w-100 mb-2 mt-3" id="extractBtn">
                                 <i class="fas fa-cut me-2"></i>Extract Feature
                             </button>
-                            {{ load_example_btn("loadExtractExample", size="small") }}
+                            {{ load_example_pair("loadExtractExample", "loadExtractExampleComplex", simple_label="Short", complex_label="With translation") }}
                         </form>
                     </div>
                 </div>
@@ -217,10 +209,10 @@
                                 <textarea class="form-control form-control-sm" id="compoundLocations" rows="3" placeholder="Example:&#10;0,100,1&#10;150,250,1&#10;300,400,1"></textarea>
                                 <small class="text-muted">Format: start,end,strand (strand: 1 for +, -1 for -)</small>
                             </div>
-                            <button type="submit" class="gradient-btn-primary w-100 mb-2 mt-2" id="compoundBtn">
+                            <button type="submit" class="btn-app-primary w-100 mb-2 mt-2" id="compoundBtn">
                                 <i class="fas fa-layer-group me-2"></i>Create Compound Feature
                             </button>
-                            {{ load_example_btn("loadCompoundExample", size="small") }}
+                            {{ load_example_pair("loadCompoundExample", "loadCompoundExampleComplex", simple_label="2 parts", complex_label="4-part compound") }}
                         </form>
                     </div>
                 </div>
@@ -272,10 +264,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" id="addFeatureBtn">
+                            <button type="button" class="btn-app-sm btn-app-secondary mb-2" id="addFeatureBtn">
                                 <i class="fas fa-plus"></i> Add Another Feature
                             </button>
-                            <button type="submit" class="gradient-btn-primary w-100 mb-2" id="annotateSubmitBtn">
+                            <button type="submit" class="btn-app-primary w-100 mb-2" id="annotateSubmitBtn">
                                 <i class="fas fa-file-export me-2"></i>Generate GenBank File
                             </button>
                             {{ load_example_btn("loadAnnotateExample", size="small") }}

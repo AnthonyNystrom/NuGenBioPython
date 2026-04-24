@@ -1,4 +1,4 @@
-{% from "_partials/_load_example_button.html" import load_example_btn %}
+{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 <div class="row mb-4">
     <div class="col-12">
         <h2 class="text-success">
@@ -31,10 +31,10 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="gradient-btn-success w-100 mb-2 mt-3" id="parsePopgenBtn">
+                    <button type="submit" class="btn-app-secondary w-100 mb-2 mt-3" id="parsePopgenBtn">
                         <i class="fas fa-chart-bar"></i> Parse GenePop Data
                     </button>
-                    {{ load_example_btn("loadPopgenExample", label="Load Example", icon_spacing="") }}
+                    {{ load_example_pair("loadPopgenExample", "loadPopgenExampleComplex", simple_label="3 pops", complex_label="4 pops × 10 loci") }}
                 </form>
             </div>
         </div>
@@ -65,7 +65,7 @@
     </div>
 </div>
 
-<div class="row mt-3">
+<div class="row mt-3 results-row">
     <div class="col-12">
         <div class="card">
             <div class="card-header py-2 d-flex justify-content-between align-items-center">
@@ -100,22 +100,22 @@
 
                 <div class="row g-2">
                     <div class="col-12 col-md-6">
-                        <button class="gradient-btn-info w-100" data-action="runAlleleFrequencies">
+                        <button class="btn-app-secondary w-100" data-action="runAlleleFrequencies">
                             <i class="fas fa-chart-pie"></i> Allele Frequencies
                         </button>
                     </div>
                     <div class="col-12 col-md-6">
-                        <button class="gradient-btn-info w-100" data-action="runHeterozygosityPython">
+                        <button class="btn-app-secondary w-100" data-action="runHeterozygosityPython">
                             <i class="fas fa-percentage"></i> Heterozygosity
                         </button>
                     </div>
                     <div class="col-12 col-md-6">
-                        <button class="gradient-btn-info w-100" data-action="runHardyWeinbergPython">
+                        <button class="btn-app-secondary w-100" data-action="runHardyWeinbergPython">
                             <i class="fas fa-balance-scale"></i> Hardy-Weinberg Test
                         </button>
                     </div>
                     <div class="col-12 col-md-6">
-                        <button class="gradient-btn-info w-100" data-action="runFstPython">
+                        <button class="btn-app-secondary w-100" data-action="runFstPython">
                             <i class="fas fa-project-diagram"></i> Fst Analysis
                         </button>
                     </div>

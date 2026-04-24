@@ -156,7 +156,7 @@ function loadMultiTrackFeaturesFromFile(data) {
                     </select>
                 </div>
                 <div class="col-3">
-                    <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                    <button type="button" class="btn-app-sm btn-app-danger w-100"
                             onclick="this.parentElement.parentElement.remove()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -220,10 +220,14 @@ function addFeature() {
                 <option value="brown">Brown</option>
                 <option value="pink">Pink</option>
                 <option value="cyan">Cyan</option>
+                <option value="gray">Gray</option>
+                <option value="darkblue">Dark blue</option>
+                <option value="teal">Teal</option>
+                <option value="black">Black</option>
             </select>
         </div>
         <div class="col-md-2">
-            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeFeature(${featureCount})">
+            <button type="button" class="btn-app-danger btn-app-sm w-100" onclick="removeFeature(${featureCount})">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
@@ -357,7 +361,7 @@ function addTrack() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">&nbsp;</label>
-                    <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                    <button type="button" class="btn-app-danger btn-app-sm w-100"
                             onclick="removeTrack(${trackCount})">
                         <i class="fas fa-trash"></i> Remove
                     </button>
@@ -368,7 +372,7 @@ function addTrack() {
             <div class="track-features" id="track-${trackCount}-features">
                 <!-- Features for this track -->
             </div>
-            <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+            <button type="button" class="btn-app-sm btn-app-secondary mt-2"
                     onclick="addTrackFeature(${trackCount})">
                 <i class="fas fa-plus"></i> Add Feature to Track
             </button>
@@ -412,6 +416,12 @@ function addTrackFeature(trackId) {
                 <option value="orange">Orange</option>
                 <option value="purple">Purple</option>
                 <option value="brown">Brown</option>
+                <option value="pink">Pink</option>
+                <option value="cyan">Cyan</option>
+                <option value="gray">Gray</option>
+                <option value="darkblue">Dark blue</option>
+                <option value="teal">Teal</option>
+                <option value="black">Black</option>
             </select>
         </div>
         <div class="col-md-1">
@@ -422,7 +432,7 @@ function addTrackFeature(trackId) {
             </select>
         </div>
         <div class="col-md-2">
-            <button type="button" class="btn btn-outline-danger btn-sm w-100"
+            <button type="button" class="btn-app-danger btn-app-sm w-100"
                     onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
@@ -441,19 +451,26 @@ function clearTracks() {
 function loadMultiTrackExample() {
     clearTracks();
 
-    document.getElementById('multiTrackGenomeLength').value = '30000';
+    // Shorter genome (12 kb) with features distributed across nearly the full
+    // length — avoids the "one crowded cluster on the left + empty right half"
+    // look. Colors vary per feature so tracks are visually distinct.
+    document.getElementById('multiTrackGenomeLength').value = '12000';
     document.getElementById('multiTrackTitle').value = 'Multi-Track Genome View';
 
-    // Track 1: Genes
+    // Track 1: Genes — spread across the full 12 kb, mixed strands + colors.
     addTrack();
     let track = document.querySelector('.track-item:last-child');
     track.querySelector('.track-name').value = 'Genes';
     track.querySelector('.track-height').value = '0.5';
 
     const genesFeatures = [
-        { name: 'geneA', start: 1000, end: 2500, color: 'blue', strand: 1 },
-        { name: 'geneB', start: 3000, end: 4500, color: 'blue', strand: 1 },
-        { name: 'geneC', start: 5000, end: 6000, color: 'blue', strand: -1 }
+        { name: 'geneA', start: 500,   end: 1800,  color: 'blue',   strand: 1 },
+        { name: 'geneB', start: 2200,  end: 3600,  color: 'purple', strand: 1 },
+        { name: 'geneC', start: 4000,  end: 5400,  color: 'blue',   strand: -1 },
+        { name: 'geneD', start: 5800,  end: 7200,  color: 'teal',   strand: 1 },
+        { name: 'geneE', start: 7600,  end: 8800,  color: 'brown',  strand: -1 },
+        { name: 'geneF', start: 9200,  end: 10600, color: 'blue',   strand: 1 },
+        { name: 'geneG', start: 11000, end: 11800, color: 'darkblue', strand: 1 }
     ];
 
     genesFeatures.forEach(f => {
@@ -466,7 +483,7 @@ function loadMultiTrackExample() {
         lastFeature.querySelector('.track-feature-strand').value = f.strand;
     });
 
-    // Track 2: Regulatory
+    // Track 2: Regulatory — promoters, enhancers, terminators.
     addTrack();
     track = document.querySelector('.track-item:last-child');
     track.querySelector('.track-name').value = 'Regulatory Elements';
@@ -474,12 +491,40 @@ function loadMultiTrackExample() {
     track.querySelector('.track-number').value = '2';
 
     const regFeatures = [
-        { name: 'Promoter1', start: 800, end: 1000, color: 'green', strand: 1 },
-        { name: 'Promoter2', start: 2800, end: 3000, color: 'green', strand: 1 },
-        { name: 'Enhancer', start: 8000, end: 8500, color: 'orange', strand: 0 }
+        { name: 'Promoter-A', start: 300,   end: 500,   color: 'green',  strand: 1 },
+        { name: 'Terminator-A', start: 1820,end: 1900,  color: 'red',    strand: 1 },
+        { name: 'Promoter-B', start: 2000,  end: 2200,  color: 'green',  strand: 1 },
+        { name: 'Enhancer-1', start: 3700,  end: 3950,  color: 'orange', strand: 0 },
+        { name: 'Promoter-D', start: 5600,  end: 5800,  color: 'green',  strand: 1 },
+        { name: 'Enhancer-2', start: 8900,  end: 9150,  color: 'orange', strand: 0 },
+        { name: 'Terminator-G', start: 11820,end: 11950,color: 'red',    strand: 1 }
     ];
 
     regFeatures.forEach(f => {
+        addTrackFeature(trackCount);
+        const lastFeature = track.querySelector('.track-feature-item:last-child');
+        lastFeature.querySelector('.track-feature-name').value = f.name;
+        lastFeature.querySelector('.track-feature-start').value = f.start;
+        lastFeature.querySelector('.track-feature-end').value = f.end;
+        lastFeature.querySelector('.track-feature-color').value = f.color;
+        lastFeature.querySelector('.track-feature-strand').value = f.strand;
+    });
+
+    // Track 3: Repeats / transposons — give a third row of varied features.
+    addTrack();
+    track = document.querySelector('.track-item:last-child');
+    track.querySelector('.track-name').value = 'Repeat Elements';
+    track.querySelector('.track-height').value = '0.3';
+    track.querySelector('.track-number').value = '3';
+
+    const repFeatures = [
+        { name: 'IS1',    start: 1400, end: 1750,  color: 'gray', strand: 1 },
+        { name: 'LINE-1', start: 4700, end: 5300,  color: 'pink', strand: -1 },
+        { name: 'SINE',   start: 8300, end: 8450,  color: 'cyan', strand: 1 },
+        { name: 'IS2',    start: 10200,end: 10550, color: 'gray', strand: -1 }
+    ];
+
+    repFeatures.forEach(f => {
         addTrackFeature(trackCount);
         const lastFeature = track.querySelector('.track-feature-item:last-child');
         lastFeature.querySelector('.track-feature-name').value = f.name;
@@ -538,7 +583,7 @@ function addDataGraph() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">&nbsp;</label>
-                    <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                    <button type="button" class="btn-app-danger btn-app-sm w-100"
                             onclick="removeDataGraph(${graphCount})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -579,23 +624,68 @@ function clearDataGraphs() {
 function loadDataTrackExample() {
     clearDataGraphs();
 
-    document.getElementById('dataGenomeLength').value = '20000';
-    document.getElementById('dataTitle').value = 'Genome Data Visualization';
-    document.getElementById('dataSequence').value = 'ATGCATGCATGCATGCGCGCGCGCATATATATATGCGCGCGC';
+    // Synthesize a 20 kb DNA sequence with regions of varying GC content and
+    // GC skew so the resulting tracks have a recognisable shape. A short
+    // hand-written sequence (the previous default, ~40 bp) can't fill even
+    // one window of the default 500 bp stride — the plot would collapse to
+    // a flat line.
+    const LEN = 20000;
+    const rng = mulberry32(1337);
+    let seq = '';
+    const blocks = [
+        { len: 3000, g: 0.20, c: 0.20 }, // AT-rich
+        { len: 3000, g: 0.35, c: 0.20 }, // GC moderate, G-skewed +
+        { len: 3000, g: 0.15, c: 0.40 }, // GC moderate, C-skewed (GC skew negative)
+        { len: 4000, g: 0.30, c: 0.30 }, // balanced GC ~60%
+        { len: 3000, g: 0.40, c: 0.15 }, // strongly G-skewed +
+        { len: 4000, g: 0.25, c: 0.25 }, // balanced ~50%
+    ];
+    for (const blk of blocks) {
+        const a = (1 - blk.g - blk.c) / 2;
+        const t = a;
+        for (let i = 0; i < blk.len; i++) {
+            const r = rng();
+            if (r < a) seq += 'A';
+            else if (r < a + t) seq += 'T';
+            else if (r < a + t + blk.g) seq += 'G';
+            else seq += 'C';
+        }
+    }
+    // Pad to exactly LEN just in case.
+    while (seq.length < LEN) seq += 'ATGC'[Math.floor(rng() * 4)];
+    seq = seq.slice(0, LEN);
 
-    // Add GC content graph
+    document.getElementById('dataGenomeLength').value = String(LEN);
+    document.getElementById('dataTitle').value = 'Genome Data Visualization';
+    document.getElementById('dataSequence').value = seq;
+
+    // GC content — line trace
     addDataGraph();
     let graph = document.querySelector('.data-graph-item:last-child');
     graph.querySelector('.graph-type').value = 'gc_content';
     graph.querySelector('.graph-style').value = 'line';
     graph.querySelector('.graph-window').value = '500';
 
-    // Add GC skew graph
+    // GC skew — bar trace
     addDataGraph();
     graph = document.querySelector('.data-graph-item:last-child');
     graph.querySelector('.graph-type').value = 'gc_skew';
     graph.querySelector('.graph-style').value = 'bar';
     graph.querySelector('.graph-color').value = 'purple';
+    graph.querySelector('.graph-window').value = '500';
+}
+
+// Deterministic PRNG so the example is reproducible across reloads.
+// (Math.random would regenerate the plot every page visit.)
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
 }
 
 // ============================================================================
@@ -654,6 +744,13 @@ function addAdvancedFeature() {
                         <option value="green">Green</option>
                         <option value="orange">Orange</option>
                         <option value="purple">Purple</option>
+                        <option value="brown">Brown</option>
+                        <option value="pink">Pink</option>
+                        <option value="cyan">Cyan</option>
+                        <option value="gray">Gray</option>
+                        <option value="darkblue">Dark blue</option>
+                        <option value="teal">Teal</option>
+                        <option value="black">Black</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -672,7 +769,7 @@ function addAdvancedFeature() {
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-4"
+                    <button type="button" class="btn-app-danger btn-app-sm w-100 mt-4"
                             onclick="removeAdvancedFeature(${featureCount})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -741,7 +838,7 @@ function addCrossLink() {
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">&nbsp;</label>
-                    <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                    <button type="button" class="btn-app-danger btn-app-sm w-100"
                             onclick="removeCrossLink(${linkCount})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -851,12 +948,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayDiagram(data.diagram, 'basicDiagramDisplay');
                     currentDiagramData = data.diagram;
                 } else {
-                    showAlert('Error: ' + data.error, 'danger');
+                    showAlert(friendlyError(data.error, 'server'), 'danger');
                 }
             })
             .catch(error => {
                 hideLoading('createBasicDiagramBtn', '<i class="fas fa-chart-area"></i> Create Diagram');
-                showAlert('Request failed', 'danger');
+                showAlert(friendlyError(error, 'server'), 'danger');
             });
         });
     }
@@ -930,12 +1027,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayDiagram(data.diagram, 'multiTrackDisplay');
                     currentDiagramData = data.diagram;
                 } else {
-                    showAlert('Error: ' + data.error, 'danger');
+                    showAlert(friendlyError(data.error, 'server'), 'danger');
                 }
             })
             .catch(error => {
                 hideLoading('createMultiTrackBtn', '<i class="fas fa-layer-group"></i> Create Multi-Track Diagram');
-                showAlert('Request failed', 'danger');
+                showAlert(friendlyError(error, 'server'), 'danger');
             });
         });
     }
@@ -1007,12 +1104,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayDiagram(data.diagram, 'dataTracksDisplay');
                     currentDiagramData = data.diagram;
                 } else {
-                    showAlert('Error: ' + data.error, 'danger');
+                    showAlert(friendlyError(data.error, 'server'), 'danger');
                 }
             })
             .catch(error => {
                 hideLoading('createDataTracksBtn', '<i class="fas fa-chart-line"></i> Create Data Tracks');
-                showAlert('Request failed', 'danger');
+                showAlert(friendlyError(error, 'server'), 'danger');
             });
         });
     }
@@ -1089,12 +1186,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayDiagram(data.diagram, 'advancedDisplay');
                     currentDiagramData = data.diagram;
                 } else {
-                    showAlert('Error: ' + data.error, 'danger');
+                    showAlert(friendlyError(data.error, 'server'), 'danger');
                 }
             })
             .catch(error => {
                 hideLoading('createAdvancedBtn', '<i class="fas fa-magic"></i> Create Advanced Diagram');
-                showAlert('Request failed', 'danger');
+                showAlert(friendlyError(error, 'server'), 'danger');
             });
         });
     }
@@ -1146,7 +1243,7 @@ function exportDiagram(format) {
 
             showAlert(`Diagram exported as ${format.toUpperCase()}`, 'success');
         } else {
-            showAlert('Export failed: ' + data.error, 'danger');
+            showAlert(friendlyError(data.error, 'server'), 'danger');
         }
     })
     .catch(error => {

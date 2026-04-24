@@ -29,6 +29,22 @@ configure_app(app)
 register_blueprints(app)
 
 
+# Cache-busting for static assets: append ?v=<file-mtime> to every
+# url_for('static', filename=...) call so browsers fetch fresh CSS/JS
+# whenever the source file changes, even if max-age says the old one
+# is cacheable.
+@app.url_defaults
+def _static_cache_bust(endpoint, values):
+    if endpoint == 'static' and 'filename' in values and 'v' not in values:
+        static_folder = app.static_folder
+        if static_folder:
+            path = os.path.join(static_folder, values['filename'])
+            try:
+                values['v'] = int(os.path.getmtime(path))
+            except OSError:
+                pass
+
+
 # Content-Security-Policy. 'unsafe-inline' on script-src is retained for now
 # because ~73 inline onclick handlers with arguments + inline <script> blocks
 # remain (simple fn() cases are migrated to data-action via utils.js). A
@@ -44,7 +60,13 @@ _CSP = (
     "img-src 'self' data: https:; "
     "connect-src 'self' "
         "https://eutils.ncbi.nlm.nih.gov https://www.ncbi.nlm.nih.gov "
-        "https://rest.kegg.jp https://rest.uniprot.org https://www.uniprot.org; "
+        "https://rest.kegg.jp https://rest.uniprot.org https://www.uniprot.org "
+        # RCSB PDB — /structure fetches .pdb files directly from the browser
+        # (see structure.js fetchFromPDB).
+        "https://files.rcsb.org "
+        # CDN hosts — needed so DevTools can fetch .js.map / .css.map
+        # sourcemaps for bootstrap.bundle.min.js and Font Awesome.
+        "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
     # 3Dmol.js spawns Web Workers from blob: URLs for surface computation.
     "worker-src 'self' blob:; "
     "object-src 'none'; "

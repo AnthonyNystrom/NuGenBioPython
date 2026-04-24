@@ -1,26 +1,38 @@
-{# Sidebar — 6 hubs only, plus Dashboard. Hub pages host their own
-   sub-tool segmented controls (R3). Existing endpoint names are
-   preserved; only what the sidebar LINKS to changes here.
-
-   `request.endpoint` belongs to the pages blueprint (aliases are registered
-   in routes/__init__.py so both 'sequence_tools' and 'pages.sequence_tools'
-   may appear); we match either form. #}
+{# Sidebar — hubs + expandable sub-tools, with active rail.
+   Every tool is one click away. `request.endpoint` matches with or
+   without the 'pages.' prefix. #}
 {% set hubs = [
-    {"label": "Dashboard",     "endpoints": ["index"],                                  "icon": "fa-home",           "href": url_for('index')},
-    {"label": "Sequences",     "endpoints": ["sequences_hub", "sequence_tools",
-                                             "seqio_tools", "features_tools"],          "icon": "fa-dna",            "href": "/sequences"},
-    {"label": "Compare",       "endpoints": ["compare_hub", "alignment_tools",
-                                             "blast_tools", "searchio_tools"],          "icon": "fa-align-center",   "href": "/compare"},
-    {"label": "Patterns",      "endpoints": ["patterns_hub", "motifs_tools",
-                                             "restriction_tools"],                      "icon": "fa-shapes",         "href": "/patterns"},
-    {"label": "Structure",     "endpoints": ["structure_tools"],                        "icon": "fa-cube",           "href": url_for('structure_tools')},
-    {"label": "Phylogeny",     "endpoints": ["phylogeny_hub", "phylo_tools",
-                                             "clustering_tools", "popgen_tools"],       "icon": "fa-project-diagram","href": "/phylogeny"},
-    {"label": "External data", "endpoints": ["data_hub", "database_tools",
-                                             "kegg_tools", "pathway_tools",
-                                             "swissprot_tools", "unigene_tools",
-                                             "biodata_tools", "hmm_tools",
-                                             "genomediagram_tools"],                    "icon": "fa-database",       "href": "/data"},
+    {"label": "Dashboard", "endpoint": "index",                     "icon": "fa-home",     "href": url_for('index'), "tools": []},
+    {"label": "Sequences", "endpoint": "sequences_hub",             "icon": "fa-dna",      "href": "/sequences", "tools": [
+        {"label": "Sequence analysis",  "endpoint": "sequence_tools", "href": "/sequence"},
+        {"label": "SeqIO",              "endpoint": "seqio_tools",    "href": "/seqio"},
+        {"label": "Features",           "endpoint": "features_tools", "href": "/features"},
+    ]},
+    {"label": "Compare", "endpoint": "compare_hub",                 "icon": "fa-align-center", "href": "/compare", "tools": [
+        {"label": "Pairwise alignment", "endpoint": "alignment_tools","href": "/alignment"},
+        {"label": "BLAST",              "endpoint": "blast_tools",    "href": "/blast"},
+        {"label": "SearchIO",           "endpoint": "searchio_tools", "href": "/searchio"},
+    ]},
+    {"label": "Patterns", "endpoint": "patterns_hub",               "icon": "fa-shapes", "href": "/patterns", "tools": [
+        {"label": "Motif finder",   "endpoint": "motifs_tools",       "href": "/motifs"},
+        {"label": "Restriction",    "endpoint": "restriction_tools",  "href": "/restriction"},
+    ]},
+    {"label": "Structure", "endpoint": "structure_tools",           "icon": "fa-cube", "href": url_for('structure_tools'), "tools": []},
+    {"label": "Phylogeny", "endpoint": "phylogeny_hub",             "icon": "fa-project-diagram", "href": "/phylogeny", "tools": [
+        {"label": "Phylo trees",    "endpoint": "phylo_tools",        "href": "/phylo"},
+        {"label": "Clustering",     "endpoint": "clustering_tools",   "href": "/clustering"},
+        {"label": "Population gen.", "endpoint": "popgen_tools",      "href": "/popgen"},
+    ]},
+    {"label": "External data", "endpoint": "data_hub",              "icon": "fa-database", "href": "/data", "tools": [
+        {"label": "Entrez / NCBI",  "endpoint": "database_tools",     "href": "/database"},
+        {"label": "KEGG",           "endpoint": "kegg_tools",         "href": "/kegg"},
+        {"label": "Pathway",        "endpoint": "pathway_tools",      "href": "/pathway"},
+        {"label": "SwissProt",      "endpoint": "swissprot_tools",    "href": "/swissprot"},
+        {"label": "UniGene",        "endpoint": "unigene_tools",      "href": "/unigene"},
+        {"label": "Biodata",        "endpoint": "biodata_tools",      "href": "/biodata"},
+        {"label": "HMM",            "endpoint": "hmm_tools",          "href": "/hmm"},
+        {"label": "Genome diagram", "endpoint": "genomediagram_tools","href": "/genomediagram"},
+    ]},
 ] %}
 {% set ep = request.endpoint or '' %}
 {% set ep_short = ep.split('.')[-1] %}
@@ -28,14 +40,30 @@
 <div class="sidebar-container" id="sidebarContainer">
     <nav class="sidebar-nav" aria-label="Main navigation">
         {% for hub in hubs %}
-        {% set is_active = ep_short in hub.endpoints %}
-        <div class="nav-item">
-            <a class="nav-link{% if is_active %} active{% endif %}"
+        {% set hub_active = ep_short == hub.endpoint %}
+        {% set child_active = hub.tools and (hub.tools | selectattr('endpoint', 'equalto', ep_short) | list | length > 0) %}
+        {% set section_active = hub_active or child_active %}
+        <div class="nav-section{% if hub.tools %} has-sub{% endif %}{% if section_active %} is-open{% endif %}">
+            <a class="nav-link{% if section_active %} active{% endif %}"
                href="{{ hub.href }}"
-               {% if is_active %}aria-current="page"{% endif %}>
+               {% if hub_active %}aria-current="page"{% endif %}>
                 <i class="fas {{ hub.icon }}" aria-hidden="true"></i>
                 <span>{{ hub.label }}</span>
             </a>
+            {% if hub.tools %}
+            <ul class="nav-sub">
+                {% for t in hub.tools %}
+                {% set tool_active = ep_short == t.endpoint %}
+                <li>
+                    <a class="nav-sublink{% if tool_active %} active{% endif %}"
+                       href="{{ t.href }}"
+                       {% if tool_active %}aria-current="page"{% endif %}>
+                        {{ t.label }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
         </div>
         {% endfor %}
     </nav>

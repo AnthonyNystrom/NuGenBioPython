@@ -1,28 +1,4 @@
-{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn %}
-<style>
-    #restrictionTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #restrictionTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-    .enzyme-badge {
-        cursor: pointer;
-        margin: 2px;
-        font-size: 0.75rem;
-    }
-    .enzyme-badge:hover {
-        transform: scale(1.05);
-        transition: transform 0.2s;
-    }
-    .restriction-map {
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 10px;
-        background: #f8f9fa;
-        overflow-x: auto;
-    }
-</style>
+{% from "_partials/_section_card.html" import card_header %}{% from "_partials/_load_example_button.html" import load_example_btn, load_example_pair %}
 
 <div class="row mb-2">
     <div class="col-12">
@@ -34,25 +10,25 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="restrictionTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
                 <i class="fas fa-cut d-block mb-1"></i>
                 <small>Basic Analysis</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab">
                 <i class="fas fa-filter d-block mb-1"></i>
                 <small>Advanced Filters</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="browser-tab" data-bs-toggle="tab" data-bs-target="#browser" type="button" role="tab">
+            <button class="nav-link" id="browser-tab" data-bs-toggle="tab" data-bs-target="#browser" type="button" role="tab">
                 <i class="fas fa-database d-block mb-1"></i>
                 <small>Enzyme Browser</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button" role="tab">
+            <button class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map" type="button" role="tab">
                 <i class="fas fa-map d-block mb-1"></i>
                 <small>Restriction Map</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" role="tab">
+            <button class="nav-link" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" role="tab">
                 <i class="fas fa-tools d-block mb-1"></i>
                 <small>Utilities</small>
             </button>
@@ -87,13 +63,13 @@
                                     <div class="mb-3">
                                         <label class="form-label small mb-2">Select Restriction Enzymes</label>
                                         <div class="d-flex gap-2 mb-2">
-                                            <button type="button" class="btn btn-sm btn-outline-success flex-fill" data-action="selectAllBasicEnzymes">
+                                            <button type="button" class="btn-app-sm btn-app-secondary flex-fill" data-action="selectAllBasicEnzymes">
                                                 <i class="fas fa-check-square"></i> All
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" data-action="clearAllBasicEnzymes">
+                                            <button type="button" class="btn-app-sm btn-app-secondary flex-fill" data-action="clearAllBasicEnzymes">
                                                 <i class="fas fa-square"></i> Clear
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" data-action="selectCommonBasicEnzymes">
+                                            <button type="button" class="btn-app-sm btn-app-secondary flex-fill" data-action="selectCommonBasicEnzymes">
                                                 <i class="fas fa-star"></i> Common
                                             </button>
                                         </div>
@@ -114,10 +90,10 @@
                                         </label>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="basicAnalyzeBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2" id="basicAnalyzeBtn">
                                         <i class="fas fa-cut me-2"></i>Analyze Restriction Sites
                                     </button>
-                                    {{ load_example_btn("loadBasicExample", label="Load Example") }}
+                                    {{ load_example_pair("loadBasicExample", "loadBasicExampleComplex", simple_label="Short", complex_label="pUC19-like, common enzymes") }}
                                 </form>
                             </div>
                         </div>
@@ -136,12 +112,12 @@
                     </div>
                 </div>
 
-                <div class="row g-3 mt-1">
+                <div class="row g-3 mt-1 results-row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 small"><i class="fas fa-table"></i> Detailed Results</h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="exportBasicResults('csv')" id="exportBasicBtn" style="display:none;">
+                                <button class="btn-app-sm btn-app-secondary" onclick="exportBasicResults('csv')" id="exportBasicBtn" style="display:none;">
                                     <i class="fas fa-download me-1"></i>Export CSV
                                 </button>
                             </div>
@@ -217,10 +193,10 @@
                                         </label>
                                     </div>
 
-                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="advancedAnalyzeBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2" id="advancedAnalyzeBtn">
                                         <i class="fas fa-filter me-2"></i>Run Advanced Analysis
                                     </button>
-                                    {{ load_example_btn("loadAdvancedExample", label="Load Example") }}
+                                    {{ load_example_pair("loadAdvancedExample", "loadAdvancedExampleComplex", simple_label="Minimal", complex_label="Long seq, all enzymes") }}
                                 </form>
                             </div>
                         </div>
@@ -341,10 +317,10 @@
                                         <input type="text" class="form-control form-control-sm" id="mapEnzymes"
                                                placeholder="e.g., EcoRI, BamHI, HindIII (comma separated)">
                                     </div>
-                                    <button type="submit" class="gradient-btn-success w-100 mb-2" id="generateMapBtn">
+                                    <button type="submit" class="btn-app-secondary w-100 mb-2" id="generateMapBtn">
                                         <i class="fas fa-map me-2"></i>Generate Restriction Map
                                     </button>
-                                    {{ load_example_btn("loadMapExample", label="Load Example") }}
+                                    {{ load_example_pair("loadMapExample", "loadMapExampleComplex", simple_label="4 enzymes", complex_label="10 enzymes") }}
                                 </form>
                             </div>
                         </div>
@@ -394,10 +370,10 @@
                                         <input type="text" class="form-control form-control-sm" id="compatibleEnzymes"
                                                placeholder="e.g., EcoRI, BamHI, BglII, XbaI">
                                     </div>
-                                    <button type="submit" class="gradient-btn-primary w-100 mb-2">
+                                    <button type="submit" class="btn-app-primary w-100 mb-2">
                                         <i class="fas fa-search me-2"></i>Find Compatible Pairs
                                     </button>
-                                    {{ load_example_btn("loadCompatibleExample", label="Load Example") }}
+                                    {{ load_example_pair("loadCompatibleExample", "loadCompatibleExampleComplex", simple_label="6 enzymes", complex_label="12 enzymes") }}
                                 </form>
                                 <div id="compatibleResults" class="mt-2"></div>
                             </div>
@@ -410,13 +386,13 @@
                             <div class="card-body py-2">
                                 <p class="small mb-2">Export your analysis results in various formats.</p>
                                 <div class="d-grid gap-2">
-                                    <button class="btn btn-sm btn-outline-success" onclick="exportLastResults('csv')">
+                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('csv')">
                                         <i class="fas fa-file-csv"></i> Export as CSV
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="exportLastResults('tsv')">
+                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('tsv')">
                                         <i class="fas fa-file-alt"></i> Export as TSV
                                     </button>
-                                    <button class="btn btn-sm btn-outline-info" onclick="exportLastResults('json')">
+                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('json')">
                                         <i class="fas fa-file-code"></i> Export as JSON
                                     </button>
                                 </div>

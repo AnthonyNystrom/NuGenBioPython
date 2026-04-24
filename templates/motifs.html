@@ -3,14 +3,6 @@
 {% block title %}Motif Analysis - NuGenBioPython{% endblock %}
 
 {% block content %}{% from "_partials/_section_card.html" import card_header %}
-<style>
-    #motifTabs button.nav-link:hover {
-        background: rgba(255,255,255,0.25) !important;
-    }
-    #motifTabs button.nav-link.active {
-        background: rgba(255,255,255,0.15) !important;
-    }
-</style>
 <div class="row mb-2">
     <div class="col-12">
         <h2 class="text-primary mb-1">
@@ -21,25 +13,25 @@
 </div>
 
 <div class="card shadow-sm border-0 mb-3">
-    <div class="card-header bg-gradient p-0 border-0">
+    <div class="card-header">
         <div class="d-flex flex-wrap" id="motifTabs" role="tablist">
-            <button class="flex-fill nav-link active text-white border-0 py-3 px-3 fw-bold" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
+            <button class="nav-link active" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
                 <i class="fas fa-plus d-block mb-1"></i>
                 <small>Create Motif</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
+            <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
                 <i class="fas fa-search d-block mb-1"></i>
                 <small>Search</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare" type="button" role="tab">
+            <button class="nav-link" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare" type="button" role="tab">
                 <i class="fas fa-balance-scale d-block mb-1"></i>
                 <small>Compare</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
                 <i class="fas fa-info-circle d-block mb-1"></i>
                 <small>Motif Info</small>
             </button>
-            <button class="flex-fill nav-link text-white border-0 py-3 px-3 fw-bold" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+            <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
                 <i class="fas fa-download d-block mb-1"></i>
                 <small>Export</small>
             </button>
@@ -58,10 +50,10 @@
                                 <textarea class="form-control form-control-sm sequence-display mb-2" id="motifSequences" rows="6"
                                         placeholder="ACGTACGTACGT&#10;ACGTTCGTACGT&#10;ACGTCCGTACGT"></textarea>
                                 <div class="d-grid gap-2">
-                                    <button class="gradient-btn-secondary" data-action="loadMotifExample">
+                                    <button class="btn-app-secondary" data-action="loadMotifExample">
                                         <i class="fas fa-flask"></i> Load Example
                                     </button>
-                                    <button class="gradient-btn-primary" id="createMotifBtn" data-action="createMotif">
+                                    <button class="btn-app-primary" id="createMotifBtn" data-action="createMotif">
                                         <i class="fas fa-plus me-1"></i> Create Motif
                                     </button>
                                 </div>
@@ -81,7 +73,7 @@
                                     <option value="transfac">TRANSFAC</option>
                                     <option value="pfm">PFM</option>
                                 </select>
-                                <button class="gradient-btn-info" data-action="uploadMotifFile">
+                                <button class="btn-app-secondary" data-action="uploadMotifFile">
                                     <i class="fas fa-upload me-1"></i> Upload & Parse
                                 </button>
                                 <small class="text-muted d-block mt-2">Supported: JASPAR, MEME, TRANSFAC, PFM formats</small>
@@ -119,7 +111,7 @@
                                         <input type="range" class="form-range" id="searchThreshold" min="0" max="1" step="0.05" value="0.7">
                                     </div>
                                 </div>
-                                <button class="gradient-btn-success" id="searchMotifBtn" data-action="searchMotif">
+                                <button class="btn-app-secondary" id="searchMotifBtn" data-action="searchMotif">
                                     <i class="fas fa-search me-1"></i> Search Motif
                                 </button>
                             </div>
@@ -153,7 +145,7 @@
                             <div class="card-body py-2">
                                 <textarea class="form-control form-control-sm sequence-display mb-2" id="compareSequences" rows="6"
                                         placeholder="Enter sequences for second motif"></textarea>
-                                <button class="gradient-btn-primary" data-action="compareMotifs">
+                                <button class="btn-app-primary" data-action="compareMotifs">
                                     <i class="fas fa-balance-scale me-1"></i> Compare Motifs
                                 </button>
                             </div>
@@ -236,7 +228,7 @@
                                     <option value="transfac">TRANSFAC</option>
                                     <option value="pfm">PFM</option>
                                 </select>
-                                <button class="gradient-btn-primary" data-action="exportMotif">
+                                <button class="btn-app-primary" data-action="exportMotif">
                                     <i class="fas fa-download me-1"></i> Export Motif
                                 </button>
                             </div>
@@ -247,7 +239,7 @@
                             {{ card_header("Exported Content", icon="fa-file-code") }}
                             <div class="card-body py-2">
                                 <pre class="bg-light p-2 small" id="exportedContent" style="max-height:300px; overflow-y:auto; min-height:200px;">Exported motif will appear here</pre>
-                                <button class="gradient-btn-secondary" data-action="copyExport">
+                                <button class="btn-app-secondary" data-action="copyExport">
                                     <i class="fas fa-copy me-1"></i> Copy to Clipboard
                                 </button>
                             </div>
