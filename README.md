@@ -47,7 +47,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 
 ![Clustering dendrogram](docs/screenshots/08_clustering_dendrogram.png)
 
-## 📋 Table of Contents
+## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -59,7 +59,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 
 ## Features
 
-### 🧬 Core BioPython Modules (21 Total)
+### Core BioPython Modules (21 Total)
 
 1. **Sequence Analysis** - DNA/RNA/Protein sequence manipulation and analysis
 2. **Sequence I/O** - Parse and convert between multiple file formats
@@ -83,7 +83,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 20. **Protein Parameters** - Advanced protein analysis with ProtParam
 21. **Graphics & Visualization** - Chromosome and comparative graphics
 
-### ✨ Key Features
+### Key Features
 
 - **60+ Analysis Functions** - Comprehensive bioinformatics toolkit
 - **10+ File Formats** - Support for all major biological data formats
@@ -94,7 +94,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - **Performance Optimized** - GPU-accelerated rendering with smooth scrolling
 - **Professional UI** - Bootstrap 5 with consistent design patterns
 
-### 🧬 Sequence Analysis (Bio.Seq, Bio.SeqUtils)
+### Sequence Analysis (Bio.Seq, Bio.SeqUtils)
 - DNA, RNA, and protein sequence analysis
 - Composition analysis and GC content calculation
 - Molecular weight calculation
@@ -102,48 +102,48 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - Translation (DNA/RNA to protein)
 - Interactive examples with real-time results
 
-### 📁 Sequence I/O (Bio.SeqIO)
+### Sequence I/O (Bio.SeqIO)
 - Parse multiple sequence file formats (FASTA, GenBank, EMBL, Swiss-Prot, etc.)
 - Convert between different sequence formats
 - File upload and download functionality
 - Support for alignment formats (Clustal, PHYLIP, NEXUS, Stockholm)
 - 15+ supported biological data formats
 
-### 🔗 Sequence Alignment (Bio.Align)
+### Sequence Alignment (Bio.Align)
 - Pairwise sequence alignment with customizable parameters
 - Configurable scoring matrices (match, mismatch, gap penalties)
 - Visual alignment display with scoring information
 - Real-time parameter adjustment
 
-### 🌳 Phylogenetic Analysis (Bio.Phylo)
+### Phylogenetic Analysis (Bio.Phylo)
 - Parse phylogenetic trees (Newick, NEXUS, PhyloXML, NeXML)
 - Tree visualization with matplotlib
 - Tree statistics (terminal count, branch lengths)
 - Support for tree manipulation and analysis
 - File upload and processing
 
-### 🧪 Protein Structure Analysis (Bio.PDB)
+### Protein Structure Analysis (Bio.PDB)
 - Parse PDB and mmCIF structure files
 - Analyze protein chains, residues, and atoms
 - Structure statistics and information display
 - Support for both traditional PDB and modern mmCIF formats
 - Structure composition analysis
 
-### 🗄️ Database Access (Bio.Entrez)
+### Database Access (Bio.Entrez)
 - Search NCBI databases (PubMed, GenBank, Protein, etc.)
 - Customizable search parameters and result limits
 - Support for complex Boolean search queries
 - Access to literature, sequences, structures, and more
 - Email requirement handling
 
-### 🧬 KEGG Database Access (Bio.KEGG)
+### KEGG Database Access (Bio.KEGG)
 - Search KEGG pathways, genes, enzymes, and compounds
 - Access metabolic pathway information for various organisms
 - Real-time connection to KEGG REST API with fallback to sample data
 - Pathway visualization and detailed entry information
 - Support for multiple organisms (human, mouse, rat, yeast, etc.)
 
-### 🔍 Motif Analysis (Bio.motifs)
+### Motif Analysis (Bio.motifs)
 - Motif creation from aligned sequences
 - Position Weight Matrix (PWM) generation
 - Sequence logo visualization with logomaker
@@ -151,7 +151,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - Motif searching with threshold scoring
 - Interactive threshold adjustment
 
-### ✂️ Restriction Enzyme Analysis (Bio.Restriction)
+### Restriction Enzyme Analysis (Bio.Restriction)
 - 20+ common restriction enzymes
 - Cut site identification and positioning
 - Fragment size calculation
@@ -159,7 +159,7 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - Fragment size distribution visualization
 - Multiple enzyme analysis
 
-### 📊 Clustering Analysis (Bio.Cluster + scikit-learn)
+### Clustering Analysis (Bio.Cluster + scikit-learn)
 - K-means clustering with configurable cluster count
 - Hierarchical clustering with dendrogram visualization
 - DBSCAN density-based clustering
@@ -167,14 +167,14 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - Interactive parameter adjustment
 - CSV data matrix input
 
-### 🚀 BLAST Search Interface
+### BLAST Search Interface
 - Multiple BLAST programs (blastn, blastp, blastx, tblastn, tblastx)
 - Database selection (nt, nr, RefSeq, SwissProt, PDB)
 - Configurable parameters (E-value, word size, max hits)
 - Mock result display with realistic data structure
 - Query sequence validation
 
-### 🧬 Genome Diagram Creation (Bio.Graphics.GenomeDiagram)
+### Genome Diagram Creation (Bio.Graphics.GenomeDiagram)
 - Interactive feature addition interface
 - Configurable genome length
 - Color-coded feature types
@@ -182,49 +182,49 @@ Hierarchical clustering with automatic distance cut-line matching the requested 
 - Visual genome representation
 - Export functionality with fallback visualization
 
-### 🔍 Search I/O (Bio.SearchIO)
+### Search I/O (Bio.SearchIO)
 - Parse BLAST XML and text results
 - Parse HMMER search results
 - Extract hit information and statistics
 - Support for multiple search formats
 - Query and hit analysis
 
-### 🧬 SwissProt/UniProt (Bio.SwissProt)
+### SwissProt/UniProt (Bio.SwissProt)
 - Parse SwissProt and UniProt database files
 - Extract protein annotations and features
 - Accession number and description parsing
 - Feature location and qualifier extraction
 - Organism and gene name information
 
-### 📊 Biological Data (Bio.Data)
+### Biological Data (Bio.Data)
 - Access codon tables for different organisms
 - Translation with specific genetic codes
 - IUPAC data and reference information
 - Support for 24+ genetic code tables
 - Custom translation parameters
 
-### 🧬 Population Genetics (Bio.PopGen)
+### Population Genetics (Bio.PopGen)
 - Parse GenePop format files
 - Hardy-Weinberg equilibrium testing
 - F-statistics calculation
 - Allele frequency analysis
 - Population structure analysis
 
-### 🛤️ Pathway Analysis (Bio.Pathway)
+### Pathway Analysis (Bio.Pathway)
 - Build biochemical pathway systems
 - Reaction network analysis
 - Species source/sink identification
 - Pathway topology analysis
 - Metabolic network visualization
 
-### 🧬 UniGene Analysis (Bio.UniGene)
+### UniGene Analysis (Bio.UniGene)
 - Parse UniGene cluster files
 - Gene expression data extraction
 - Tissue-specific expression analysis
 - Protein similarity information
 - STS marker integration
 
-### 🎯 Hidden Markov Models (Bio.HMM) - Advanced Tools
+### Hidden Markov Models (Bio.HMM) - Advanced Tools
 - **Build HMM Models** - MarkovModelBuilder with multiple model types
 - **Baum-Welch Training** - Unsupervised parameter estimation
 - **Viterbi Decoding** - Optimal state path prediction
@@ -462,17 +462,17 @@ The application provides RESTful API endpoints for programmatic access:
 NuGenBioPython includes comprehensive validation and testing:
 
 ### Test Coverage
-- ✅ **Import Validation**: All BioPython modules and dependencies
-- ✅ **Core Functionality**: Sequence analysis, file I/O, alignment
-- ✅ **Advanced Features**: Motifs, restriction enzymes, clustering
-- ✅ **Web Interface**: All Flask routes and API endpoints
-- ✅ **Error Handling**: Graceful fallbacks and user feedback
-- ✅ **Environment**: Cross-platform compatibility verification
-- ✅ **Specialized Modules**: SearchIO, SwissProt, BioData, PopGen, Pathway, UniGene
-- ✅ **HMM Advanced Tools**: Model building, Baum-Welch training, Viterbi decoding, Literature mining, Nexus parsing, SCOP lookup, Codon alignment
-- ✅ **Clustering Algorithms**: K-means, DBSCAN, Hierarchical clustering
-- ✅ **Restriction Enzymes**: 20+ common enzymes with cut site analysis
-- ✅ **Performance**: UI scroll optimization and GPU acceleration
+- **Import Validation**: All BioPython modules and dependencies
+- **Core Functionality**: Sequence analysis, file I/O, alignment
+- **Advanced Features**: Motifs, restriction enzymes, clustering
+- **Web Interface**: All Flask routes and API endpoints
+- **Error Handling**: Graceful fallbacks and user feedback
+- **Environment**: Cross-platform compatibility verification
+- **Specialized Modules**: SearchIO, SwissProt, BioData, PopGen, Pathway, UniGene
+- **HMM Advanced Tools**: Model building, Baum-Welch training, Viterbi decoding, Literature mining, Nexus parsing, SCOP lookup, Codon alignment
+- **Clustering Algorithms**: K-means, DBSCAN, Hierarchical clustering
+- **Restriction Enzymes**: 20+ common enzymes with cut site analysis
+- **Performance**: UI scroll optimization and GPU acceleration
 
 ### Quality Assurance
 - **Code Review**: BioPython best practices implementation
@@ -544,4 +544,4 @@ GitHub: https://github.com/AnthonyNystrom/NuGenBioPython
 
 ---
 
-**Made with ❤️ for the Bioinformatics Community**
+**Made for the Bioinformatics Community**
