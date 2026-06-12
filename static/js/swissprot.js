@@ -110,24 +110,24 @@ function displayParseResults(records, count) {
             <div class="accordion-item border mb-1">
                 <h2 class="accordion-header" id="heading${index}">
                     <button class="accordion-button ${isFirst ? '' : 'collapsed'} p-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#${accordionId}" aria-expanded="${isFirst}" aria-controls="${accordionId}">
-                        <strong>${record.entry_name}</strong>
+                        <strong>${escapeHtml(record.entry_name)}</strong>
                         <span class="badge bg-warning ms-2">${record.sequence_length} AA</span>
-                        <span class="ms-2 text-muted">${record.description}</span>
+                        <span class="ms-2 text-muted">${escapeHtml(record.description)}</span>
                     </button>
                 </h2>
                 <div id="${accordionId}" class="accordion-collapse collapse ${isFirst ? 'show' : ''}" aria-labelledby="heading${index}" data-bs-parent="#parseAccordion">
                     <div class="accordion-body p-2">
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <p class="small mb-1"><strong>Accessions:</strong> ${record.accessions.join(', ')}</p>
-                                <p class="small mb-1"><strong>Gene:</strong> ${record.gene_name || 'N/A'}</p>
-                                <p class="small mb-1"><strong>Organism:</strong> ${record.organism}</p>
+                                <p class="small mb-1"><strong>Accessions:</strong> ${escapeHtml(record.accessions.join(', '))}</p>
+                                <p class="small mb-1"><strong>Gene:</strong> ${escapeHtml(record.gene_name || 'N/A')}</p>
+                                <p class="small mb-1"><strong>Organism:</strong> ${escapeHtml(record.organism)}</p>
                                 <p class="small mb-1"><strong>Length:</strong> ${record.sequence_length} AA</p>
                             </div>
                             <div class="col-md-6">
                                 <p class="small mb-1"><strong>Keywords:</strong></p>
                                 <div class="d-flex flex-wrap gap-1">
-                                    ${record.keywords.slice(0, 5).map(kw => `<span class="badge bg-secondary">${kw}</span>`).join('')}
+                                    ${record.keywords.slice(0, 5).map(kw => `<span class="badge bg-secondary">${escapeHtml(kw)}</span>`).join('')}
                                     ${record.keywords.length > 5 ? `<span class="badge bg-secondary">+${record.keywords.length - 5} more</span>` : ''}
                                 </div>
                             </div>
@@ -148,9 +148,9 @@ function displayParseResults(records, count) {
                                     <tbody>
                                         ${record.features.slice(0, 5).map(feature => `
                                             <tr>
-                                                <td><span class="badge bg-info">${feature.type}</span></td>
-                                                <td>${feature.location}</td>
-                                                <td>${feature.description || 'N/A'}</td>
+                                                <td><span class="badge bg-info">${escapeHtml(feature.type)}</span></td>
+                                                <td>${escapeHtml(feature.location)}</td>
+                                                <td>${escapeHtml(feature.description || 'N/A')}</td>
                                             </tr>
                                         `).join('')}
                                         ${record.features.length > 5 ? `
@@ -170,7 +170,7 @@ function displayParseResults(records, count) {
                             <p class="small mb-1"><strong>Cross-References (${record.cross_references.length}):</strong></p>
                             <div class="d-flex flex-wrap gap-1">
                                 ${record.cross_references.slice(0, 10).map(ref => `
-                                    <span class="badge bg-secondary">${ref.database}: ${ref.id}</span>
+                                    <span class="badge bg-secondary">${escapeHtml(ref.database)}: ${escapeHtml(ref.id)}</span>
                                 `).join('')}
                                 ${record.cross_references.length > 10 ? `
                                     <span class="badge bg-secondary">+${record.cross_references.length - 10} more</span>
@@ -187,7 +187,7 @@ function displayParseResults(records, count) {
                                 const type = m ? m[1] : 'NOTE';
                                 const text = m ? m[2] : s;
                                 return `<div class="alert alert-info p-2 mb-1 small">
-                                    <strong>${type}:</strong> ${text}
+                                    <strong>${escapeHtml(type)}:</strong> ${escapeHtml(text)}
                                 </div>`;
                             }).join('')}
                             ${record.comments.length > 3 ? `
@@ -233,33 +233,33 @@ function displayReadResults(record) {
     let html = `
         <div class="card mb-2">
             <div class="card-header p-2 bg-warning text-white">
-                <h6 class="mb-0"><i class="fas fa-protein"></i> ${record.entry_name}</h6>
+                <h6 class="mb-0"><i class="fas fa-protein"></i> ${escapeHtml(record.entry_name)}</h6>
             </div>
             <div class="card-body p-2">
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <p class="small mb-1"><strong>Accessions:</strong> ${record.accessions.join(', ')}</p>
-                        <p class="small mb-1"><strong>Data Class:</strong> ${record.data_class || 'N/A'}</p>
-                        <p class="small mb-1"><strong>Molecule Type:</strong> ${record.molecule_type || 'N/A'}</p>
-                        <p class="small mb-1"><strong>Gene:</strong> ${record.gene_name || 'N/A'}</p>
+                        <p class="small mb-1"><strong>Accessions:</strong> ${escapeHtml(record.accessions.join(', '))}</p>
+                        <p class="small mb-1"><strong>Data Class:</strong> ${escapeHtml(record.data_class || 'N/A')}</p>
+                        <p class="small mb-1"><strong>Molecule Type:</strong> ${escapeHtml(record.molecule_type || 'N/A')}</p>
+                        <p class="small mb-1"><strong>Gene:</strong> ${escapeHtml(record.gene_name || 'N/A')}</p>
                     </div>
                     <div class="col-md-6">
-                        <p class="small mb-1"><strong>Organism:</strong> ${record.organism}</p>
+                        <p class="small mb-1"><strong>Organism:</strong> ${escapeHtml(record.organism)}</p>
                         <p class="small mb-1"><strong>Length:</strong> ${record.sequence_length} AA</p>
-                        <p class="small mb-1"><strong>Description:</strong> ${record.description}</p>
+                        <p class="small mb-1"><strong>Description:</strong> ${escapeHtml(record.description)}</p>
                     </div>
                 </div>
 
                 <hr class="my-2">
                 <p class="small mb-1"><strong>Keywords (${record.keywords.length}):</strong></p>
                 <div class="d-flex flex-wrap gap-1 mb-2">
-                    ${record.keywords.map(kw => `<span class="badge bg-secondary">${kw}</span>`).join('')}
+                    ${record.keywords.map(kw => `<span class="badge bg-secondary">${escapeHtml(kw)}</span>`).join('')}
                 </div>
 
                 <hr class="my-2">
                 <p class="small mb-1"><strong>Sequence:</strong></p>
                 <div class="bg-light p-2 rounded" style="font-family: monospace; font-size: 12px; word-break: break-all; max-height: 200px; overflow-y: auto;">
-                    ${record.sequence}
+                    ${escapeHtml(record.sequence)}
                 </div>
 
                 ${record.features && record.features.length > 0 ? `
@@ -277,9 +277,9 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.features.map(feature => `
                                     <tr>
-                                        <td><span class="badge bg-info">${feature.type}</span></td>
-                                        <td>${feature.location}</td>
-                                        <td>${feature.description || 'N/A'}</td>
+                                        <td><span class="badge bg-info">${escapeHtml(feature.type)}</span></td>
+                                        <td>${escapeHtml(feature.location)}</td>
+                                        <td>${escapeHtml(feature.description || 'N/A')}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -302,9 +302,9 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.cross_references.map(ref => `
                                     <tr>
-                                        <td><span class="badge bg-secondary">${ref.database}</span></td>
-                                        <td>${ref.id}</td>
-                                        <td>${ref.info || 'N/A'}</td>
+                                        <td><span class="badge bg-secondary">${escapeHtml(ref.database)}</span></td>
+                                        <td>${escapeHtml(ref.id)}</td>
+                                        <td>${escapeHtml(ref.info || 'N/A')}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -322,7 +322,7 @@ function displayReadResults(record) {
                             const type = m ? m[1] : 'NOTE';
                             const text = m ? m[2] : s;
                             return `<div class="alert alert-info p-2 mb-1 small">
-                                <strong>${type}:</strong> ${text}
+                                <strong>${escapeHtml(type)}:</strong> ${escapeHtml(text)}
                             </div>`;
                         }).join('')}
                     </div>
@@ -334,9 +334,9 @@ function displayReadResults(record) {
                     <div style="max-height: 300px; overflow-y: auto;">
                         ${record.references.map((ref, idx) => `
                             <div class="alert alert-secondary p-2 mb-1 small">
-                                <strong>[${idx + 1}]</strong> ${ref.authors || 'N/A'}<br>
-                                <em>${ref.title || 'N/A'}</em><br>
-                                ${ref.journal || 'N/A'}
+                                <strong>[${idx + 1}]</strong> ${escapeHtml(ref.authors || 'N/A')}<br>
+                                <em>${escapeHtml(ref.title || 'N/A')}</em><br>
+                                ${escapeHtml(ref.journal || 'N/A')}
                             </div>
                         `).join('')}
                     </div>

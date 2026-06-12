@@ -84,6 +84,19 @@ def _apply_security_headers(response):
     response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
     return response
 
+
+# Belt-and-braces against matplotlib figure leaks. The plot helpers close their
+# figure on the success path (utils/plot_helpers.figure_to_*_data_url), but a
+# render that raises between plt.subplots() and serialization would leave the
+# figure in pyplot's global registry, growing memory across requests. Closing
+# all open figures at the end of every request reclaims those (a no-op on the
+# success path). Safe because the Agg/pyplot backend is single-threaded by
+# design — see the threading note in utils/request_helpers.remote_timeout.
+@app.teardown_request
+def _close_stale_figures(exc):
+    import matplotlib.pyplot as plt
+    plt.close('all')
+
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     port = int(os.environ.get('PORT', 9000))

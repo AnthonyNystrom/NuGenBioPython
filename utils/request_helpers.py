@@ -64,6 +64,14 @@ def remote_timeout(seconds):
     for the duration of the call so a slow/hung external service aborts
     instead of blocking a Flask worker indefinitely. The original timeout
     is always restored, even on exception.
+
+    THREAD-SAFETY CAVEAT: this mutates the process-global default socket
+    timeout via ``socket.setdefaulttimeout``. Under a threaded server
+    (Flask ``threaded=True`` or gunicorn ``--threads > 1``) concurrent
+    requests can stomp each other's timeout window. It is safe under a
+    single-threaded / one-request-per-worker model (gunicorn sync workers,
+    the default), which is how this app is intended to run. If you move to
+    threaded workers, replace this with a per-call timeout instead.
     """
     old = socket.getdefaulttimeout()
     socket.setdefaulttimeout(seconds)

@@ -46,11 +46,11 @@ function displayCodonResults(data) {
     ).join('') + '</div>';
 
     const summary = tilesHtml + `
-        <p class="small mb-2"><strong>Table:</strong> ${data.table_name}</p>
+        <p class="small mb-2"><strong>Table:</strong> ${escapeHtml(data.table_name)}</p>
         <div class="mb-2"><label class="small"><strong>Translated:</strong></label>
-        <textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${data.translated_sequence}</textarea></div>
-        <p class="small mb-1"><strong>Start codons:</strong> ${data.start_codons.map(c => '<code class="badge bg-success">'+c+'</code>').join(' ')}</p>
-        <p class="small mb-0"><strong>Stop codons:</strong> ${data.stop_codons.map(c => '<code class="badge bg-danger">'+c+'</code>').join(' ')}</p>
+        <textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.translated_sequence)}</textarea></div>
+        <p class="small mb-1"><strong>Start codons:</strong> ${data.start_codons.map(c => '<code class="badge bg-success">'+escapeHtml(c)+'</code>').join(' ')}</p>
+        <p class="small mb-0"><strong>Stop codons:</strong> ${data.stop_codons.map(c => '<code class="badge bg-danger">'+escapeHtml(c)+'</code>').join(' ')}</p>
     `;
 
     if (typeof ResultsCard !== 'undefined') {
@@ -85,9 +85,9 @@ function displayCodonTables(tables) {
     const div = document.getElementById('codonTablesDiv');
     let html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr><th>ID</th><th>Name</th><th>Start</th><th>Stop</th></tr></thead><tbody>';
     Object.values(tables).forEach(table => {
-        html += `<tr><td><span class="badge bg-primary">${table.id}</span></td><td class="small">${table.name}</td>
-                 <td>${table.start_codons.map(c => '<code class="badge bg-success">'+c+'</code>').join(' ')}</td>
-                 <td>${table.stop_codons.map(c => '<code class="badge bg-danger">'+c+'</code>').join(' ')}</td></tr>`;
+        html += `<tr><td><span class="badge bg-primary">${escapeHtml(table.id)}</span></td><td class="small">${escapeHtml(table.name)}</td>
+                 <td>${table.start_codons.map(c => '<code class="badge bg-success">'+escapeHtml(c)+'</code>').join(' ')}</td>
+                 <td>${table.stop_codons.map(c => '<code class="badge bg-danger">'+escapeHtml(c)+'</code>').join(' ')}</td></tr>`;
     });
     html += '</tbody></table></div>';
     div.innerHTML = html;
@@ -133,9 +133,9 @@ document.getElementById('iupacLookupForm').addEventListener('submit', function(e
 
 function displayIUPACLookup(data) {
     const tiles = [
-        { label: 'Code',       value: data.code },
-        { label: 'Bases',      value: data.bases },
-        { label: 'Complement', value: data.complement },
+        { label: 'Code',       value: escapeHtml(data.code) },
+        { label: 'Bases',      value: escapeHtml(data.bases) },
+        { label: 'Complement', value: escapeHtml(data.complement) },
     ];
     const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
         `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
@@ -169,7 +169,7 @@ function showAllIUPACCodes() {
 
 function displayIUPACTable(codes, codeType) {
     const entries = Object.entries(codes.values);
-    const tiles = [{ label: 'Codes', value: entries.length }, { label: 'Type', value: codeType }];
+    const tiles = [{ label: 'Codes', value: entries.length }, { label: 'Type', value: escapeHtml(codeType) }];
     const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
         `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
     ).join('') + '</div>';
@@ -178,7 +178,7 @@ function displayIUPACTable(codes, codeType) {
     const tsv = ['code\tbases\tcomplement'];
     entries.forEach(([code, bases]) => {
         const complement = codes.complement[code] || 'N';
-        rows += `<tr><td><code class="badge bg-primary">${code}</code></td><td class="small">${bases}</td><td><code class="badge bg-info">${complement}</code></td></tr>`;
+        rows += `<tr><td><code class="badge bg-primary">${escapeHtml(code)}</code></td><td class="small">${escapeHtml(bases)}</td><td><code class="badge bg-info">${escapeHtml(complement)}</code></td></tr>`;
         tsv.push([code, bases, complement].join('\t'));
     });
     const table = `<div class="table-responsive"><table class="table table-sm mb-0">
@@ -243,7 +243,7 @@ function displayProteinConvert(data) {
 
     const summary = tilesHtml +
         `<p class="small mb-1"><strong>Converted:</strong></p>` +
-        `<textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${data.result}</textarea>`;
+        `<textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.result)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('iupacResults', {
@@ -305,7 +305,7 @@ function displayMolecularWeight(data) {
     const tiles = [
         { label: 'Weight', value: data.weight + ' Da' },
         { label: 'Length', value: data.length },
-        { label: 'Type',   value: data.weight_type },
+        { label: 'Type',   value: escapeHtml(data.weight_type) },
     ];
     const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
         `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
@@ -313,7 +313,7 @@ function displayMolecularWeight(data) {
 
     let composition = '<p class="small mb-1"><strong>Composition:</strong></p><div class="d-flex flex-wrap gap-1">';
     for (let [unit, count] of Object.entries(data.composition)) {
-        composition += `<span class="badge bg-secondary">${unit}: ${count}</span>`;
+        composition += `<span class="badge bg-secondary">${escapeHtml(unit)}: ${count}</span>`;
     }
     composition += '</div>';
 
@@ -350,7 +350,7 @@ function loadPDBConversion(convType) {
 
 function displayPDBConversionTable(conversions, convType) {
     const entries = Object.entries(conversions);
-    const tiles = [{ label: 'Mappings', value: entries.length }, { label: 'Type', value: convType }];
+    const tiles = [{ label: 'Mappings', value: entries.length }, { label: 'Type', value: escapeHtml(convType) }];
     const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
         `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
     ).join('') + '</div>';
@@ -358,7 +358,7 @@ function displayPDBConversionTable(conversions, convType) {
     let rows = '';
     const tsv = ['from\tto'];
     entries.forEach(([from, to]) => {
-        rows += `<tr><td><code class="badge bg-primary">${from}</code></td><td><code class="badge bg-success">${to}</code></td></tr>`;
+        rows += `<tr><td><code class="badge bg-primary">${escapeHtml(from)}</code></td><td><code class="badge bg-success">${escapeHtml(to)}</code></td></tr>`;
         tsv.push([from, to].join('\t'));
     });
     const table = `<div class="table-responsive"><table class="table table-sm table-hover mb-0">

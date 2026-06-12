@@ -99,22 +99,22 @@ function displayParseResults(records, count) {
             <div class="accordion-item border mb-1">
                 <h2 class="accordion-header" id="heading${index}">
                     <button class="accordion-button ${isFirst ? '' : 'collapsed'} p-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#${accordionId}" aria-expanded="${isFirst}" aria-controls="${accordionId}">
-                        <strong>${record.cluster_id}</strong>
-                        <span class="badge bg-info ms-2">${record.gene_symbol}</span>
-                        <span class="ms-2 text-muted">${record.title}</span>
+                        <strong>${escapeHtml(record.cluster_id)}</strong>
+                        <span class="badge bg-info ms-2">${escapeHtml(record.gene_symbol)}</span>
+                        <span class="ms-2 text-muted">${escapeHtml(record.title)}</span>
                     </button>
                 </h2>
                 <div id="${accordionId}" class="accordion-collapse collapse ${isFirst ? 'show' : ''}" aria-labelledby="heading${index}" data-bs-parent="#parseAccordion">
                     <div class="accordion-body p-2">
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <p class="small mb-1"><strong>Cluster ID:</strong> <code>${record.cluster_id}</code></p>
-                                <p class="small mb-1"><strong>Gene:</strong> ${record.gene_symbol}</p>
-                                <p class="small mb-1"><strong>Species:</strong> ${record.species}</p>
-                                <p class="small mb-1"><strong>Chromosome:</strong> ${record.chromosome}</p>
+                                <p class="small mb-1"><strong>Cluster ID:</strong> <code>${escapeHtml(record.cluster_id)}</code></p>
+                                <p class="small mb-1"><strong>Gene:</strong> ${escapeHtml(record.gene_symbol)}</p>
+                                <p class="small mb-1"><strong>Species:</strong> ${escapeHtml(record.species)}</p>
+                                <p class="small mb-1"><strong>Chromosome:</strong> ${escapeHtml(record.chromosome)}</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="small mb-1"><strong>Title:</strong> ${record.title}</p>
+                                <p class="small mb-1"><strong>Title:</strong> ${escapeHtml(record.title)}</p>
                                 <p class="small mb-1"><strong>Sequences:</strong> <span class="badge bg-secondary">${record.sequence_count}</span></p>
                                 <p class="small mb-1"><strong>Tissues:</strong> <span class="badge bg-info">${record.tissue_count}</span></p>
                             </div>
@@ -124,7 +124,7 @@ function displayParseResults(records, count) {
                             <hr class="my-2">
                             <p class="small mb-1"><strong>Expression Tissues (${record.tissues.length}):</strong></p>
                             <div class="d-flex flex-wrap gap-1">
-                                ${record.tissues.slice(0, 10).map(tissue => `<span class="badge bg-secondary">${tissue}</span>`).join('')}
+                                ${record.tissues.slice(0, 10).map(tissue => `<span class="badge bg-secondary">${escapeHtml(tissue)}</span>`).join('')}
                                 ${record.tissues.length > 10 ? `<span class="badge bg-secondary">+${record.tissues.length - 10} more</span>` : ''}
                             </div>
                         ` : ''}
@@ -178,39 +178,39 @@ function displayReadResults(record) {
     let html = `
         <div class="card mb-2">
             <div class="card-header p-2 bg-info text-white">
-                <h6 class="mb-0"><i class="fas fa-sitemap"></i> ${record.cluster_id} - ${record.gene_symbol}</h6>
+                <h6 class="mb-0"><i class="fas fa-sitemap"></i> ${escapeHtml(record.cluster_id)} - ${escapeHtml(record.gene_symbol)}</h6>
             </div>
             <div class="card-body p-2">
                 <div class="row g-2 mb-2">
                     <div class="col-md-6">
-                        <p class="small mb-1"><strong>Cluster ID:</strong> <code>${record.cluster_id}</code></p>
-                        <p class="small mb-1"><strong>Gene Symbol:</strong> ${record.gene_symbol}</p>
-                        <p class="small mb-1"><strong>Species:</strong> ${record.species}</p>
-                        <p class="small mb-1"><strong>Title:</strong> ${record.title}</p>
+                        <p class="small mb-1"><strong>Cluster ID:</strong> <code>${escapeHtml(record.cluster_id)}</code></p>
+                        <p class="small mb-1"><strong>Gene Symbol:</strong> ${escapeHtml(record.gene_symbol)}</p>
+                        <p class="small mb-1"><strong>Species:</strong> ${escapeHtml(record.species)}</p>
+                        <p class="small mb-1"><strong>Title:</strong> ${escapeHtml(record.title)}</p>
                     </div>
                     <div class="col-md-6">
-                        <p class="small mb-1"><strong>Chromosome:</strong> ${record.chromosome}</p>
-                        <p class="small mb-1"><strong>Cytoband:</strong> ${record.cytoband}</p>
-                        <p class="small mb-1"><strong>Gene ID:</strong> ${record.gene_id}</p>
-                        <p class="small mb-1"><strong>LocusLink:</strong> ${record.locuslink}</p>
+                        <p class="small mb-1"><strong>Chromosome:</strong> ${escapeHtml(record.chromosome)}</p>
+                        <p class="small mb-1"><strong>Cytoband:</strong> ${escapeHtml(record.cytoband)}</p>
+                        <p class="small mb-1"><strong>Gene ID:</strong> ${escapeHtml(record.gene_id)}</p>
+                        <p class="small mb-1"><strong>LocusLink:</strong> ${escapeHtml(record.locuslink)}</p>
                     </div>
                 </div>
 
                 ${record.homol !== 'N/A' ? `
                     <hr class="my-2">
-                    <p class="small mb-1"><strong>Homology:</strong> ${record.homol}</p>
+                    <p class="small mb-1"><strong>Homology:</strong> ${escapeHtml(record.homol)}</p>
                 ` : ''}
 
                 ${record.restr_expr !== 'N/A' ? `
-                    <p class="small mb-1"><strong>Restricted Expression:</strong> ${record.restr_expr}</p>
+                    <p class="small mb-1"><strong>Restricted Expression:</strong> ${escapeHtml(record.restr_expr)}</p>
                 ` : ''}
 
                 ${record.gnm_terminus !== 'N/A' ? `
-                    <p class="small mb-1"><strong>Genome Terminus:</strong> ${record.gnm_terminus}</p>
+                    <p class="small mb-1"><strong>Genome Terminus:</strong> ${escapeHtml(record.gnm_terminus)}</p>
                 ` : ''}
 
                 ${record.txmap !== 'N/A' ? `
-                    <p class="small mb-1"><strong>TxMap:</strong> ${record.txmap}</p>
+                    <p class="small mb-1"><strong>TxMap:</strong> ${escapeHtml(record.txmap)}</p>
                 ` : ''}
 
                 <hr class="my-2">
@@ -250,8 +250,8 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.tissue_details.map(tissue => `
                                     <tr>
-                                        <td>${tissue.tissue}</td>
-                                        <td><span class="badge bg-info">${tissue.frequency}</span></td>
+                                        <td>${escapeHtml(tissue.tissue)}</td>
+                                        <td><span class="badge bg-info">${escapeHtml(tissue.frequency)}</span></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -276,11 +276,11 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.sequences.slice(0, 50).map(seq => `
                                     <tr>
-                                        <td><code>${seq.acc}</code></td>
-                                        <td><span class="badge bg-secondary">${seq.seqtype}</span></td>
-                                        <td>${seq.clone}</td>
-                                        <td>${seq.end}</td>
-                                        <td>${seq.lid}</td>
+                                        <td><code>${escapeHtml(seq.acc)}</code></td>
+                                        <td><span class="badge bg-secondary">${escapeHtml(seq.seqtype)}</span></td>
+                                        <td>${escapeHtml(seq.clone)}</td>
+                                        <td>${escapeHtml(seq.end)}</td>
+                                        <td>${escapeHtml(seq.lid)}</td>
                                     </tr>
                                 `).join('')}
                                 ${record.sequences.length > 50 ? `
@@ -311,8 +311,8 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.protein_similarities.map(prot => `
                                     <tr>
-                                        <td>${prot.organism}</td>
-                                        <td><code>${prot.protein_id}</code></td>
+                                        <td>${escapeHtml(prot.organism)}</td>
+                                        <td><code>${escapeHtml(prot.protein_id)}</code></td>
                                         <td><span class="badge bg-success">${prot.percent}%</span></td>
                                         <td>${prot.alignment_length}</td>
                                     </tr>
@@ -336,8 +336,8 @@ function displayReadResults(record) {
                             <tbody>
                                 ${record.sts.map(sts => `
                                     <tr>
-                                        <td><code>${sts.acc}</code></td>
-                                        <td>${sts.unists}</td>
+                                        <td><code>${escapeHtml(sts.acc)}</code></td>
+                                        <td>${escapeHtml(sts.unists)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>

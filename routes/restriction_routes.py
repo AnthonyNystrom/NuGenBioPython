@@ -227,7 +227,7 @@ def advanced_analysis():
         }
 
         # Apply filters
-        if filter_type == 'unique' or min_cuts == 1 and max_cuts == 1:
+        if filter_type == 'unique' or (min_cuts == 1 and max_cuts == 1):
             enzymes_dict = analyzer.with_N_sites(1)
             result['filters_applied'].append('Enzymes cutting exactly once')
         elif filter_type == 'non_cutters':

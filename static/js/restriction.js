@@ -514,7 +514,7 @@ function displayAdvancedResults(result) {
     }
 }
 
-function loadAdvancedExample() {
+function loadAdvancedRestrictionExample() {
     document.getElementById('advancedSequence').value = 'GAATTCAAGCTTATCGATCGAATTCCTGCAGGGATCCAAGCTTTCTAGATGCATGCCTGCAGGAATTC';
     document.getElementById('filterType').value = 'unique';
     document.getElementById('useAllEnzymes').checked = true;

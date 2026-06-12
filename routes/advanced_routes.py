@@ -10,10 +10,14 @@ from werkzeug.utils import secure_filename
 
 from dependencies import SearchIO, SwissProt, ProtParam, CodonTable, Seq
 from utils.upload_helpers import saved_upload, UploadError
+from utils.request_helpers import remote_timeout, clamp_int
 import time
 import uuid
 
 bp = Blueprint('advanced', __name__, url_prefix='/api')
+
+# Socket-timeout budget for Entrez/PubMed calls in this module (seconds).
+_ENTREZ_TIMEOUT = 30
 
 # In-memory HMM model cache. Bounded to prevent unbounded growth in long-running
 # processes; oldest entries are evicted once the cap is reached. For multi-worker
@@ -53,7 +57,7 @@ def api_sequence_protparam():
             'isoelectric_point': round(protein_analysis.isoelectric_point(), 2),
             'gravy': round(protein_analysis.gravy(), 4),
             'secondary_structure': protein_analysis.secondary_structure_fraction(),
-            'amino_acid_percent': protein_analysis.get_amino_acids_percent(),
+            'amino_acid_percent': protein_analysis.amino_acids_percent,
             'flexibility': protein_analysis.flexibility(),
             'molar_extinction_coefficient': protein_analysis.molar_extinction_coefficient()
         }
@@ -491,7 +495,7 @@ def api_literature_search():
 
         data = request.get_json(silent=True) or {}
         query = data.get('query', '')
-        max_results = data.get('max_results', 10)
+        max_results = clamp_int(data.get('max_results'), 10, lo=1, hi=100)
 
         if not query:
             return jsonify({'success': False, 'error': 'Query required'})
@@ -499,10 +503,11 @@ def api_literature_search():
         # Set email for NCBI (required by Entrez)
         Entrez.email = os.environ.get('ENTREZ_EMAIL', 'your.email@example.com')
 
-        # Search PubMed
-        handle = Entrez.esearch(db='pubmed', term=query, retmax=max_results)
-        search_results = Entrez.read(handle)
-        handle.close()
+        # Search PubMed (timeout-bounded so a hung NCBI socket can't pin the worker)
+        with remote_timeout(_ENTREZ_TIMEOUT):
+            handle = Entrez.esearch(db='pubmed', term=query, retmax=max_results)
+            search_results = Entrez.read(handle)
+            handle.close()
 
         id_list = search_results['IdList']
 
@@ -510,9 +515,10 @@ def api_literature_search():
             return jsonify({'success': True, 'results': []})
 
         # Fetch details for the articles
-        handle = Entrez.efetch(db='pubmed', id=id_list, rettype='abstract', retmode='xml')
-        records = Entrez.read(handle)
-        handle.close()
+        with remote_timeout(_ENTREZ_TIMEOUT):
+            handle = Entrez.efetch(db='pubmed', id=id_list, rettype='abstract', retmode='xml')
+            records = Entrez.read(handle)
+            handle.close()
 
         results = []
         for record in records['PubmedArticle']:

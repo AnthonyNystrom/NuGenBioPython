@@ -430,7 +430,7 @@
             }
         }
         flushToken();
-        return '<pre class="p-3 border rounded small" style="max-height:500px; overflow:auto; background:#f8fafc;">' + out + '</pre>';
+        return '<pre class="p-3 border rounded small" style="max-height:500px; overflow:auto; background:var(--color-bg); color:var(--color-text);">' + out + '</pre>';
     }
 
     // --- Pairwise alignment (BioPython str format) -----------------------

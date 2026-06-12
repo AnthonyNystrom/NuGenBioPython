@@ -92,16 +92,16 @@ function displaySearchResults(results, count, database) {
 
     results.forEach(result => {
         html += `<tr>
-            <td><code>${result.id}</code></td>
-            <td>${result.title || 'N/A'}</td>`;
+            <td><code>${escapeHtml(result.id)}</code></td>
+            <td>${escapeHtml(result.title || 'N/A')}</td>`;
         if (database === 'pubmed') {
             const authors = Array.isArray(result.authors) ? result.authors.slice(0, 2).join(', ') : '';
-            html += `<td><small>${authors}</small></td>
-                    <td><small>${result.journal || ''}</small></td>
-                    <td><small>${result.date || ''}</small></td>`;
+            html += `<td><small>${escapeHtml(authors)}</small></td>
+                    <td><small>${escapeHtml(result.journal || '')}</small></td>
+                    <td><small>${escapeHtml(result.date || '')}</small></td>`;
         }
         html += `<td>
-                <button class="btn-app-sm btn-app-secondary" onclick="viewFullRecord('${result.id}', '${database}')">
+                <button class="btn-app-sm btn-app-secondary" onclick="viewFullRecord('${escapeHtml(result.id)}', '${escapeHtml(database)}')">
                     <i class="fas fa-eye"></i> View
                 </button>
             </td>`;
@@ -265,7 +265,7 @@ function displayFetchedRecords(data, format) {
             ],
         });
     } else {
-        resultsDiv.innerHTML = `<pre class="mb-0" style="max-height: 500px; overflow-y: auto; font-size: 12px;">${data}</pre>`;
+        resultsDiv.innerHTML = `<pre class="mb-0" style="max-height: 500px; overflow-y: auto; font-size: 12px;">${escapeHtml(data)}</pre>`;
     }
 }
 

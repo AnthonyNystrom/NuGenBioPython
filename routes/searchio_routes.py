@@ -2,9 +2,8 @@
 Routes for Bio.SearchIO operations
 Handles parsing, reading, indexing, converting, filtering, and writing search results
 """
-from flask import Blueprint, request, jsonify, current_app
-import os
-from werkzeug.utils import secure_filename
+from flask import Blueprint, request, jsonify
+from utils.upload_helpers import saved_upload, UploadError
 from utils.searchio_helpers import (
     searchio_parse, searchio_read, searchio_index, searchio_convert,
     searchio_filter, searchio_write, get_supported_formats
@@ -20,20 +19,8 @@ def parse():
         file = request.files.get('file')
         format_name = request.form.get('format', 'blast-xml')
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(temp_path)
-
-        # Parse results
-        results = searchio_parse(temp_path, format_name)
-
-        # Clean up
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        with saved_upload(file) as temp_path:
+            results = searchio_parse(temp_path, format_name)
 
         return jsonify({
             'success': True,
@@ -41,6 +28,8 @@ def parse():
             'count': len(results)
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,
@@ -55,26 +44,16 @@ def read():
         file = request.files.get('file')
         format_name = request.form.get('format', 'blast-xml')
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(temp_path)
-
-        # Read single query result
-        result = searchio_read(temp_path, format_name)
-
-        # Clean up
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        with saved_upload(file) as temp_path:
+            result = searchio_read(temp_path, format_name)
 
         return jsonify({
             'success': True,
             'result': result
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,
@@ -90,26 +69,16 @@ def index():
         format_name = request.form.get('format', 'blast-xml')
         limit = int(request.form.get('limit', 100))
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(temp_path)
-
-        # Index results
-        results = searchio_index(temp_path, format_name, limit)
-
-        # Clean up
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        with saved_upload(file) as temp_path:
+            results = searchio_index(temp_path, format_name, limit)
 
         return jsonify({
             'success': True,
             'results': results
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,
@@ -125,26 +94,16 @@ def convert():
         input_format = request.form.get('input_format', 'blast-xml')
         output_format = request.form.get('output_format', 'blast-tab')
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        input_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(input_path)
-
-        # Convert
-        result = searchio_convert(input_path, input_format, output_format)
-
-        # Clean up input file
-        if os.path.exists(input_path):
-            os.remove(input_path)
+        with saved_upload(file) as input_path:
+            result = searchio_convert(input_path, input_format, output_format)
 
         return jsonify({
             'success': True,
             'result': result
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,
@@ -169,20 +128,8 @@ def filter_results():
         bitscore_threshold = float(bitscore_threshold) if bitscore_threshold else None
         min_identity = float(min_identity) if min_identity else None
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(temp_path)
-
-        # Filter results
-        results = searchio_filter(temp_path, format_name, evalue_threshold, bitscore_threshold, min_identity)
-
-        # Clean up
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        with saved_upload(file) as temp_path:
+            results = searchio_filter(temp_path, format_name, evalue_threshold, bitscore_threshold, min_identity)
 
         return jsonify({
             'success': True,
@@ -190,6 +137,8 @@ def filter_results():
             'count': len(results)
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,
@@ -206,26 +155,16 @@ def write():
         output_format = request.form.get('output_format', 'blast-tab')
         max_queries = int(request.form.get('max_queries', 10))
 
-        if not file:
-            return jsonify({'success': False, 'error': 'No file provided'})
-
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        input_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(input_path)
-
-        # Write to new format
-        result = searchio_write(input_path, input_format, output_format, max_queries)
-
-        # Clean up input file
-        if os.path.exists(input_path):
-            os.remove(input_path)
+        with saved_upload(file) as input_path:
+            result = searchio_write(input_path, input_format, output_format, max_queries)
 
         return jsonify({
             'success': True,
             'result': result
         })
 
+    except UploadError as e:
+        return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
         return jsonify({
             'success': False,

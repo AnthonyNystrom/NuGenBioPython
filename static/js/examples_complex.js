@@ -195,7 +195,7 @@
     window.loadAdvancedExampleComplexGenome = function () {
         if (typeof clearAdvancedFeatures === 'function') clearAdvancedFeatures();
         var len = document.getElementById('advancedGenomeLength');
-        var title = document.getElementById('advancedDiagramTitle');
+        var title = document.getElementById('advancedTitle');
         if (len) len.value = '25000';
         if (title) title.value = 'E. coli operon cluster (complex)';
         // Genes use ARROW sigils + proper strand; regulatory elements use BOX.
@@ -316,9 +316,9 @@
             'CAGATCATGTTTGAGACCTTCAACACCCCAGCCATGTACGTTGCTATCCAGGCTGTGCTA' +
             'TCCCTGTACGCCTCTGGCCGTACCACTGGCATCGTGATGGACTCCGGTGACGGGGTCACC' +
             'CACACTGTGCCCATCTACGAGGGGTATGCCCTCCCCCATGCCATCCTGCGTCTGGACCTG';
-        var minLen = document.getElementById('orfMinLength');
+        var minLen = document.getElementById('minLength');
         if (minLen) minLen.value = '60';
-        var strand = document.getElementById('orfStrand');
+        var strand = document.getElementById('strand');
         if (strand) strand.value = 'both';
     };
 
@@ -639,13 +639,11 @@ SQ   SEQUENCE   147 AA;  15998 MW;  A31F6F1D08A6CE4A CRC64;
 
     // -------- HMM --------
     window.loadHmmExampleComplex = function () {
-        var states = document.getElementById('hmmStates');
-        var alpha = document.getElementById('hmmAlphabet');
-        var seq = document.getElementById('hmmSequence');
+        var states = document.getElementById('states');
+        var seq = document.getElementById('sequence');
         var type = document.getElementById('hmmType');
         if (states) states.value = '4';
-        if (alpha) alpha.value = 'ACGT';
-        if (type) type.value = 'ergodic';
+        if (type) type.value = 'sequence';
         if (seq) seq.value = 'ACGTACGTACGTACGTACGTACGTACGTACGT' +
             'AAACCCGGGTTTAAACCCGGGTTTAAACCCGG' +
             'GTATATATACGTACGTACGTACGTATATATAT' +

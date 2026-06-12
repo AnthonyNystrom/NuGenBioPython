@@ -60,7 +60,7 @@ function displayParseResults(results, count) {
         details += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
-                    <strong>${query.id}</strong> - ${query.description} (${query.seq_len} bp/aa)
+                    <strong>${escapeHtml(query.id)}</strong> - ${escapeHtml(query.description)} (${query.seq_len} bp/aa)
                 </div>
                 <div class="card-body p-2">
                     <table class="table table-sm small mb-0">
@@ -68,8 +68,8 @@ function displayParseResults(results, count) {
                         <tbody>`;
         query.hits.slice(0, 10).forEach(hit => {
             details += `<tr>
-                <td><code class="small">${hit.id}</code></td>
-                <td class="small">${hit.description.substring(0, 60)}</td>
+                <td><code class="small">${escapeHtml(hit.id)}</code></td>
+                <td class="small">${escapeHtml(hit.description.substring(0, 60))}</td>
                 <td class="small">${hit.evalue}</td>
                 <td class="small">${hit.bitscore}</td>
             </tr>`;
@@ -140,7 +140,7 @@ function displayReadResults(result) {
         body += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
-                    <strong>${hit.id}</strong> - ${hit.description.substring(0, 80)}
+                    <strong>${escapeHtml(hit.id)}</strong> - ${escapeHtml(hit.description.substring(0, 80))}
                 </div>
                 <div class="card-body p-2">
                     <p class="small mb-1"><strong>Hit Length:</strong> ${hit.length} | <strong>HSPs:</strong> ${hit.num_hsps}</p>
@@ -156,7 +156,7 @@ function displayReadResults(result) {
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('readResults', {
             title: 'SearchIO Record',
-            meta: `${result.id} · ${result.num_hits} hits`,
+            meta: `${escapeHtml(result.id)} · ${result.num_hits} hits`,
             summary: tilesHtml + body,
             raw: JSON.stringify(result, null, 2),
             workspaceItem: { type: 'searchio-record', name: `${result.id} (${result.num_hits} hits)`, data: result },
@@ -219,7 +219,7 @@ function displayIndexResults(results) {
 
     let rows = '';
     results.queries.forEach(q => {
-        rows += `<tr><td><code class="small">${q.id}</code></td><td class="small">${q.description.substring(0, 60)}</td><td class="small">${q.seq_len}</td><td><span class="badge bg-secondary">${q.num_hits}</span></td></tr>`;
+        rows += `<tr><td><code class="small">${escapeHtml(q.id)}</code></td><td class="small">${escapeHtml(q.description.substring(0, 60))}</td><td class="small">${q.seq_len}</td><td><span class="badge bg-secondary">${q.num_hits}</span></td></tr>`;
     });
     const table = `<div class="table-responsive"><table class="table table-sm small">
         <thead><tr><th>Query ID</th><th>Description</th><th>Length</th><th>Hits</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -300,7 +300,7 @@ function displayConvertResults(result) {
     } else {
         document.getElementById('convertResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
             <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
-            <pre class="bg-light p-2 small mt-1" style="max-height:300px;overflow-y:auto;">${result.content_preview}</pre>
+            <pre class="bg-light p-2 small mt-1" style="max-height:300px;overflow-y:auto;">${escapeHtml(result.content_preview)}</pre>
         </div></div>`;
     }
 }
@@ -365,7 +365,7 @@ function displayFilterResults(results, count) {
         body += `
             <div class="card mb-2">
                 <div class="card-header py-1 small">
-                    <strong>${query.id}</strong> - ${query.description}
+                    <strong>${escapeHtml(query.id)}</strong> - ${escapeHtml(query.description)}
                     <span class="badge bg-success ms-2">${query.filtered_count}/${query.original_count} hits passed</span>
                 </div>
                 <div class="card-body p-2">
@@ -373,7 +373,7 @@ function displayFilterResults(results, count) {
                         <thead><tr><th>Hit ID</th><th>Description</th><th>E-value</th><th>Bit Score</th><th>Identity</th></tr></thead>
                         <tbody>`;
         query.hits.slice(0, 10).forEach(hit => {
-            body += `<tr><td><code class="small">${hit.id}</code></td><td class="small">${hit.description.substring(0, 50)}</td><td class="small">${hit.evalue}</td><td class="small">${hit.bitscore}</td><td class="small">${hit.identity}</td></tr>`;
+            body += `<tr><td><code class="small">${escapeHtml(hit.id)}</code></td><td class="small">${escapeHtml(hit.description.substring(0, 50))}</td><td class="small">${hit.evalue}</td><td class="small">${hit.bitscore}</td><td class="small">${hit.identity}</td></tr>`;
         });
         body += '</tbody></table></div></div>';
     });
@@ -455,7 +455,7 @@ function displayWriteResults(result) {
     } else {
         document.getElementById('writeResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
             <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
-            <pre class="bg-light p-2 small mt-1" style="max-height:400px;overflow-y:auto;">${result.content}</pre>
+            <pre class="bg-light p-2 small mt-1" style="max-height:400px;overflow-y:auto;">${escapeHtml(result.content)}</pre>
         </div></div>`;
     }
 }
@@ -498,14 +498,14 @@ function displayFormats(formats) {
     const tsv = ['category\tid\tname\tcan_write\tdescription'];
     for (const [category, formatList] of Object.entries(formats)) {
         body += `<div class="card mb-2">
-            <div class="card-header py-1 small bg-primary text-white"><strong>${category}</strong></div>
+            <div class="card-header py-1 small bg-primary text-white"><strong>${escapeHtml(category)}</strong></div>
             <div class="card-body p-2">
                 <table class="table table-sm small mb-0">
                     <thead><tr><th>Format ID</th><th>Name</th><th>Description</th><th>Can Write</th></tr></thead>
                     <tbody>`;
         formatList.forEach(fmt => {
             const canWrite = fmt.can_write ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>';
-            body += `<tr><td><code class="small">${fmt.id}</code></td><td class="small">${fmt.name}</td><td class="small">${fmt.description}</td><td>${canWrite}</td></tr>`;
+            body += `<tr><td><code class="small">${escapeHtml(fmt.id)}</code></td><td class="small">${escapeHtml(fmt.name)}</td><td class="small">${escapeHtml(fmt.description)}</td><td>${canWrite}</td></tr>`;
             tsv.push([category, fmt.id, fmt.name, fmt.can_write ? 'yes' : 'no', fmt.description].join('\t'));
         });
         body += '</tbody></table></div></div>';
@@ -740,7 +740,7 @@ function loadConvertExample() {
                 displayConvertResults(data.result);
             } else {
                 document.getElementById('convertResults').innerHTML =
-                    `<div class="alert alert-info small mb-0">Note: ${data.error}</div>`;
+                    `<div class="alert alert-info small mb-0">Note: ${escapeHtml(data.error)}</div>`;
             }
         })
         .catch(error => {
@@ -871,7 +871,7 @@ function loadWriteExample() {
                 displayWriteResults(data.result);
             } else {
                 document.getElementById('writeResults').innerHTML =
-                    `<div class="alert alert-danger small mb-0">Error: ${data.error}</div>`;
+                    `<div class="alert alert-danger small mb-0">Error: ${escapeHtml(data.error)}</div>`;
             }
         })
         .catch(error => {

@@ -85,7 +85,7 @@ function displayStructureInfo(structureInfo) {
         let chainHtml = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Chain</th><th>Residues</th><th>Atoms</th><th>Type</th></tr></thead><tbody>';
         structureInfo.chains.forEach(chain => {
             const chainType = chain.residue_count > 50 ? 'Protein' : 'Small molecule/Ion';
-            chainHtml += `<tr><td><span class="badge bg-danger">${chain.id}</span></td><td>${chain.residue_count}</td><td>${chain.atoms}</td><td><small>${chainType}</small></td></tr>`;
+            chainHtml += `<tr><td><span class="badge bg-danger">${escapeHtml(chain.id)}</span></td><td>${chain.residue_count}</td><td>${chain.atoms}</td><td><small>${chainType}</small></td></tr>`;
         });
         chainHtml += '</tbody></table></div>';
         chainDiv.innerHTML = chainHtml;
@@ -270,7 +270,7 @@ function displayGeometry(geometry) {
     accordion += '<div id="distances" class="accordion-collapse collapse show" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
     accordion += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
     geometry.distances.slice(0, 10).forEach(d => {
-        accordion += `<tr><td>${d.residue1}</td><td>${d.residue2}</td><td>${d.distance}</td></tr>`;
+        accordion += `<tr><td>${escapeHtml(d.residue1)}</td><td>${escapeHtml(d.residue2)}</td><td>${d.distance}</td></tr>`;
     });
     accordion += '</tbody></table></div></div></div>';
 
@@ -278,7 +278,7 @@ function displayGeometry(geometry) {
     accordion += '<div id="angles" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
     accordion += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Angle (°)</th></tr></thead><tbody>';
     geometry.angles.slice(0, 10).forEach(a => {
-        accordion += `<tr><td>${a.residues}</td><td>${a.angle_degrees}</td></tr>`;
+        accordion += `<tr><td>${escapeHtml(a.residues)}</td><td>${a.angle_degrees}</td></tr>`;
     });
     accordion += '</tbody></table></div></div></div>';
 
@@ -286,7 +286,7 @@ function displayGeometry(geometry) {
     accordion += '<div id="dihedrals" class="accordion-collapse collapse" data-bs-parent="#geometryAccordion"><div class="accordion-body">';
     accordion += '<table class="table table-sm"><thead><tr><th>Residues</th><th>Dihedral (°)</th></tr></thead><tbody>';
     geometry.dihedrals.forEach(d => {
-        accordion += `<tr><td>${d.residues}</td><td>${d.dihedral_degrees}</td></tr>`;
+        accordion += `<tr><td>${escapeHtml(d.residues)}</td><td>${d.dihedral_degrees}</td></tr>`;
     });
     accordion += '</tbody></table></div></div></div></div>';
 
@@ -425,7 +425,7 @@ function displayContacts(data) {
     ).join('') + '</div>';
 
     let rows = '';
-    data.contacts.forEach(c => { rows += `<tr><td>${c.residue1}</td><td>${c.residue2}</td><td>${c.distance}</td></tr>`; });
+    data.contacts.forEach(c => { rows += `<tr><td>${escapeHtml(c.residue1)}</td><td>${escapeHtml(c.residue2)}</td><td>${c.distance}</td></tr>`; });
     const table = `<div class="table-responsive"><table class="table table-sm table-hover">
         <thead class="table-light"><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
@@ -499,14 +499,14 @@ function displayInteractions(data) {
     accordion += `Hydrogen Bonds (${data.hbond_count} found, showing first 50)</button></h2>`;
     accordion += '<div id="hbonds" class="accordion-collapse collapse show" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
     accordion += '<table class="table table-sm"><thead><tr><th>Donor</th><th>Acceptor</th><th>Distance (Å)</th></tr></thead><tbody>';
-    data.hbonds.forEach(hb => { accordion += `<tr><td>${hb.donor}</td><td>${hb.acceptor}</td><td>${hb.distance}</td></tr>`; });
+    data.hbonds.forEach(hb => { accordion += `<tr><td>${escapeHtml(hb.donor)}</td><td>${escapeHtml(hb.acceptor)}</td><td>${hb.distance}</td></tr>`; });
     accordion += '</tbody></table></div></div></div>';
 
     accordion += '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#saltbridges">';
     accordion += `Salt Bridges (${data.salt_bridge_count} found)</button></h2>`;
     accordion += '<div id="saltbridges" class="accordion-collapse collapse" data-bs-parent="#interactionsAccordion"><div class="accordion-body">';
     accordion += '<table class="table table-sm"><thead><tr><th>Residue 1</th><th>Residue 2</th><th>Distance (Å)</th></tr></thead><tbody>';
-    data.salt_bridges.forEach(sb => { accordion += `<tr><td>${sb.residue1}</td><td>${sb.residue2}</td><td>${sb.distance}</td></tr>`; });
+    data.salt_bridges.forEach(sb => { accordion += `<tr><td>${escapeHtml(sb.residue1)}</td><td>${escapeHtml(sb.residue2)}</td><td>${sb.distance}</td></tr>`; });
     accordion += '</tbody></table></div></div></div></div>';
 
     if (typeof ResultsCard !== 'undefined') {
@@ -578,7 +578,7 @@ function displayDsspResults(result) {
     let distribution = '<h6 class="mb-2"><i class="fas fa-chart-pie"></i> Secondary Structure Distribution</h6><div class="row g-2 mb-3">';
     for (const [key, count] of Object.entries(ss.counts)) {
         const name = ss.mapping[key] || key;
-        distribution += `<div class="col-md-4"><div class="border rounded p-2"><strong>${name} (${key}):</strong> ${count}</div></div>`;
+        distribution += `<div class="col-md-4"><div class="border rounded p-2"><strong>${escapeHtml(name)} (${escapeHtml(key)}):</strong> ${count}</div></div>`;
     }
     distribution += '</div>';
 
@@ -587,7 +587,7 @@ function displayDsspResults(result) {
         table += '<h6 class="mb-2"><i class="fas fa-list"></i> Residue Details (first 50)</h6>';
         table += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SS</th><th>Type</th><th>Accessibility</th><th>Phi</th><th>Psi</th></tr></thead><tbody>';
         result.residue_details.forEach(r => {
-            table += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.ss}</td><td class="small">${r.ss_name}</td><td>${r.accessibility}</td><td>${r.phi !== null ? r.phi + '°' : '-'}</td><td>${r.psi !== null ? r.psi + '°' : '-'}</td></tr>`;
+            table += `<tr><td>${escapeHtml(r.chain)}</td><td>${escapeHtml(r.residue)}</td><td>${escapeHtml(r.ss)}</td><td class="small">${escapeHtml(r.ss_name)}</td><td>${r.accessibility}</td><td>${r.phi !== null ? r.phi + '°' : '-'}</td><td>${r.psi !== null ? r.psi + '°' : '-'}</td></tr>`;
         });
         table += '</tbody></table></div>';
     }
@@ -669,7 +669,7 @@ function displayRamaResults(data) {
 
     let table = '<h6 class="mb-2"><i class="fas fa-table"></i> Phi/Psi Angles (first 100)</h6>';
     table += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Residue</th><th>Phi (°)</th><th>Psi (°)</th></tr></thead><tbody>';
-    data.phi_psi_data.forEach(r => { table += `<tr><td>${r.residue}</td><td>${r.phi}</td><td>${r.psi}</td></tr>`; });
+    data.phi_psi_data.forEach(r => { table += `<tr><td>${escapeHtml(r.residue)}</td><td>${r.phi}</td><td>${r.psi}</td></tr>`; });
     table += '</tbody></table></div>';
 
     const tsv = ['residue\tphi\tpsi'];
@@ -748,28 +748,28 @@ function displaySasaResults(data) {
         tiles.push({ label: 'Residues', value: (data.residue_sasa || []).length });
         summary += '<h6 class="mb-2">Chain SASA:</h6><div class="row g-2 mb-3">';
         for (const [chain, sasa] of Object.entries(data.chain_sasa || {})) {
-            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${sasa} Ų</div></div>`;
+            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${escapeHtml(chain)}:</strong> ${sasa} Ų</div></div>`;
         }
         summary += '</div>';
         if (data.residue_sasa && data.residue_sasa.length > 0) {
             summary += '<h6 class="mb-2">Residue SASA (first 50):</h6>';
             summary += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>SASA (Ų)</th></tr></thead><tbody>';
-            data.residue_sasa.forEach(r => { summary += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.sasa}</td></tr>`; });
+            data.residue_sasa.forEach(r => { summary += `<tr><td>${escapeHtml(r.chain)}</td><td>${escapeHtml(r.residue)}</td><td>${r.sasa}</td></tr>`; });
             summary += '</tbody></table></div>';
         }
     } else if (data.method) {
-        tiles.push({ label: 'Method', value: data.method });
+        tiles.push({ label: 'Method', value: escapeHtml(data.method) });
         tiles.push({ label: 'Chains', value: Object.keys(data.chain_accessibility || {}).length });
         tiles.push({ label: 'Residues', value: (data.residue_accessibility || []).length });
         summary += '<h6 class="mb-2">Chain Accessibility:</h6><div class="row g-2 mb-3">';
         for (const [chain, acc] of Object.entries(data.chain_accessibility || {})) {
-            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${chain}:</strong> ${acc}</div></div>`;
+            summary += `<div class="col-md-3"><div class="border rounded p-2"><strong>Chain ${escapeHtml(chain)}:</strong> ${acc}</div></div>`;
         }
         summary += '</div>';
         if (data.residue_accessibility) {
             summary += '<h6 class="mb-2">Relative Accessibility (first 50):</h6>';
             summary += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Chain</th><th>Residue</th><th>Accessibility</th></tr></thead><tbody>';
-            data.residue_accessibility.forEach(r => { summary += `<tr><td>${r.chain}</td><td>${r.residue}</td><td>${r.relative_accessibility}</td></tr>`; });
+            data.residue_accessibility.forEach(r => { summary += `<tr><td>${escapeHtml(r.chain)}</td><td>${escapeHtml(r.residue)}</td><td>${r.relative_accessibility}</td></tr>`; });
             summary += '</tbody></table></div>';
         }
     }
@@ -858,11 +858,11 @@ function displaySelectionResults(extraction) {
     if (extraction.details.length > 0) {
         const keys = Object.keys(extraction.details[0]);
         table = '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>';
-        keys.forEach(k => { table += `<th>${k}</th>`; });
+        keys.forEach(k => { table += `<th>${escapeHtml(k)}</th>`; });
         table += '</tr></thead><tbody>';
         extraction.details.forEach(item => {
             table += '<tr>';
-            keys.forEach(k => { table += `<td>${item[k]}</td>`; });
+            keys.forEach(k => { table += `<td>${escapeHtml(item[k])}</td>`; });
             table += '</tr>';
         });
         table += '</tbody></table></div>';

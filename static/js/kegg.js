@@ -262,7 +262,7 @@ function displayInfoResults(info, database) {
         });
     } else {
         document.getElementById('infoResults').innerHTML =
-            `<div class="p-3"><h6>Database: ${database}</h6><pre class="border p-3" style="max-height: 400px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">${info.raw_data}</pre></div>`;
+            `<div class="p-3"><h6>Database: ${escapeHtml(database)}</h6><pre class="border p-3" style="max-height: 400px; overflow-y: auto; font-size: 11px; background: var(--color-bg); color: var(--color-text);">${escapeHtml(info.raw_data)}</pre></div>`;
     }
 }
 
@@ -310,6 +310,6 @@ function displayEntryInModal(data) {
         });
     } else {
         document.getElementById('entryModalContent').innerHTML = image +
-            '<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: #f8f9fa;">' + data.raw_data + '</pre>';
+            '<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: var(--color-bg); color: var(--color-text);">' + escapeHtml(data.raw_data) + '</pre>';
     }
 }

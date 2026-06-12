@@ -11,6 +11,7 @@ from utils.plot_helpers import (
     figure_to_svg_data_url, style_axes, set_title,
     LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
 )
+from utils.request_helpers import clamp_int, clamp_float
 
 bp = Blueprint('clustering', __name__, url_prefix='/api')
 
@@ -94,8 +95,8 @@ def clustering_analyze():
             }
 
         elif method == 'dbscan':
-            eps = float(data.get('eps', 0.5))
-            min_samples = int(data.get('min_samples', 5))
+            eps = clamp_float(data.get('eps'), 0.5, lo=1e-9)
+            min_samples = clamp_int(data.get('min_samples'), 5, lo=1)
 
             dbscan = DBSCAN(eps=eps, min_samples=min_samples)
             labels = dbscan.fit_predict(matrix)

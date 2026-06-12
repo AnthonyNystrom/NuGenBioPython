@@ -166,14 +166,14 @@ function updateReactionsList() {
 
     let html = '';
     pathwayReactions.forEach((rxn, idx) => {
-        const reactantsStr = Object.entries(rxn.reactants).map(([s, c]) => `${Math.abs(c)} ${s}`).join(' + ');
-        const productsStr = Object.entries(rxn.products).map(([s, c]) => `${c} ${s}`).join(' + ');
+        const reactantsStr = Object.entries(rxn.reactants).map(([s, c]) => `${Math.abs(c)} ${escapeHtml(s)}`).join(' + ');
+        const productsStr = Object.entries(rxn.products).map(([s, c]) => `${c} ${escapeHtml(s)}`).join(' + ');
 
         html += `
             <div class="card mb-2">
                 <div class="card-body p-2">
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                        <h6 class="mb-0 small"><i class="fas fa-flask"></i> ${rxn.name}</h6>
+                        <h6 class="mb-0 small"><i class="fas fa-flask"></i> ${escapeHtml(rxn.name)}</h6>
                         <button class="btn-app-sm btn-app-danger" onclick="removeReaction(${idx})">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -185,7 +185,7 @@ function updateReactionsList() {
                     </div>
                     ${rxn.catalysts.length > 0 ? `
                         <div class="mt-1">
-                            <small class="badge bg-success">${rxn.catalysts.join(', ')}</small>
+                            <small class="badge bg-success">${rxn.catalysts.map(escapeHtml).join(', ')}</small>
                         </div>
                     ` : ''}
                 </div>
@@ -293,14 +293,14 @@ function displaySystemAnalysis(analysis) {
             <div class="col-md-6">
                 <h6 class="mb-2"><i class="fas fa-list"></i> All Species</h6>
                 <div class="p-3 bg-light rounded">
-                    ${analysis.species.map(s => `<span class="badge bg-secondary me-1 mb-1">${s}</span>`).join('')}
+                    ${analysis.species.map(s => `<span class="badge bg-secondary me-1 mb-1">${escapeHtml(s)}</span>`).join('')}
                 </div>
             </div>
             <div class="col-md-6">
                 <h6 class="mb-2"><i class="fas fa-info-circle"></i> System Properties</h6>
                 <ul class="list-unstyled small">
-                    <li><strong>Reversible reactions:</strong> ${analysis.reversible_reactions.join(', ') || 'None'}</li>
-                    <li><strong>Irreversible reactions:</strong> ${analysis.irreversible_reactions.join(', ') || 'None'}</li>
+                    <li><strong>Reversible reactions:</strong> ${analysis.reversible_reactions.map(escapeHtml).join(', ') || 'None'}</li>
+                    <li><strong>Irreversible reactions:</strong> ${analysis.irreversible_reactions.map(escapeHtml).join(', ') || 'None'}</li>
                 </ul>
             </div>
         </div>`;
@@ -376,7 +376,7 @@ function displayNetworkAnalysis(analysis) {
                     </div>
                     <div class="card-body p-2">
                         ${analysis.sources.length > 0 ?
-                            analysis.sources.map(s => `<span class="badge bg-success me-1 mb-1">${s}</span>`).join('') :
+                            analysis.sources.map(s => `<span class="badge bg-success me-1 mb-1">${escapeHtml(s)}</span>`).join('') :
                             '<p class="text-muted small mb-0">No sources found</p>'}
                     </div>
                 </div>
@@ -388,7 +388,7 @@ function displayNetworkAnalysis(analysis) {
                     </div>
                     <div class="card-body p-2">
                         ${analysis.sinks.length > 0 ?
-                            analysis.sinks.map(s => `<span class="badge bg-danger me-1 mb-1">${s}</span>`).join('') :
+                            analysis.sinks.map(s => `<span class="badge bg-danger me-1 mb-1">${escapeHtml(s)}</span>`).join('') :
                             '<p class="text-muted small mb-0">No sinks found</p>'}
                     </div>
                 </div>
@@ -400,7 +400,7 @@ function displayNetworkAnalysis(analysis) {
                     </div>
                     <div class="card-body p-2">
                         ${analysis.intermediates.length > 0 ?
-                            analysis.intermediates.map(s => `<span class="badge bg-info me-1 mb-1">${s}</span>`).join('') :
+                            analysis.intermediates.map(s => `<span class="badge bg-info me-1 mb-1">${escapeHtml(s)}</span>`).join('') :
                             '<p class="text-muted small mb-0">No intermediates</p>'}
                     </div>
                 </div>
@@ -414,10 +414,10 @@ function displayNetworkAnalysis(analysis) {
                 <tbody>
                     ${analysis.interactions.map(i => `
                         <tr>
-                            <td><span class="badge bg-primary">${i.source}</span></td>
+                            <td><span class="badge bg-primary">${escapeHtml(i.source)}</span></td>
                             <td><i class="fas fa-arrow-right text-muted"></i></td>
-                            <td><span class="badge bg-info">${i.sink}</span></td>
-                            <td><small>${i.reaction}</small></td>
+                            <td><span class="badge bg-info">${escapeHtml(i.sink)}</span></td>
+                            <td><small>${escapeHtml(i.reaction)}</small></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -427,10 +427,10 @@ function displayNetworkAnalysis(analysis) {
         <div class="row">
             ${Object.entries(analysis.species_connections).map(([species, conn]) => `
                 <div class="col-md-6 mb-2">
-                    <strong>${species}</strong>
+                    <strong>${escapeHtml(species)}</strong>
                     <ul class="small mb-0">
-                        ${conn.upstream.length > 0 ? `<li>Upstream: ${conn.upstream.join(', ')}</li>` : ''}
-                        ${conn.downstream.length > 0 ? `<li>Downstream: ${conn.downstream.join(', ')}</li>` : ''}
+                        ${conn.upstream.length > 0 ? `<li>Upstream: ${conn.upstream.map(escapeHtml).join(', ')}</li>` : ''}
+                        ${conn.downstream.length > 0 ? `<li>Downstream: ${conn.downstream.map(escapeHtml).join(', ')}</li>` : ''}
                     </ul>
                 </div>
             `).join('')}

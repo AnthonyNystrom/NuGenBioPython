@@ -127,7 +127,7 @@ function displayORFs(data) {
             '<td>' + orf.end + '</td>' +
             '<td>' + orf.length + ' bp</td>' +
             '<td>' + orf.frame + '</td>' +
-            '<td>' + orf.strand + '</td>' +
+            '<td>' + escapeHtml(orf.strand) + '</td>' +
             '<td>' + orf.protein_length + ' aa</td>' +
             '<td><button class="btn-app-sm btn-app-secondary" data-action="showORFDetails" data-action-args="[' + index + ']">View</button></td>' +
         '</tr>';
@@ -178,11 +178,11 @@ function showORFDetails(index) {
                 </div>
                 <div class="modal-body">
                     <p><strong>Length:</strong> ${orf.length} bp</p>
-                    <p><strong>Frame:</strong> ${orf.frame} | <strong>Strand:</strong> ${orf.strand}</p>
+                    <p><strong>Frame:</strong> ${orf.frame} | <strong>Strand:</strong> ${escapeHtml(orf.strand)}</p>
                     <p><strong>DNA Sequence:</strong></p>
-                    <textarea class="form-control sequence-display mb-2" rows="3" readonly>${orf.sequence}</textarea>
+                    <textarea class="form-control sequence-display mb-2" rows="3" readonly>${escapeHtml(orf.sequence)}</textarea>
                     <p><strong>Protein Sequence (${orf.protein_length} aa):</strong></p>
-                    <textarea class="form-control sequence-display" rows="3" readonly>${orf.protein}</textarea>
+                    <textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(orf.protein)}</textarea>
                 </div>
             </div>
         </div>
@@ -239,7 +239,7 @@ document.getElementById('createFeatureForm').addEventListener('submit', function
 
 function displayCreatedFeature(feature) {
     const tiles = [
-        { label: 'Type',   value: feature.type },
+        { label: 'Type',   value: escapeHtml(feature.type) },
         { label: 'Length', value: feature.length + ' bp' },
         { label: 'Strand', value: feature.strand },
     ];
@@ -250,7 +250,7 @@ function displayCreatedFeature(feature) {
     const summary = tilesHtml +
         `<p class="mb-1"><strong>Location:</strong> ${feature.start}..${feature.end} (${feature.strand} strand)</p>` +
         `<p class="mb-1"><strong>Sequence:</strong></p>` +
-        `<textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
+        `<textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('createResults', {
@@ -318,7 +318,7 @@ function displayParsedFeatures(data) {
         `<div class="rc-stat"><div class="rc-stat-value">${t.value}</div><div class="rc-stat-label">${t.label}</div></div>`
     ).join('') + '</div>';
 
-    const header = `<p class="small mb-2"><strong>${data.record_id}</strong> — ${data.record_description}</p>`;
+    const header = `<p class="small mb-2"><strong>${escapeHtml(data.record_id)}</strong> — ${escapeHtml(data.record_description)}</p>`;
 
     let accordion = '<div class="accordion" id="featuresAccordion">';
     data.features.forEach((feat, index) => {
@@ -326,22 +326,22 @@ function displayParsedFeatures(data) {
         accordion += `<div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#feat${index}">
-                    ${feat.type} (${feat.start}..${feat.end}, ${feat.strand_symbol})
+                    ${escapeHtml(feat.type)} (${feat.start}..${feat.end}, ${escapeHtml(feat.strand_symbol)})
                 </button>
             </h2>
             <div id="feat${index}" class="accordion-collapse collapse ${isFirst ? 'show' : ''}" data-bs-parent="#featuresAccordion">
                 <div class="accordion-body small">
                     <p><strong>Location:</strong> ${feat.start}..${feat.end} (${feat.length} bp)</p>
-                    <p><strong>Strand:</strong> ${feat.strand_symbol}</p>`;
+                    <p><strong>Strand:</strong> ${escapeHtml(feat.strand_symbol)}</p>`;
         if (Object.keys(feat.qualifiers).length > 0) {
             accordion += '<p><strong>Qualifiers:</strong></p><ul>';
             for (const [key, value] of Object.entries(feat.qualifiers)) {
-                accordion += `<li><strong>${key}:</strong> ${value}</li>`;
+                accordion += `<li><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</li>`;
             }
             accordion += '</ul>';
         }
         if (feat.sequence) {
-            accordion += `<p><strong>Sequence (first 100 bp):</strong></p><code class="small">${feat.sequence}</code>`;
+            accordion += `<p><strong>Sequence (first 100 bp):</strong></p><code class="small">${escapeHtml(feat.sequence)}</code>`;
         }
         accordion += '</div></div></div>';
     });
@@ -424,10 +424,10 @@ function displayExtractedFeature(feature) {
 
     let summary = tilesHtml +
         '<p class="mb-1"><strong>Extracted Sequence:</strong></p>' +
-        `<textarea class="form-control sequence-display mb-2" rows="3" readonly>${feature.sequence}</textarea>`;
+        `<textarea class="form-control sequence-display mb-2" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
     if (feature.protein) {
         summary += `<p class="mb-1"><strong>Protein Translation (${feature.protein_length} aa):</strong></p>` +
-            `<textarea class="form-control sequence-display" rows="2" readonly>${feature.protein}</textarea>`;
+            `<textarea class="form-control sequence-display" rows="2" readonly>${escapeHtml(feature.protein)}</textarea>`;
     }
 
     const downloads = [
@@ -523,7 +523,7 @@ function displayCompoundFeature(feature) {
         locs += `<li>${loc.start}..${loc.end} (${loc.strand > 0 ? '+' : '-'})</li>`;
     });
     locs += '</ul>';
-    const textarea = `<p class="mb-1"><strong>Joined Sequence:</strong></p><textarea class="form-control sequence-display" rows="3" readonly>${feature.sequence}</textarea>`;
+    const textarea = `<p class="mb-1"><strong>Joined Sequence:</strong></p><textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('compoundResults', {
@@ -642,7 +642,7 @@ function displayAnnotatedSequence(data) {
 
     const tiles = [
         { label: 'Features', value: data.feature_count },
-        { label: 'ID',       value: data.summary.id },
+        { label: 'ID',       value: escapeHtml(data.summary.id) },
         { label: 'Length',   value: data.summary.length + ' bp' },
     ];
     const tilesHtml = '<div class="rc-stats mb-3">' + tiles.map(t =>
@@ -651,7 +651,7 @@ function displayAnnotatedSequence(data) {
 
     const summary = tilesHtml +
         `<p class="mb-1"><strong>GenBank Output:</strong></p>` +
-        `<textarea class="form-control" rows="10" readonly>${data.genbank}</textarea>`;
+        `<textarea class="form-control" rows="10" readonly>${escapeHtml(data.genbank)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('annotateResults', {
