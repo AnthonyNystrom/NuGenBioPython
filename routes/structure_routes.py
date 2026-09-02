@@ -2,6 +2,9 @@
 Routes for protein structure analysis
 """
 from flask import Blueprint, request, jsonify, send_file, current_app
+
+from utils.request_helpers import error_response, safe_error_message
+from utils.structure_plots import classify_all, render_ramachandran
 import os
 from werkzeug.utils import secure_filename
 import numpy as np
@@ -24,7 +27,7 @@ def download_sample_pdb():
         else:
             return jsonify({'success': False, 'error': 'Sample PDB file not found'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.download_sample_pdb')
 
 
 @bp.route('/structure/parse', methods=['POST'])
@@ -64,7 +67,7 @@ def parse_structure():
                                 'density': len(nearby) / len(atom_list) if len(atom_list) > 0 else 0
                             }
                 except Exception as e:
-                    structure_info['neighbor_analysis'] = {'error': str(e)}
+                    structure_info['neighbor_analysis'] = {'error': safe_error_message(e)}
 
                 for chain in model:
                     # Count amino acid residues
@@ -102,7 +105,7 @@ def parse_structure():
                         if any(residue.get_parent().id == chain_info['id'] for residue in pp):
                             chain_info['polypeptide_count'] += 1
                 except Exception as e:
-                    structure_info['polypeptides'].append({'error': str(e)})
+                    structure_info['polypeptides'].append({'error': safe_error_message(e)})
 
             # Try DSSP analysis if available
             if DSSP:
@@ -115,7 +118,7 @@ def parse_structure():
                         ss_summary[ss] = ss_summary.get(ss, 0) + 1
                     structure_info['secondary_structure'] = ss_summary
                 except Exception as e:
-                    structure_info['secondary_structure'] = {'error': str(e)}
+                    structure_info['secondary_structure'] = {'error': safe_error_message(e)}
 
         return jsonify({
             'success': True,
@@ -124,7 +127,7 @@ def parse_structure():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.parse_structure')
 
 
 @bp.route('/structure/advanced_analysis', methods=['POST'])
@@ -179,7 +182,7 @@ def advanced_structure_analysis():
                 }
                 analysis_results['polypeptide_analysis'].append(pp_analysis)
             except Exception as e:
-                analysis_results['polypeptide_analysis'].append({'error': str(e)})
+                analysis_results['polypeptide_analysis'].append({'error': safe_error_message(e)})
 
         # Geometric analysis with neighbor search
         try:
@@ -198,7 +201,7 @@ def advanced_structure_analysis():
                     'packing_density_10A': len(nearby_10A) / len(atom_list)
                 }
         except Exception as e:
-            analysis_results['geometric_analysis'] = {'error': str(e)}
+            analysis_results['geometric_analysis'] = {'error': safe_error_message(e)}
 
         # DSSP secondary structure analysis
         if DSSP:
@@ -220,7 +223,7 @@ def advanced_structure_analysis():
                     'total_residues_analyzed': len(accessibility_stats)
                 }
             except Exception as e:
-                analysis_results['secondary_structure'] = {'error': str(e)}
+                analysis_results['secondary_structure'] = {'error': safe_error_message(e)}
 
         return jsonify({
             'success': True,
@@ -229,7 +232,7 @@ def advanced_structure_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.advanced_structure_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -259,7 +262,7 @@ def export_structure():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.export_structure')
     finally:
         cleanup_upload(filepath)
 
@@ -321,7 +324,7 @@ def superimpose_structures():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.superimpose_structures')
     finally:
         cleanup_upload(filepath1)
         cleanup_upload(filepath2)
@@ -397,7 +400,7 @@ def geometric_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.geometric_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -469,7 +472,7 @@ def quality_metrics():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.quality_metrics')
     finally:
         cleanup_upload(filepath)
 
@@ -527,7 +530,7 @@ def contact_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.contact_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -594,7 +597,7 @@ def hydrogen_bonds():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.hydrogen_bonds')
     finally:
         cleanup_upload(filepath)
 
@@ -658,7 +661,7 @@ def secondary_structure_analysis():
                     'total_residues': sum(ss_counts.values())
                 }
             except Exception as e:
-                result['dssp_error'] = str(e)
+                result['dssp_error'] = safe_error_message(e)
 
         return jsonify({
             'success': True,
@@ -667,7 +670,7 @@ def secondary_structure_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.secondary_structure_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -703,37 +706,30 @@ def ramachandran_analysis():
                         'resname': residue.get_resname()
                     })
 
-        # Classify into regions
-        favored = 0
-        allowed = 0
-        outliers = 0
-
-        for data in phi_psi_data:
-            phi, psi = data['phi'], data['psi']
-            # Simplified classification
-            if (-180 <= phi <= -30 and -180 <= psi <= 50):  # Beta region
-                favored += 1
-            elif (-90 <= phi <= -30 and -75 <= psi <= -10):  # Alpha region
-                favored += 1
-            elif (-180 <= phi <= 180 and -180 <= psi <= 180):  # Allowed
-                allowed += 1
-            else:
-                outliers += 1
+        # Classify into regions. The previous inline rules could never
+        # report an outlier — their final branch tested whether phi and psi
+        # were within +-180, which is true of every possible angle — so every
+        # structure scored zero outliers regardless of its geometry.
+        counts, annotated = classify_all(phi_psi_data)
 
         return jsonify({
             'success': True,
-            'phi_psi_data': phi_psi_data[:100],  # Limit to 100 for display
+            'phi_psi_data': annotated[:100],  # Limit to 100 for display
             'total_residues': len(phi_psi_data),
             'classification': {
-                'favored': favored,
-                'allowed': allowed,
-                'outliers': outliers
-            }
+                'favored': counts['favored'],
+                'allowed': counts['allowed'],
+                'outliers': counts['outlier'],
+            },
+            'outlier_residues': [e['residue'] for e in annotated
+                                 if e['region'] == 'outlier'],
+            'plot': render_ramachandran(
+                annotated, f'Ramachandran plot — chain {chain_id}'),
         })
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.ramachandran_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -806,13 +802,13 @@ def sasa_analysis():
                         'residue_accessibility': accessibility_data
                     })
                 except Exception as e:
-                    return jsonify({'success': False, 'error': f'DSSP failed: {str(e)}'})
+                    return jsonify({'success': False, 'error': f'DSSP failed: {safe_error_message(e)}'})
             else:
                 return jsonify({'success': False, 'error': 'SASA module not available, DSSP not installed'})
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.sasa_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -869,7 +865,7 @@ def residue_depth_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.residue_depth_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -928,7 +924,7 @@ def hse_analysis():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.hse_analysis')
     finally:
         cleanup_upload(filepath)
 
@@ -1013,6 +1009,6 @@ def extract_structure():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='structure_routes.extract_structure')
     finally:
         cleanup_upload(filepath)

@@ -49,7 +49,7 @@
                                 <label for="sequence1" class="form-label small">Sequence 1</label>
                                 <textarea class="form-control form-control-sm sequence-display" id="sequence1" rows="4"
                                         placeholder="Enter first sequence..."></textarea>
-                                <input type="file" class="form-control form-control-sm mt-1" id="file1" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(1)">
+                                <input type="file" class="form-control form-control-sm mt-1" id="file1" accept=".fasta,.fa,.txt" data-action-change="loadSequenceFile" data-action-args="[1]">
                                 <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
                             </div>
                         </div>
@@ -58,7 +58,7 @@
                                 <label for="sequence2" class="form-label small">Sequence 2</label>
                                 <textarea class="form-control form-control-sm sequence-display" id="sequence2" rows="4"
                                         placeholder="Enter second sequence..."></textarea>
-                                <input type="file" class="form-control form-control-sm mt-1" id="file2" accept=".fasta,.fa,.txt" onchange="loadSequenceFile(2)">
+                                <input type="file" class="form-control form-control-sm mt-1" id="file2" accept=".fasta,.fa,.txt" data-action-change="loadSequenceFile" data-action-args="[2]">
                                 <div class="form-text"><i class="fas fa-info-circle"></i> Upload FASTA or text file</div>
                             </div>
                         </div>
@@ -78,7 +78,7 @@
             <div class="card-body py-2">
                 <div class="mb-3">
                     <label for="alignmentMode" class="form-label small">Alignment Mode</label>
-                    <select class="form-select form-select-sm" id="alignmentMode" onchange="toggleSemiGlobalOptions()">
+                    <select class="form-select form-select-sm" id="alignmentMode" data-action-change="toggleSemiGlobalOptions">
                         <option value="global" selected>Global (Needleman-Wunsch)</option>
                         <option value="local">Local (Smith-Waterman)</option>
                         <option value="semi-global">Semi-Global</option>
@@ -96,7 +96,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="substitutionMatrix" class="form-label small">Substitution Matrix</label>
-                    <select class="form-select form-select-sm" id="substitutionMatrix" onchange="toggleManualScoring()">
+                    <select class="form-select form-select-sm" id="substitutionMatrix" data-action-change="toggleManualScoring">
                         <option value="none" selected>None (Manual Scoring)</option>
                         <optgroup label="Protein Matrices">
                             <option value="BLOSUM62">BLOSUM62</option>
@@ -293,7 +293,7 @@
                                 <form id="conservationForm">
                                     <textarea class="form-control form-control-sm sequence-display" id="conservationSeqs" rows="8"
                                             placeholder="Enter aligned sequences, one per line...&#10;ACGTACGTACGT&#10;ACGTACCGTACGT&#10;ACGTACGACGT"
-                                            oninput="document.getElementById('consensusBtn').disabled = true; document.getElementById('trimBtn').disabled = true;"></textarea>
+                                            data-action-input="disableConsensusAndTrimButtons"></textarea>
                                     <div class="form-text"><i class="fas fa-info-circle"></i> Enter pre-aligned sequences</div>
                                     <button type="submit" class="btn-app-primary w-100 mb-2 mt-2">
                                         <i class="fas fa-chart-line me-2"></i>Analyze Conservation

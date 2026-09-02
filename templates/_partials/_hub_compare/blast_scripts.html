@@ -1,5 +1,5 @@
 
-<script>
+<script nonce="{{ csp_nonce }}">
 let currentResults = [];
 
 document.getElementById('blastForm').addEventListener('submit', function(e) {
@@ -110,7 +110,7 @@ function displayResults(data) {
             <td class="text-center"><span class="badge bg-success">${displayScore}</span></td>
             <td class="small">${eValue}</td>
             <td class="text-center">${hit.identity_percent || 0}%</td>
-            <td class="text-center"><button class="btn-app-sm btn-app-secondary" onclick="window.viewBlastAlignment(${index}); return false;">
+            <td class="text-center"><button class="btn-app-sm btn-app-secondary" data-action="viewBlastAlignment" data-action-args="[${index}]">
                 <i class="fas fa-align-left"></i> View
             </button></td>
         </tr>`;
@@ -192,7 +192,7 @@ window.viewBlastAlignment = function(index) {
                     <strong><i class="fas fa-dna"></i> ${data.hit.accession}</strong>
                     <span class="results-card-meta">${data.hit.title || ''}</span>
                 </div>
-                <button type="button" class="btn-app-sm btn-app-ghost" onclick="document.getElementById('blastInlineAlignment').remove()" aria-label="Close alignment">
+                <button type="button" class="btn-app-sm btn-app-ghost" data-action="removeElementById" data-action-args="[&quot;blastInlineAlignment&quot;]" aria-label="Close alignment">
                     <i class="fas fa-times"></i>
                 </button>
             </header>

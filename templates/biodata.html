@@ -182,9 +182,9 @@
                             <div class="card-body p-2">
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <button class="btn-app-secondary w-100 mb-2" onclick="loadPDBConversion('protein_1to3')"><i class="fas fa-arrow-right me-1"></i>Protein 1→3</button>
-                                        <button class="btn-app-secondary w-100 mb-2" onclick="loadPDBConversion('protein_3to1')"><i class="fas fa-arrow-left me-1"></i>Protein 3→1</button>
-                                        <button class="btn-app-secondary w-100" onclick="loadPDBConversion('nucleic_3to1')"><i class="fas fa-dna me-1"></i>Nucleic 3→1</button>
+                                        <button class="btn-app-secondary w-100 mb-2" data-action="loadPDBConversion" data-action-args="[&quot;protein_1to3&quot;]"><i class="fas fa-arrow-right me-1"></i>Protein 1→3</button>
+                                        <button class="btn-app-secondary w-100 mb-2" data-action="loadPDBConversion" data-action-args="[&quot;protein_3to1&quot;]"><i class="fas fa-arrow-left me-1"></i>Protein 3→1</button>
+                                        <button class="btn-app-secondary w-100" data-action="loadPDBConversion" data-action-args="[&quot;nucleic_3to1&quot;]"><i class="fas fa-dna me-1"></i>Nucleic 3→1</button>
                                     </div>
                                     <div class="col-6">
                                         <button class="btn-app-secondary w-100 mb-2" data-action="loadAtomWeights"><i class="fas fa-atom me-1"></i>Atom Weights</button>

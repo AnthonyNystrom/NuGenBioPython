@@ -5,6 +5,8 @@ import logging
 import math
 
 from flask import Blueprint, request, jsonify, send_file
+
+from utils.request_helpers import error_response, safe_error_message
 from io import StringIO, BytesIO
 import csv
 import json
@@ -193,7 +195,7 @@ def restriction_analyze():
         map_svg = render_restriction_map(results, len(sequence))
         return jsonify({'success': True, 'analysis': results, 'map': map_svg})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='restriction_routes.restriction_analyze')
 
 
 @bp.route('/restriction/advanced_analysis', methods=['POST'])
@@ -370,7 +372,7 @@ def list_restriction_enzymes():
             'filter': filter_type
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='restriction_routes.list_restriction_enzymes')
 
 
 @bp.route('/restriction/enzyme_details/<enzyme_name>', methods=['GET'])
@@ -418,7 +420,7 @@ def enzyme_details(enzyme_name):
     except AttributeError:
         return jsonify({'success': False, 'error': f'Enzyme {enzyme_name} not found'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='restriction_routes.enzyme_details')
 
 
 @bp.route('/restriction/export', methods=['POST'])
@@ -471,7 +473,7 @@ def export_results():
         return jsonify({'success': False, 'error': 'Unsupported format'})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='restriction_routes.export_results')
 
 
 @bp.route('/restriction/compatible_ends', methods=['POST'])
@@ -516,7 +518,7 @@ def compatible_ends():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='restriction_routes.compatible_ends')
 
 
 @bp.route('/restriction/upload_sequence', methods=['POST'])
@@ -555,7 +557,7 @@ def upload_sequence():
                     'length': len(sequence)
                 }
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Invalid FASTA format: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Invalid FASTA format: {safe_error_message(e)}'})
 
         elif filename.endswith(('.gb', '.gbk', '.genbank')):
             # Parse GenBank
@@ -573,7 +575,7 @@ def upload_sequence():
                     'features': len(record.features) if hasattr(record, 'features') else 0
                 }
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Invalid GenBank format: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Invalid GenBank format: {safe_error_message(e)}'})
 
         elif filename.endswith('.embl'):
             # Parse EMBL
@@ -589,7 +591,7 @@ def upload_sequence():
                     'length': len(sequence)
                 }
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Invalid EMBL format: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Invalid EMBL format: {safe_error_message(e)}'})
 
         elif filename.endswith('.txt'):
             # Plain text - just extract DNA sequence

@@ -157,7 +157,7 @@ function loadMultiTrackFeaturesFromFile(data) {
                 </div>
                 <div class="col-3">
                     <button type="button" class="btn-app-sm btn-app-danger w-100"
-                            onclick="this.parentElement.parentElement.remove()">
+                            data-action="removeParentRow">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -227,7 +227,7 @@ function addFeature() {
             </select>
         </div>
         <div class="col-md-2">
-            <button type="button" class="btn-app-danger btn-app-sm w-100" onclick="removeFeature(${featureCount})">
+            <button type="button" class="btn-app-danger btn-app-sm w-100" data-action="removeFeature" data-action-args="[${featureCount}]">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
@@ -362,7 +362,7 @@ function addTrack() {
                 <div class="col-md-2">
                     <label class="form-label small mb-0">&nbsp;</label>
                     <button type="button" class="btn-app-danger btn-app-sm w-100"
-                            onclick="removeTrack(${trackCount})">
+                            data-action="removeTrack" data-action-args="[${trackCount}]">
                         <i class="fas fa-trash"></i> Remove
                     </button>
                 </div>
@@ -373,7 +373,7 @@ function addTrack() {
                 <!-- Features for this track -->
             </div>
             <button type="button" class="btn-app-sm btn-app-secondary mt-2"
-                    onclick="addTrackFeature(${trackCount})">
+                    data-action="addTrackFeature" data-action-args="[${trackCount}]">
                 <i class="fas fa-plus"></i> Add Feature to Track
             </button>
         </div>
@@ -433,7 +433,7 @@ function addTrackFeature(trackId) {
         </div>
         <div class="col-md-2">
             <button type="button" class="btn-app-danger btn-app-sm w-100"
-                    onclick="this.parentElement.parentElement.remove()">
+                    data-action="removeParentRow">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -584,7 +584,7 @@ function addDataGraph() {
                 <div class="col-md-2">
                     <label class="form-label small mb-0">&nbsp;</label>
                     <button type="button" class="btn-app-danger btn-app-sm w-100"
-                            onclick="removeDataGraph(${graphCount})">
+                            data-action="removeDataGraph" data-action-args="[${graphCount}]">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -770,7 +770,7 @@ function addAdvancedFeature() {
                 </div>
                 <div class="col-md-1">
                     <button type="button" class="btn-app-danger btn-app-sm w-100 mt-4"
-                            onclick="removeAdvancedFeature(${featureCount})">
+                            data-action="removeAdvancedFeature" data-action-args="[${featureCount}]">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -839,7 +839,7 @@ function addCrossLink() {
                 <div class="col-md-1">
                     <label class="form-label small mb-0">&nbsp;</label>
                     <button type="button" class="btn-app-danger btn-app-sm w-100"
-                            onclick="removeCrossLink(${linkCount})">
+                            data-action="removeCrossLink" data-action-args="[${linkCount}]">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1208,6 +1208,7 @@ function displayDiagram(diagramData, containerId) {
         <div>
             <img src="${diagramData}" class="img-fluid" alt="Genome Diagram"
                  style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
+            ${FigureExport.controls(diagramData, 'genome_diagram')}
         </div>
     `;
 }
@@ -1218,38 +1219,31 @@ function exportDiagram(format) {
         return;
     }
 
-    showLoading('exportBtn');
-
-    fetch('/api/genomediagram/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            diagram_data: currentDiagramData,
-            format: format
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading('exportBtn', '<i class="fas fa-download"></i> Export Diagram');
-
-        if (data.success) {
-            // Trigger download
-            const link = document.createElement('a');
-            link.href = data.file_data;
-            link.download = `genome_diagram.${format}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showAlert(`Diagram exported as ${format.toUpperCase()}`, 'success');
-        } else {
-            showAlert(friendlyError(data.error, 'server'), 'danger');
-        }
-    })
-    .catch(error => {
-        hideLoading('exportBtn', '<i class="fas fa-download"></i> Export Diagram');
-        showAlert('Export request failed', 'danger');
-    });
+    // This used to POST to /api/genomediagram/export, which is a pass-through:
+    // it hands the same SVG data URL back for every requested format. The
+    // client then saved it under the requested extension, so "Export PNG"
+    // produced a .png file containing SVG markup, and PDF/EPS were corrupt in
+    // the same way. Only the SVG button ever produced a valid file.
+    //
+    // SVG and PNG are now both handled locally and correctly — PNG is genuinely
+    // rasterized through a canvas. PDF and EPS need a real vector converter
+    // (the server has no figure object left to re-render, and reportlab cannot
+    // parse SVG), so they report honestly rather than emitting a broken file.
+    if (format === 'svg') {
+        FigureExport.download(currentDiagramData, 'genome_diagram');
+        showAlert('Diagram exported as SVG', 'success');
+        return;
+    }
+    if (format === 'png') {
+        FigureExport.downloadPng(currentDiagramData, 'genome_diagram');
+        showAlert('Diagram exported as PNG', 'success');
+        return;
+    }
+    showAlert(
+        format.toUpperCase() + ' export is not available yet. Download the SVG — ' +
+        'it is vector and opens in Illustrator, Inkscape and most publishers\' tools.',
+        'warning'
+    );
 }
 
 // showLoading, hideLoading, showAlert are provided globally by static/js/utils.js
@@ -1261,3 +1255,11 @@ window.addEventListener('load', function() {
         addFeature();
     }
 });
+
+// Named action for the "clear all" control. Was an inline
+// onclick="clearAdvancedFeatures(); clearCrossLinks()", which a CSP nonce
+// cannot cover — inline event handlers are never nonce-able.
+function clearAdvancedFeaturesAndCrossLinks() {
+    clearAdvancedFeatures();
+    clearCrossLinks();
+}

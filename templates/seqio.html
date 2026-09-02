@@ -121,22 +121,22 @@
                                         <h6 class="text-muted mb-2 small text-uppercase" style="font-size: 11px; letter-spacing: 1px;">Load Sample Files</h6>
                                         <div class="row g-2">
                                             <div class="col-6">
-                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('fasta')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="loadExample" data-action-args="[&quot;fasta&quot;]">
                                                     <i class="fas fa-flask me-1"></i> FASTA
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('genbank')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="loadExample" data-action-args="[&quot;genbank&quot;]">
                                                     <i class="fas fa-flask me-1"></i> GenBank
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('fastq')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="loadExample" data-action-args="[&quot;fastq&quot;]">
                                                     <i class="fas fa-flask me-1"></i> FASTQ
                                                 </button>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" onclick="loadExample('embl')">
+                                                <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="loadExample" data-action-args="[&quot;embl&quot;]">
                                                     <i class="fas fa-flask me-1"></i> EMBL
                                                 </button>
                                             </div>
@@ -582,7 +582,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 let parsedSequences = [];
 let currentSequences = [];
 

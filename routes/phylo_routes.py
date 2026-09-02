@@ -2,6 +2,8 @@
 Routes for phylogenetic tree operations
 """
 from flask import Blueprint, request, jsonify, current_app, session
+
+from utils.request_helpers import error_response
 import os
 from werkzeug.utils import secure_filename
 
@@ -55,7 +57,7 @@ def parse_tree():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.parse_tree')
 
 
 @bp.route('/phylo/build', methods=['POST'])
@@ -104,7 +106,7 @@ def build_tree():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.build_tree')
 
 
 @bp.route('/phylo/distance-matrix', methods=['POST'])
@@ -136,7 +138,7 @@ def calculate_distance():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.calculate_distance')
 
 
 @bp.route('/phylo/terminals', methods=['GET'])
@@ -157,7 +159,7 @@ def get_terminals():
             'terminals': terminals
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.get_terminals')
 
 
 @bp.route('/phylo/clades', methods=['GET'])
@@ -178,7 +180,7 @@ def get_clades():
             'clades': clades
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.get_clades')
 
 
 @bp.route('/phylo/path', methods=['POST'])
@@ -206,7 +208,7 @@ def get_path():
             'path': path
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.get_path')
 
 
 @bp.route('/phylo/common-ancestor', methods=['POST'])
@@ -235,7 +237,7 @@ def find_common_ancestor():
             'common_ancestor': ancestor
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.find_common_ancestor')
 
 
 @bp.route('/phylo/prune', methods=['POST'])
@@ -268,7 +270,7 @@ def prune():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.prune')
 
 
 @bp.route('/phylo/collapse', methods=['POST'])
@@ -303,7 +305,7 @@ def collapse():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.collapse')
 
 
 @bp.route('/phylo/ladderize', methods=['POST'])
@@ -333,7 +335,7 @@ def ladderize():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.ladderize')
 
 
 @bp.route('/phylo/reroot', methods=['POST'])
@@ -364,7 +366,7 @@ def reroot():
             **tree_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.reroot')
 
 
 @bp.route('/phylo/compare', methods=['POST'])
@@ -393,7 +395,7 @@ def compare_trees():
             **distance_info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.compare_trees')
 
 
 @bp.route('/phylo/export', methods=['POST'])
@@ -416,7 +418,7 @@ def export_tree():
             'format': export_format
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.export_tree')
 
 
 @bp.route('/phylo/visualize', methods=['POST'])
@@ -438,4 +440,4 @@ def visualize():
             'tree_image': tree_image
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='phylo_routes.visualize')

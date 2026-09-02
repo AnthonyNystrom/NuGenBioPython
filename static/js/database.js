@@ -101,7 +101,7 @@ function displaySearchResults(results, count, database) {
                     <td><small>${escapeHtml(result.date || '')}</small></td>`;
         }
         html += `<td>
-                <button class="btn-app-sm btn-app-secondary" onclick="viewFullRecord('${escapeHtml(result.id)}', '${escapeHtml(database)}')">
+                <button class="btn-app-sm btn-app-secondary" data-action="viewFullRecord" data-action-args="[&quot;${escapeHtml(result.id)}&quot;, &quot;${escapeHtml(database)}&quot;]">
                     <i class="fas fa-eye"></i> View
                 </button>
             </td>`;

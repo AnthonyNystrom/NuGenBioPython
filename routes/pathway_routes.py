@@ -3,6 +3,8 @@ Routes for pathway analysis - Complete Bio.Pathway implementation
 Supports: Reaction, System, Network, MultiGraph
 """
 from flask import Blueprint, request, jsonify
+
+from utils.request_helpers import error_response
 import base64
 import math
 from io import BytesIO
@@ -79,7 +81,7 @@ def analyze_system():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='pathway_routes.analyze_system')
 
 
 # ============================================================================
@@ -162,7 +164,7 @@ def analyze_network():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='pathway_routes.analyze_network')
 
 
 # ============================================================================
@@ -307,7 +309,7 @@ def visualize_pathway():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='pathway_routes.visualize_pathway')
 
 
 # ============================================================================
@@ -421,4 +423,4 @@ def export_pathway():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='pathway_routes.export_pathway')

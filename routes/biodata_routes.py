@@ -2,6 +2,8 @@
 Routes for Bio.Data operations (CodonTable, IUPACData, PDBData)
 """
 from flask import Blueprint, request, jsonify
+
+from utils.request_helpers import error_response
 from utils.biodata_helpers import (
     get_codon_tables, translate_sequence, get_iupac_codes,
     convert_protein_letters, calculate_molecular_weight,
@@ -19,7 +21,7 @@ def codon_tables():
         tables = get_codon_tables()
         return jsonify({'success': True, 'tables': tables})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.codon_tables')
 
 
 @bp.route('/translate', methods=['POST'])
@@ -36,7 +38,7 @@ def translate():
         result = translate_sequence(sequence, table_id)
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.translate')
 
 
 # IUPACData Routes
@@ -48,7 +50,7 @@ def iupac_codes():
         codes = get_iupac_codes(code_type)
         return jsonify({'success': True, 'codes': codes})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.iupac_codes')
 
 
 @bp.route('/iupac_lookup', methods=['POST'])
@@ -65,7 +67,7 @@ def iupac_lookup():
         result = lookup_iupac_code(code, code_type)
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.iupac_lookup')
 
 
 @bp.route('/convert_protein', methods=['POST'])
@@ -82,7 +84,7 @@ def convert_protein():
         result = convert_protein_letters(input_str, conversion_type)
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.convert_protein')
 
 
 @bp.route('/molecular_weight', methods=['POST'])
@@ -100,7 +102,7 @@ def molecular_weight():
         result = calculate_molecular_weight(sequence, seq_type, weight_type)
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.molecular_weight')
 
 
 @bp.route('/atom_weights', methods=['GET'])
@@ -110,7 +112,7 @@ def atom_weights():
         weights = get_atom_weights()
         return jsonify({'success': True, 'weights': weights})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.atom_weights')
 
 
 # PDBData Routes
@@ -122,4 +124,4 @@ def pdb_conversions():
         conversions = get_pdb_conversions(conversion_type)
         return jsonify({'success': True, 'conversions': conversions})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='biodata_routes.pdb_conversions')

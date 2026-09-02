@@ -389,6 +389,54 @@
         fn.apply(btn, args);
     });
 
+    // ---- non-click events ----------------------------------------------
+    // onchange / onsubmit / oninput are inline event handlers too, so the
+    // nonce-based CSP blocks them exactly like onclick did. These mirror the
+    // click dispatcher:
+    //
+    //     <select data-action-change="loadEnzymeBrowser">
+    //     <input  data-action-change="loadSequenceFile" data-action-args="[1]">
+    //     <form   data-action-submit="buildHMM">
+    //
+    // The DOM event is appended as the final argument, so a handler written as
+    // `fn(event)` keeps working and one written as `fn(1)` simply ignores it.
+    // Submit handlers get preventDefault() called for them, which is what
+    // every migrated onsubmit did by hand.
+    function delegate(eventName, attribute, preventDefault) {
+        document.addEventListener(eventName, function (e) {
+            var el = e.target && e.target.closest
+                ? e.target.closest('[' + attribute + ']')
+                : null;
+            if (!el) return;
+            var name = el.getAttribute(attribute);
+            var fn = global[name];
+            if (typeof fn !== 'function') return;
+            if (preventDefault) e.preventDefault();
+            var args = [];
+            if (el.dataset.actionArgs) {
+                try { args = JSON.parse(el.dataset.actionArgs); } catch (_) {}
+                if (!Array.isArray(args)) args = [args];
+            }
+            fn.apply(el, args.concat([e]));
+        }, eventName === 'submit');
+    }
+
+    delegate('change', 'data-action-change', false);
+    delegate('input', 'data-action-input', false);
+    delegate('submit', 'data-action-submit', true);
+
+    // Images that should quietly disappear when they fail to load — the old
+    // inline onerror="this.style.display='none'". Error events on <img> do
+    // not bubble, so this listens in the capture phase.
+    document.addEventListener('error', function (e) {
+        var el = e.target;
+        if (el && el.tagName === 'IMG' && el.hasAttribute('data-hide-on-error')) {
+            el.style.display = 'none';
+        }
+    }, true);
+
+
+
     // D15: real keyboard shortcuts catalog. Cmd/Ctrl-Enter submits,
     // Cmd/Ctrl-S saves latest result, g-chords navigate.
     let chord = null;
@@ -568,6 +616,187 @@
         return raw.slice(0, 200) || (svcName + ' returned an unexpected error.');
     }
 
+    // ---- Theme-aware server rendering ----------------------------------
+    // Server-rendered figures (genome diagrams, phylo trees, restriction
+    // maps, dendrograms, pathway graphs, sequence logos) are delivered as
+    // opaque `<img src="data:image/svg+xml;base64,...">` URLs, so CSS cannot
+    // restyle them for dark mode — the renderer itself has to know the theme.
+    //
+    // Rather than touch every fetch() call site (there are ~158 across page
+    // scripts and inline template blocks), tag same-origin /api/ requests
+    // with the active theme here. Server side, utils.plot_helpers.
+    // resolve_theme() reads this header and recolors the figure chrome.
+    function currentTheme() {
+        return document.documentElement.getAttribute('data-theme') || 'light';
+    }
+
+    function installThemeHeader() {
+        if (!global.fetch || global.__nugenThemeFetchPatched) return;
+        global.__nugenThemeFetchPatched = true;
+        var nativeFetch = global.fetch.bind(global);
+        global.fetch = function (input, init) {
+            try {
+                var url = (typeof input === 'string')
+                    ? input
+                    : (input && input.url) || '';
+                // Same-origin API calls only — never leak the header to the
+                // external biology services the app also talks to.
+                var isAbsolute = /^[a-z][a-z0-9+.-]*:\/\//i.test(url);
+                if (!isAbsolute && url.indexOf('/api/') !== -1) {
+                    init = init ? Object.assign({}, init) : {};
+                    var headers = new Headers(
+                        init.headers ||
+                        (typeof input === 'object' && input && input.headers) ||
+                        {}
+                    );
+                    headers.set('X-Theme', currentTheme());
+                    init.headers = headers;
+                }
+            } catch (e) {
+                // Theming must never be able to block a request.
+            }
+            return nativeFetch(input, init);
+        };
+    }
+
+    installThemeHeader();
+
+    // ---- Figure export -------------------------------------------------
+    // Server-rendered diagrams arrive as `data:` URLs. Before this, only the
+    // phylo page offered a download at all, and it saved SVG payloads under a
+    // .png filename — the file opened as garbage in image viewers. This gives
+    // every diagram one control that gets the format right: keep the vector
+    // SVG (ideal for figures and further editing), or rasterize to a
+    // high-resolution PNG for slides and manuscripts.
+
+    function figureMimeType(dataUrl) {
+        var m = /^data:([^;,]+)/.exec(String(dataUrl || ''));
+        return m ? m[1].toLowerCase() : '';
+    }
+
+    function figureExtension(dataUrl) {
+        var mime = figureMimeType(dataUrl);
+        if (mime.indexOf('svg') !== -1) return 'svg';
+        if (mime.indexOf('png') !== -1) return 'png';
+        if (mime.indexOf('jpeg') !== -1 || mime.indexOf('jpg') !== -1) return 'jpg';
+        return 'img';
+    }
+
+    function figureFilename(basename, dataUrl) {
+        var safe = String(basename || 'figure')
+            .replace(/[^A-Za-z0-9._-]+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'figure';
+        return safe + '.' + figureExtension(dataUrl);
+    }
+
+    function triggerDownload(href, filename) {
+        var link = document.createElement('a');
+        link.href = href;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Save the figure exactly as the server produced it.
+    function downloadFigure(dataUrl, basename) {
+        if (!dataUrl) return;
+        triggerDownload(dataUrl, figureFilename(basename, dataUrl));
+    }
+
+    // Rasterize a figure to PNG at `scale`x its intrinsic size. Vector SVG
+    // has no intrinsic pixel size in some browsers, so fall back to a
+    // sensible publication-width canvas when the image reports 0.
+    function downloadFigureAsPng(dataUrl, basename, scale) {
+        if (!dataUrl) return;
+        if (figureExtension(dataUrl) === 'png') {
+            downloadFigure(dataUrl, basename);
+            return;
+        }
+        scale = scale || 2;
+        var img = new Image();
+        img.onload = function () {
+            var w = (img.naturalWidth || img.width || 1200) * scale;
+            var h = (img.naturalHeight || img.height || 800) * scale;
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(w));
+            canvas.height = Math.max(1, Math.round(h));
+            var ctx = canvas.getContext('2d');
+            // Diagrams are drawn on an opaque ground server-side, but a
+            // transparent PNG on a dark slide is unreadable — paint the
+            // current surface color behind it.
+            ctx.fillStyle = currentTheme() === 'dark' ? '#141c2e' : '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            try {
+                triggerDownload(canvas.toDataURL('image/png'),
+                                figureFilename(basename, 'data:image/png'));
+            } catch (e) {
+                // Canvas export blocked — fall back to the original asset.
+                downloadFigure(dataUrl, basename);
+            }
+        };
+        img.onerror = function () { downloadFigure(dataUrl, basename); };
+        img.src = dataUrl;
+    }
+
+    // Markup for a pair of export buttons. Uses data-action so the handlers
+    // stay out of inline onclick attributes (see the CSP note in app.py).
+    function figureExportControls(dataUrl, basename) {
+        if (!dataUrl) return '';
+        var args = JSON.stringify([dataUrl, basename || 'figure']);
+        var esc = escapeHtml(args);
+        return '' +
+            '<div class="figure-export-controls d-flex gap-2 mt-2 justify-content-end">' +
+              '<button type="button" class="btn-app-ghost btn-app-sm" ' +
+                'data-action="downloadFigure" data-action-args="' + esc + '" ' +
+                'title="Download the original vector figure">' +
+                '<i class="fas fa-download"></i> SVG' +
+              '</button>' +
+              '<button type="button" class="btn-app-ghost btn-app-sm" ' +
+                'data-action="downloadFigureAsPng" data-action-args="' + esc + '" ' +
+                'title="Download a high-resolution raster copy">' +
+                '<i class="fas fa-image"></i> PNG' +
+              '</button>' +
+            '</div>';
+    }
+
+    var FigureExport = {
+        mimeType: figureMimeType,
+        extension: figureExtension,
+        filename: figureFilename,
+        download: downloadFigure,
+        downloadPng: downloadFigureAsPng,
+        controls: figureExportControls,
+    };
+
+    // ---- Generic DOM actions for the data-action dispatcher -------------
+    // A handful of inline handlers did DOM work directly rather than calling a
+    // named function ("this.parentElement.parentElement.remove()"). Inline
+    // event handlers cannot be covered by a CSP nonce, so they have to become
+    // named actions before 'unsafe-inline' can be dropped from script-src.
+    // The dispatcher calls fn.apply(btn, args), so `this` is the button.
+
+    // Removes the row/group a button sits in — the old
+    // `this.parentElement.parentElement.remove()`.
+    function disableConsensusAndTrimButtons() {
+        ['consensusBtn', 'trimBtn'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+    }
+
+    function removeParentRow() {
+        var el = this && this.parentElement && this.parentElement.parentElement;
+        if (el && el.remove) el.remove();
+    }
+
+    function removeElementById(id) {
+        var el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
     global.showLoading = showLoading;
     global.hideLoading = hideLoading;
     global.showAlert = showAlert;
@@ -575,6 +804,13 @@
     global.ResultsPanel = ResultsPanel;
     global.friendlyError = friendlyError;
     global.escapeHtml = escapeHtml;
+    global.currentTheme = currentTheme;
+    global.removeParentRow = removeParentRow;
+    global.removeElementById = removeElementById;
+    global.disableConsensusAndTrimButtons = disableConsensusAndTrimButtons;
+    global.FigureExport = FigureExport;
+    global.downloadFigure = downloadFigure;
+    global.downloadFigureAsPng = downloadFigureAsPng;
     global.toggleShortcutsHelp = toggleShortcutsHelp;
     global.NuGenUtils = {
         showLoading: showLoading,
@@ -583,5 +819,6 @@
         fetchJSON: fetchJSON,
         escapeHtml: escapeHtml,
         ResultsPanel: ResultsPanel,
+        FigureExport: FigureExport,
     };
 })(window);

@@ -1,14 +1,77 @@
 """
 Helper functions for NCBI Entrez database operations using Bio.Entrez
 """
+import logging
+import os
+
 from Bio import Entrez
 from io import StringIO
 import xml.etree.ElementTree as ET
 
 from utils.request_helpers import remote_timeout
 
+log = logging.getLogger(__name__)
+
 # Entrez ceiling — NCBI usually responds in <5s but large queries can run longer.
 _ENTREZ_TIMEOUT = 30
+
+# Addresses that identify nobody. Callers used to default to one of these when
+# the client sent no email, which is worse than sending nothing: it labels every
+# request from every deployment as the same fake contact, and that is what gets
+# a host IP throttled or blocked by NCBI.
+_PLACEHOLDER_EMAILS = {
+    'user@example.com',
+    'your.email@example.com',
+    'your@email.com',
+    'email@example.com',
+}
+
+
+def _looks_like_email(value):
+    value = (value or '').strip()
+    if '@' not in value or value.lower() in _PLACEHOLDER_EMAILS:
+        return False
+    local, _, domain = value.partition('@')
+    return bool(local) and '.' in domain and not domain.endswith('.')
+
+
+def configure_entrez(email=None):
+    """Set the NCBI identity used by the next Entrez call, and return it.
+
+    NCBI's usage policy asks every request to carry a real contact address,
+    and grants a higher rate ceiling (10 req/s rather than 3) when an API key
+    is supplied. Resolution order:
+
+      1. a valid address supplied by the caller,
+      2. the ENTREZ_EMAIL environment variable,
+      3. nothing — the call still proceeds, but is logged as unidentified so
+         an operator can see why NCBI may be throttling them.
+
+    ENTREZ_API_KEY is applied whenever it is set. Entrez.tool is always set so
+    NCBI can attribute traffic to this application.
+    """
+    Entrez.tool = 'NuGenBioPython'
+
+    resolved = email if _looks_like_email(email) else None
+    if resolved is None:
+        env_email = os.environ.get('ENTREZ_EMAIL', '')
+        resolved = env_email if _looks_like_email(env_email) else None
+
+    if resolved:
+        Entrez.email = resolved
+    else:
+        log.warning(
+            'Entrez request has no valid contact email. NCBI asks every '
+            'request to identify a real address; set ENTREZ_EMAIL (and '
+            'optionally ENTREZ_API_KEY for a 10 req/s ceiling) to avoid '
+            'being throttled or blocked.'
+        )
+
+    api_key = os.environ.get('ENTREZ_API_KEY', '').strip()
+    if api_key:
+        Entrez.api_key = api_key
+
+    return resolved
 
 
 def search_entrez(database, term, email, retmax=20, retstart=0,
@@ -30,7 +93,7 @@ def search_entrez(database, term, email, retmax=20, retstart=0,
     Returns:
         Dictionary with search results
     """
-    Entrez.email = email
+    configure_entrez(email)
 
     # Build search term with date range if provided
     search_term = term
@@ -44,7 +107,7 @@ def search_entrez(database, term, email, retmax=20, retstart=0,
         search_term += f"[{field}]"
 
     # Perform search
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         handle = Entrez.esearch(
             db=database,
             term=search_term,
@@ -70,13 +133,13 @@ def fetch_summaries(database, id_list, email):
     Returns:
         List of summary dictionaries
     """
-    Entrez.email = email
+    configure_entrez(email)
 
     if not id_list:
         return []
 
     ids = ','.join([str(i) for i in id_list])
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         handle = Entrez.esummary(db=database, id=ids)
         summaries = Entrez.read(handle)
         handle.close()
@@ -95,9 +158,9 @@ def global_query(term, email):
     Returns:
         Dictionary with hit counts per database
     """
-    Entrez.email = email
+    configure_entrez(email)
 
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         handle = Entrez.egquery(term=term)
         results = Entrez.read(handle)
         handle.close()
@@ -131,14 +194,14 @@ def fetch_records(database, id_list, email, rettype='fasta', retmode='text'):
     Returns:
         String containing fetched records
     """
-    Entrez.email = email
+    configure_entrez(email)
 
     if not id_list:
         return ""
 
     ids = ','.join([str(i) for i in id_list])
 
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         handle = Entrez.efetch(
             db=database,
             id=ids,
@@ -168,9 +231,9 @@ def find_related_records(record_id, from_db, to_db, email):
     Returns:
         List of related record IDs
     """
-    Entrez.email = email
+    configure_entrez(email)
 
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         handle = Entrez.elink(
             dbfrom=from_db,
             db=to_db,
@@ -201,9 +264,9 @@ def get_database_info(database, email):
     Returns:
         Dictionary with database information
     """
-    Entrez.email = email
+    configure_entrez(email)
 
-    with remote_timeout(_ENTREZ_TIMEOUT):
+    with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
         if database:
             # Get info for specific database
             handle = Entrez.einfo(db=database)

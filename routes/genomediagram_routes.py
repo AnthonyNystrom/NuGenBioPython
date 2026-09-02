@@ -11,8 +11,9 @@ and smart label placement with leader lines when features crowd.
 File upload (GenBank/EMBL/FASTA) still uses BioPython for parsing only.
 """
 from flask import Blueprint, request, jsonify
-import base64
-from io import BytesIO, StringIO
+
+from utils.request_helpers import error_response, safe_error_message
+from io import StringIO
 import math
 
 import matplotlib
@@ -24,6 +25,10 @@ from matplotlib.path import Path
 import numpy as np
 
 from dependencies import SeqIO, Seq
+from utils.plot_helpers import (
+    PALETTE, EDGE_COLOR, TITLE_COLOR, LABEL_COLOR, AXIS_COLOR, GRID_COLOR,
+    resolve_color, figure_to_svg_data_url, fmt_bp as _fmt,
+)
 
 bp = Blueprint('genomediagram', __name__, url_prefix='/api')
 
@@ -32,78 +37,11 @@ bp = Blueprint('genomediagram', __name__, url_prefix='/api')
 # Shared rendering helpers
 # --------------------------------------------------------------------------
 
-# Curated palette — muted, print-safe, and colorblind-friendly. Named keys
-# match the color dropdowns in static/js/genomediagram.js.
-PALETTE = {
-    'blue':       '#2563eb',
-    'red':        '#dc2626',
-    'green':      '#059669',
-    'orange':     '#ea580c',
-    'purple':     '#7c3aed',
-    'brown':      '#92400e',
-    'pink':       '#db2777',
-    'cyan':       '#0891b2',
-    'gray':       '#64748b',
-    'grey':       '#64748b',
-    'darkblue':   '#1e3a8a',
-    'teal':       '#0d9488',
-    'black':      '#0f172a',
-    'yellow':     '#ca8a04',
-    'lightblue':  '#93c5fd',
-    'lightgreen': '#86efac',
-    'lightcoral': '#fca5a5',
-    'lightgray':  '#cbd5e1',
-}
-
-EDGE_COLOR = '#1e293b'
-TITLE_COLOR = '#0f172a'
-LABEL_COLOR = '#334155'
-AXIS_COLOR = '#94a3b8'
-GRID_COLOR = '#e2e8f0'
+# Palette, role constants, color resolution, and the bp axis formatter are
+# shared with every other diagram route via utils.plot_helpers — this module
+# used to carry byte-identical copies of all of them, which meant a styling
+# change had to be made twice to keep the app's diagrams consistent.
 BASELINE_COLOR = '#cbd5e1'
-
-
-def resolve_color(c, default='#2563eb'):
-    if not c:
-        return default
-    c = str(c).strip()
-    if c.startswith('#'):
-        return c
-    return PALETTE.get(c.lower(), default)
-
-
-def figure_to_svg_data_url(fig):
-    buf = StringIO()
-    fig.savefig(buf, format='svg', bbox_inches='tight', facecolor='white',
-                pad_inches=0.25)
-    plt.close(fig)
-    svg = buf.getvalue().encode('utf-8')
-    b64 = base64.b64encode(svg).decode()
-    return f'data:image/svg+xml;base64,{b64}'
-
-
-def _format_bp(value):
-    """Axis label formatter — switches kb/Mb at reasonable thresholds."""
-    v = int(round(value))
-    if v == 0:
-        return '0'
-    if abs(v) >= 1_000_000:
-        return f'{v/1_000_000:.2f} Mb'.rstrip('0').rstrip('.') + (' Mb' if not f'{v/1_000_000:.2f}'.rstrip('0').rstrip('.').endswith('Mb') else '')
-    if abs(v) >= 10_000:
-        return f'{v/1000:.1f} kb'.rstrip('0').rstrip('.').replace('.kb', ' kb') if v % 1000 else f'{v//1000} kb'
-    return f'{v:,}'
-
-
-def _fmt(value):
-    v = int(round(value))
-    if abs(v) >= 1_000_000:
-        s = f'{v/1_000_000:.2f}'.rstrip('0').rstrip('.')
-        return f'{s} Mb'
-    if abs(v) >= 10_000:
-        if v % 1000 == 0:
-            return f'{v//1000} kb'
-        return f'{v/1000:.1f} kb'
-    return f'{v:,}'
 
 
 def _draw_arrow_feature(ax, start, end, y, height, color, strand,
@@ -378,7 +316,7 @@ def render_linear_feature_diagram(genome_length, tracks, title='',
         ax.set_title(title, fontsize=12, fontweight='600',
                      color=TITLE_COLOR, pad=14, loc='left')
 
-    return figure_to_svg_data_url(fig)
+    return figure_to_svg_data_url(fig, pad_inches=0.25)
 
 
 def render_circular_feature_diagram(genome_length, tracks, title='',
@@ -524,7 +462,7 @@ def render_circular_feature_diagram(genome_length, tracks, title='',
         fig.suptitle(title, fontsize=13, fontweight='600',
                      color=TITLE_COLOR, y=0.97)
 
-    return figure_to_svg_data_url(fig)
+    return figure_to_svg_data_url(fig, pad_inches=0.25)
 
 
 # --------------------------------------------------------------------------
@@ -629,7 +567,7 @@ def render_data_tracks(genome_length, graphs, title='', diagram_type='linear'):
                      color=TITLE_COLOR, y=0.98)
     fig.tight_layout(rect=(0, 0, 1, 0.96) if title else None)
 
-    return figure_to_svg_data_url(fig)
+    return figure_to_svg_data_url(fig, pad_inches=0.25)
 
 
 # ============================================================================
@@ -741,7 +679,7 @@ def upload_file():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': f'File parsing error: {str(e)}'})
+        return jsonify({'success': False, 'error': f'File parsing error: {safe_error_message(e)}'})
 
 
 # ============================================================================
@@ -767,7 +705,7 @@ def create_genome_diagram():
         return jsonify({'success': True, 'diagram': url})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='genomediagram_routes.create_genome_diagram')
 
 
 # ============================================================================
@@ -803,7 +741,7 @@ def create_multitrack_diagram():
         return jsonify({'success': True, 'diagram': url})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='genomediagram_routes.create_multitrack_diagram')
 
 
 # ============================================================================
@@ -862,7 +800,7 @@ def create_data_tracks():
         return jsonify({'success': True, 'diagram': url})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='genomediagram_routes.create_data_tracks')
 
 
 # ============================================================================
@@ -901,7 +839,7 @@ def create_advanced_diagram():
         return jsonify({'success': True, 'diagram': url})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='genomediagram_routes.create_advanced_diagram')
 
 
 # ============================================================================
@@ -935,4 +873,4 @@ def export_diagram():
         return jsonify({'success': True, 'file_data': diagram_data})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='genomediagram_routes.export_diagram')

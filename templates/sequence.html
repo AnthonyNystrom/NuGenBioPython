@@ -38,7 +38,7 @@
                         <i class="fas fa-layer-group me-2"></i>Save to workspace
                     </button>
                 </form>
-                <script>
+                <script nonce="{{ csp_nonce }}">
                     // Phase-4 integration: save the current sequence to the
                     // workspace clipboard. Safely no-ops if Workspace isn't
                     // loaded yet.
@@ -111,13 +111,13 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Transcription</h6>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-secondary w-100" onclick="transcribe('transcribe')">
+                                <button type="button" class="btn-app-secondary w-100" data-action="transcribe" data-action-args="[&quot;transcribe&quot;]">
                                     <i class="fas fa-arrow-right d-block mb-2"></i>
                                     <small>DNA → RNA</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-secondary w-100" onclick="transcribe('back_transcribe')">
+                                <button type="button" class="btn-app-secondary w-100" data-action="transcribe" data-action-args="[&quot;back_transcribe&quot;]">
                                     <i class="fas fa-arrow-left d-block mb-2"></i>
                                     <small>RNA → DNA</small>
                                 </button>
@@ -135,13 +135,13 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Protein Conversion</h6>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-ghost w-100" onclick="proteinConvert('to_three')">
+                                <button type="button" class="btn-app-ghost w-100" data-action="proteinConvert" data-action-args="[&quot;to_three&quot;]">
                                     <i class="fas fa-text-width d-block mb-2"></i>
                                     <small>1→3 Letter</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-ghost w-100" onclick="proteinConvert('to_one')">
+                                <button type="button" class="btn-app-ghost w-100" data-action="proteinConvert" data-action-args="[&quot;to_one&quot;]">
                                     <i class="fas fa-compress d-block mb-2"></i>
                                     <small>3→1 Letter</small>
                                 </button>
@@ -190,6 +190,42 @@
                                 <button type="button" class="btn-app-secondary w-100" data-action="findORFs" id="orfBtn">
                                     <i class="fas fa-dna me-3"></i>
                                     <span>Find ORFs</span>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-uppercase fw-bold mb-2">Dot Plot</h6>
+                                <p class="small text-muted mb-2">
+                                    Compare the sequence against itself, or against a
+                                    second sequence. Diagonal runs are conserved
+                                    segments, parallel diagonals are repeats or
+                                    duplications, and runs perpendicular to the main
+                                    diagonal are inversions.
+                                </p>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small mb-1" for="dotplotSeq2">
+                                    Second sequence <span class="text-muted">(optional — leave blank to self-compare)</span>
+                                </label>
+                                <textarea class="form-control mb-2" id="dotplotSeq2" rows="3"
+                                          placeholder="ACGT..." spellcheck="false"></textarea>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small mb-1" for="dotplotWordSize">Word size</label>
+                                <input type="number" class="form-control mb-2" id="dotplotWordSize"
+                                       value="8" min="2" max="64" step="1">
+                            </div>
+                            <div class="col-6 d-flex align-items-end">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="dotplotReverse" checked>
+                                    <label class="form-check-label small" for="dotplotReverse">
+                                        Reverse strand
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn-app-secondary w-100" data-action="renderDotPlot" id="dotplotBtn">
+                                    <i class="fas fa-braille me-3"></i>
+                                    <span>Generate Dot Plot</span>
                                 </button>
                             </div>
                             <div class="col-12 mt-4">
@@ -254,19 +290,19 @@
                                 <h6 class="text-uppercase fw-bold mb-2">Sequence Manipulation</h6>
                             </div>
                             <div class="col-12">
-                                <button type="button" class="btn-app-primary w-100" onclick="manipulateSequence('ungap')">
+                                <button type="button" class="btn-app-primary w-100" data-action="manipulateSequence" data-action-args="[&quot;ungap&quot;]">
                                     <i class="fas fa-eraser me-3"></i>
                                     <span>Remove Gaps</span>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-secondary w-100" onclick="manipulateSequence('upper')">
+                                <button type="button" class="btn-app-secondary w-100" data-action="manipulateSequence" data-action-args="[&quot;upper&quot;]">
                                     <i class="fas fa-font d-block mb-2"></i>
                                     <small>UPPERCASE</small>
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button type="button" class="btn-app-secondary w-100" onclick="manipulateSequence('lower')">
+                                <button type="button" class="btn-app-secondary w-100" data-action="manipulateSequence" data-action-args="[&quot;lower&quot;]">
                                     <i class="fas fa-font d-block mb-2"></i>
                                     <small>lowercase</small>
                                 </button>
@@ -322,7 +358,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 document.getElementById('sequenceForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -632,6 +668,59 @@ function transcribe(operation) {
 }
 
 // Advanced GC Analysis
+function renderDotPlot() {
+    const sequence = document.getElementById('sequenceInput').value.trim();
+    if (!sequence) {
+        showAlert('Please enter a sequence first', 'warning');
+        return;
+    }
+    const second = document.getElementById('dotplotSeq2').value.trim();
+    const wordSize = parseInt(document.getElementById('dotplotWordSize').value, 10) || 8;
+    const includeReverse = document.getElementById('dotplotReverse').checked;
+
+    showLoading('dotplotBtn');
+    fetchJSON('/api/sequence/dotplot', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sequence1: sequence,
+            sequence2: second || sequence,
+            word_size: wordSize,
+            include_reverse: includeReverse
+        })
+    })
+    .then(function (data) {
+        hideLoading('dotplotBtn', '<i class="fas fa-braille me-3"></i><span>Generate Dot Plot</span>');
+        if (!data.success) {
+            showAlert(data.error || 'Dot plot failed', 'danger');
+            return;
+        }
+        const note = data.truncated
+            ? '<div class="small text-warning mt-1">Too many matches to draw them all; showing the first batch. Try a larger word size.</div>'
+            : '';
+        document.getElementById('resultsArea').innerHTML = `
+            <div class="border rounded p-2">
+                <div class="small fw-bold text-primary mb-1">
+                    ${data.self_comparison ? 'Self-comparison' : 'Dot plot'}
+                    (word size ${data.word_size})
+                </div>
+                <img src="${data.plot}" class="img-fluid" alt="Dot plot" style="max-width:100%">
+                <div class="small text-muted mt-1">
+                    ${data.forward_matches.toLocaleString()} forward
+                    ${includeReverse ? ' · ' + data.reverse_matches.toLocaleString() + ' reverse-complement' : ''}
+                    matches
+                </div>
+                ${note}
+                ${FigureExport.controls(data.plot, 'dot_plot')}
+            </div>
+        `;
+    })
+    .catch(function (err) {
+        hideLoading('dotplotBtn', '<i class="fas fa-braille me-3"></i><span>Generate Dot Plot</span>');
+        showAlert(friendlyError(err.message, 'server'), 'danger');
+    });
+}
+
 function advancedGCAnalysis() {
     const sequence = document.getElementById('sequenceInput').value.trim();
 
@@ -793,25 +882,45 @@ function displayGCAnalysisResults(data) {
         html += `
             <div class="border rounded p-2 bg-light mb-2">
                 <div class="small fw-bold text-primary mb-1">GC by Codon Position</div>
+                <!-- Bio.SeqUtils.GC123 returns (overall, pos1, pos2, pos3) and the
+                     values are already percentages. This previously read
+                     indices 0-2 and multiplied by 100, so it labelled the
+                     OVERALL GC as "Pos 1", shifted the other two, dropped
+                     position 3 entirely, and printed values like 4984.67%. -->
                 <div class="row g-1 small">
-                    <div class="col-4">Pos 1: ${(data.gc123[0] * 100).toFixed(2)}%</div>
-                    <div class="col-4">Pos 2: ${(data.gc123[1] * 100).toFixed(2)}%</div>
-                    <div class="col-4">Pos 3: ${(data.gc123[2] * 100).toFixed(2)}%</div>
+                    <div class="col-3">Pos 1: ${data.gc123[1].toFixed(2)}%</div>
+                    <div class="col-3">Pos 2: ${data.gc123[2].toFixed(2)}%</div>
+                    <div class="col-3">Pos 3: ${data.gc123[3].toFixed(2)}%</div>
+                    <div class="col-3 text-muted">Overall: ${data.gc123[0].toFixed(2)}%</div>
                 </div>
             </div>
         `;
     }
 
-    // GC Skew
+    // GC Skew. The cumulative curve is the useful readout — its minimum
+    // marks the replication origin and its maximum the terminus — so the plot
+    // replaces the old "first 10 values" number dump.
     if (data.gc_skew && data.gc_skew.length > 0) {
         const avgSkew = (data.gc_skew.reduce((a, b) => a + b, 0) / data.gc_skew.length).toFixed(4);
         html += `
             <div class="border rounded p-2 bg-light">
                 <div class="small fw-bold text-primary mb-1">GC Skew (Window: ${data.window_size}bp)</div>
                 <div class="small"><strong>Average:</strong> ${avgSkew}</div>
-                <div class="small"><strong>First 10 values:</strong> ${data.gc_skew.slice(0, 10).map(v => v.toFixed(4)).join(', ')}${data.gc_skew.length > 10 ? '...' : ''}</div>
+                <div class="small text-muted">${data.gc_skew.length} windows</div>
             </div>
         `;
+        if (data.skew_plot) {
+            html += `
+                <div class="border rounded p-2 mt-2">
+                    <img src="${data.skew_plot}" class="img-fluid" alt="GC skew plot" style="max-width:100%">
+                    <div class="small text-muted mt-1">
+                        The cumulative curve's minimum marks the likely replication
+                        origin and its maximum the terminus.
+                    </div>
+                    ${FigureExport.controls(data.skew_plot, 'gc_skew')}
+                </div>
+            `;
+        }
     }
 
     resultsArea.innerHTML = html;

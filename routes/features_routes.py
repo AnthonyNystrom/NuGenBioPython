@@ -2,6 +2,8 @@
 Routes for sequence feature operations (ORF, CDS, annotations)
 """
 from flask import Blueprint, request, jsonify, current_app
+
+from utils.request_helpers import error_response, safe_error_message
 import os
 from werkzeug.utils import secure_filename
 import re
@@ -110,7 +112,7 @@ def find_orfs():
             'sequence_length': len(sequence)
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.find_orfs')
 
 
 @bp.route('/features/create', methods=['POST'])
@@ -160,7 +162,7 @@ def create_feature():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.create_feature')
 
 
 @bp.route('/features/parse_genbank', methods=['POST'])
@@ -210,7 +212,7 @@ def parse_genbank_features():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.parse_genbank_features')
 
 
 @bp.route('/features/extract', methods=['POST'])
@@ -255,14 +257,14 @@ def extract_feature():
                 result['protein'] = protein
                 result['protein_length'] = len(protein)
             except Exception as e:
-                result['translation_error'] = str(e)
+                result['translation_error'] = safe_error_message(e)
 
         return jsonify({
             'success': True,
             'feature': result
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.extract_feature')
 
 
 @bp.route('/features/compound_location', methods=['POST'])
@@ -307,7 +309,7 @@ def create_compound_location():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.create_compound_location')
 
 
 @bp.route('/features/annotate', methods=['POST'])
@@ -360,7 +362,7 @@ def annotate_sequence():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='features_routes.annotate_sequence')
 
 
 @bp.route('/features/feature_types', methods=['GET'])

@@ -52,7 +52,7 @@
                                         <div class="mt-2">
                                             <input type="file" class="form-control form-control-sm" id="basicSequenceFile"
                                                    accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
-                                                   onchange="handleBasicFileUpload(event)">
+                                                   data-action-change="handleBasicFileUpload">
                                             <div class="form-text small">
                                                 <i class="fas fa-upload text-muted"></i> Upload: FASTA, GenBank, EMBL, or plain text
                                             </div>
@@ -117,7 +117,7 @@
                         <div class="card">
                             <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 small"><i class="fas fa-table"></i> Detailed Results</h6>
-                                <button class="btn-app-sm btn-app-secondary" onclick="exportBasicResults('csv')" id="exportBasicBtn" style="display:none;">
+                                <button class="btn-app-sm btn-app-secondary" data-action="exportBasicResults" data-action-args="[&quot;csv&quot;]" id="exportBasicBtn" style="display:none;">
                                     <i class="fas fa-download me-1"></i>Export CSV
                                 </button>
                             </div>
@@ -160,7 +160,7 @@
                                                 placeholder="Enter DNA sequence..."></textarea>
                                         <input type="file" class="form-control form-control-sm mt-1" id="advancedSequenceFile"
                                                accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
-                                               onchange="handleAdvancedFileUpload(event)">
+                                               data-action-change="handleAdvancedFileUpload">
                                         <div id="advancedFileInfo" class="mt-1" style="display:none;"></div>
                                     </div>
 
@@ -239,7 +239,7 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-3">
                                         <label class="form-label small mb-0">Database</label>
-                                        <select class="form-select form-select-sm" id="enzymeDatabaseFilter" onchange="loadEnzymeBrowser()">
+                                        <select class="form-select form-select-sm" id="enzymeDatabaseFilter" data-action-change="loadEnzymeBrowser">
                                             <option value="common">Common (30)</option>
                                             <option value="commercial">Commercial (623)</option>
                                             <option value="all">All Enzymes (1,088)</option>
@@ -247,7 +247,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small mb-0">Overhang Type</label>
-                                        <select class="form-select form-select-sm" id="overhangFilter" onchange="loadEnzymeBrowser()">
+                                        <select class="form-select form-select-sm" id="overhangFilter" data-action-change="loadEnzymeBrowser">
                                             <option value="">All types</option>
                                             <option value="blunt">Blunt</option>
                                             <option value="5">5' overhang</option>
@@ -256,7 +256,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label small mb-0">Site Size</label>
-                                        <select class="form-select form-select-sm" id="siteSizeFilter" onchange="loadEnzymeBrowser()">
+                                        <select class="form-select form-select-sm" id="siteSizeFilter" data-action-change="loadEnzymeBrowser">
                                             <option value="">All sizes</option>
                                             <option value="4">4 bp</option>
                                             <option value="6">6 bp</option>
@@ -266,7 +266,7 @@
                                     <div class="col-md-4">
                                         <label class="form-label small mb-0">Search Name</label>
                                         <input type="text" class="form-control form-control-sm" id="enzymeSearch"
-                                               placeholder="Search enzyme name..." onkeyup="loadEnzymeBrowser()">
+                                               placeholder="Search enzyme name..." data-action-input="loadEnzymeBrowser">
                                     </div>
                                 </div>
                                 <div id="enzymeBrowserResults">
@@ -309,7 +309,7 @@
                                                 placeholder="Enter DNA sequence..."></textarea>
                                         <input type="file" class="form-control form-control-sm mt-1" id="mapSequenceFile"
                                                accept=".fasta,.fa,.fna,.gb,.gbk,.genbank,.embl,.txt"
-                                               onchange="handleMapFileUpload(event)">
+                                               data-action-change="handleMapFileUpload">
                                         <div id="mapFileInfo" class="mt-1" style="display:none;"></div>
                                     </div>
                                     <div class="mb-2">
@@ -386,13 +386,13 @@
                             <div class="card-body py-2">
                                 <p class="small mb-2">Export your analysis results in various formats.</p>
                                 <div class="d-grid gap-2">
-                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('csv')">
+                                    <button class="btn-app-sm btn-app-secondary" data-action="exportLastResults" data-action-args="[&quot;csv&quot;]">
                                         <i class="fas fa-file-csv"></i> Export as CSV
                                     </button>
-                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('tsv')">
+                                    <button class="btn-app-sm btn-app-secondary" data-action="exportLastResults" data-action-args="[&quot;tsv&quot;]">
                                         <i class="fas fa-file-alt"></i> Export as TSV
                                     </button>
-                                    <button class="btn-app-sm btn-app-secondary" onclick="exportLastResults('json')">
+                                    <button class="btn-app-sm btn-app-secondary" data-action="exportLastResults" data-action-args="[&quot;json&quot;]">
                                         <i class="fas fa-file-code"></i> Export as JSON
                                     </button>
                                 </div>

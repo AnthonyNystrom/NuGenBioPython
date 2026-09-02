@@ -2,6 +2,8 @@
 Routes for sequence alignment operations
 """
 from flask import Blueprint, request, jsonify, current_app
+
+from utils.request_helpers import error_response
 from Bio.Align import PairwiseAligner, substitution_matrices
 from Bio import AlignIO
 from io import StringIO
@@ -13,6 +15,22 @@ from dependencies import Seq
 from utils.upload_helpers import saved_upload, UploadError
 
 bp = Blueprint('alignment', __name__, url_prefix='/api')
+
+
+def _aligned_rows(alignment):
+    """Return the two gapped rows of a PairwiseAligner alignment as strings.
+
+    Reads the rows off the Alignment object instead of scraping
+    ``str(alignment)``. BioPython wraps that text form at 60 columns and
+    drops the trailing coordinate on wrapped lines, so ``line.split()[-2]``
+    picks up the *start coordinate* rather than the sequence for any
+    alignment longer than one block — which silently reported 100% identity
+    and a length of 1 for essentially every real query.
+    """
+    try:
+        return str(alignment[0]), str(alignment[1])
+    except (IndexError, TypeError, ValueError):
+        return '', ''
 
 
 @bp.route('/alignment/pairwise', methods=['POST'])
@@ -61,40 +79,24 @@ def pairwise_alignment():
 
         # Calculate alignment statistics
         alignment_str = str(top_alignment)
-        lines = alignment_str.strip().split('\n')
 
-        # Extract aligned sequences from the alignment string
-        # BioPython format: "target  0 ACGT-CG 7"
-        # We need to extract just the sequence part
         matches = 0
         gaps = 0
         identity_percent = 0
         gap_percent = 0
-        aligned_seq1 = ""
-        aligned_seq2 = ""
+        aligned_seq1, aligned_seq2 = _aligned_rows(top_alignment)
 
-        if len(lines) >= 3:
-            # Parse first line (target sequence)
-            parts1 = lines[0].split()
-            if len(parts1) >= 3:
-                aligned_seq1 = parts1[-2]
+        # Calculate identity, similarity, and gaps
+        length = min(len(aligned_seq1), len(aligned_seq2))
 
-            # Parse third line (query sequence)
-            parts2 = lines[2].split()
-            if len(parts2) >= 3:
-                aligned_seq2 = parts2[-2]
+        for i in range(length):
+            if aligned_seq1[i] == aligned_seq2[i]:
+                matches += 1
+            if aligned_seq1[i] == '-' or aligned_seq2[i] == '-':
+                gaps += 1
 
-            # Calculate identity, similarity, and gaps
-            length = min(len(aligned_seq1), len(aligned_seq2))
-
-            for i in range(length):
-                if aligned_seq1[i] == aligned_seq2[i]:
-                    matches += 1
-                if aligned_seq1[i] == '-' or aligned_seq2[i] == '-':
-                    gaps += 1
-
-            identity_percent = (matches / length * 100) if length > 0 else 0
-            gap_percent = (gaps / length * 100) if length > 0 else 0
+        identity_percent = (matches / length * 100) if length > 0 else 0
+        gap_percent = (gaps / length * 100) if length > 0 else 0
 
         return jsonify({
             'success': True,
@@ -105,11 +107,11 @@ def pairwise_alignment():
                 'gap_percent': round(gap_percent, 2),
                 'matches': matches,
                 'gaps': gaps,
-                'alignment_length': len(aligned_seq1) if len(lines) >= 2 else 0
+                'alignment_length': len(aligned_seq1)
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.pairwise_alignment')
 
 
 @bp.route('/alignment/matrices', methods=['GET'])
@@ -138,7 +140,7 @@ def get_substitution_matrices():
             'dna_matrices': dna_matrices
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.get_substitution_matrices')
 
 
 @bp.route('/alignment/multiple', methods=['POST'])
@@ -202,7 +204,7 @@ def multiple_sequence_alignment():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.multiple_sequence_alignment')
 
 # ============================================================================
 # ADVANCED ALIGNMENT FEATURES
@@ -251,7 +253,7 @@ def generate_consensus():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.generate_consensus')
 
 
 @bp.route('/alignment/conservation', methods=['POST'])
@@ -312,7 +314,7 @@ def analyze_conservation():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.analyze_conservation')
 
 
 @bp.route('/alignment/parse_file', methods=['POST'])
@@ -339,7 +341,7 @@ def parse_alignment_file():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.parse_alignment_file')
 
 
 @bp.route('/alignment/export', methods=['POST'])
@@ -379,7 +381,7 @@ def export_alignment():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.export_alignment')
 
 
 @bp.route('/alignment/trim', methods=['POST'])
@@ -424,7 +426,7 @@ def trim_alignment():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.trim_alignment')
 
 # ============================================================================
 # NEW ADVANCED FEATURES  
@@ -468,7 +470,7 @@ def get_all_alignments():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.get_all_alignments')
 
 
 @bp.route('/alignment/identity_matrix', methods=['POST'])
@@ -500,19 +502,12 @@ def pairwise_identity_matrix():
                 elif i < j:
                     alignments = aligner.align(seq_objects[i], seq_objects[j])
                     alignment = alignments[0]
-                    alignment_str = str(alignment)
-                    lines = alignment_str.strip().split('\n')
+                    aligned_seq1, aligned_seq2 = _aligned_rows(alignment)
 
-                    if len(lines) >= 3:
-                        aligned_seq1 = lines[0].split()[-2] if len(lines[0].split()) >= 3 else ""
-                        aligned_seq2 = lines[2].split()[-2] if len(lines[2].split()) >= 3 else ""
-
-                        matches = sum(1 for a, b in zip(aligned_seq1, aligned_seq2) if a == b and a != '-')
-                        length = max(len(aligned_seq1), len(aligned_seq2))
-                        identity = (matches / length * 100) if length > 0 else 0
-                        row.append(round(identity, 2))
-                    else:
-                        row.append(0.0)
+                    matches = sum(1 for a, b in zip(aligned_seq1, aligned_seq2) if a == b and a != '-')
+                    length = max(len(aligned_seq1), len(aligned_seq2))
+                    identity = (matches / length * 100) if length > 0 else 0
+                    row.append(round(identity, 2))
                 else:
                     row.append(matrix[j][i])
             matrix.append(row)
@@ -525,7 +520,7 @@ def pairwise_identity_matrix():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.pairwise_identity_matrix')
 
 
 @bp.route('/alignment/coordinates', methods=['POST'])
@@ -548,7 +543,6 @@ def alignment_coordinates():
 
         # Get alignment path/coordinates
         alignment_str = str(alignment)
-        lines = alignment_str.strip().split('\n')
 
         coordinates = {
             'target_start': 0,
@@ -558,19 +552,19 @@ def alignment_coordinates():
             'score': float(alignment.score)
         }
 
-        # Extract coordinates from alignment string if available
-        if len(lines) > 0:
-            # Format: "target  start SEQUENCE end"
-            parts = lines[0].split()
-            if len(parts) >= 4:
-                coordinates['target_start'] = int(parts[1])
-                coordinates['target_end'] = int(parts[-1])
-
-            if len(lines) >= 3:
-                parts = lines[2].split()
-                if len(parts) >= 4:
-                    coordinates['query_start'] = int(parts[1])
-                    coordinates['query_end'] = int(parts[-1])
+        # Read the aligned extent off the Alignment object. The previous
+        # implementation scraped str(alignment), which only carries the
+        # trailing coordinate on unwrapped (<=60 column) output — so any
+        # longer alignment silently fell back to the full-sequence extent,
+        # reporting a local alignment as if it spanned everything.
+        try:
+            coords = alignment.coordinates
+            coordinates['target_start'] = int(coords[0][0])
+            coordinates['target_end'] = int(coords[0][-1])
+            coordinates['query_start'] = int(coords[1][0])
+            coordinates['query_end'] = int(coords[1][-1])
+        except (AttributeError, IndexError, TypeError, ValueError):
+            pass
 
         return jsonify({
             'success': True,
@@ -580,7 +574,7 @@ def alignment_coordinates():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.alignment_coordinates')
 
 
 @bp.route('/alignment/codon_aware', methods=['POST'])
@@ -615,12 +609,10 @@ def codon_aware_alignment():
         alignment = alignments[0]
 
         alignment_str = str(alignment)
-        lines = alignment_str.strip().split('\n')
 
         # Calculate codon statistics
-        if len(lines) >= 3:
-            aligned_seq1 = lines[0].split()[-2] if len(lines[0].split()) >= 3 else ""
-            aligned_seq2 = lines[2].split()[-2] if len(lines[2].split()) >= 3 else ""
+        aligned_seq1, aligned_seq2 = _aligned_rows(alignment)
+        if aligned_seq1 and aligned_seq2:
 
             # Count synonymous vs non-synonymous changes
             codon_matches = 0
@@ -659,7 +651,7 @@ def codon_aware_alignment():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.codon_aware_alignment')
 
 
 @bp.route('/alignment/detailed_stats', methods=['POST'])
@@ -681,7 +673,6 @@ def detailed_alignment_stats():
         alignment = alignments[0]
 
         alignment_str = str(alignment)
-        lines = alignment_str.strip().split('\n')
 
         stats = {
             'score': float(alignment.score),
@@ -690,9 +681,8 @@ def detailed_alignment_stats():
             'seq2_length': len(seq2)
         }
 
-        if len(lines) >= 3:
-            aligned_seq1 = lines[0].split()[-2] if len(lines[0].split()) >= 3 else ""
-            aligned_seq2 = lines[2].split()[-2] if len(lines[2].split()) >= 3 else ""
+        aligned_seq1, aligned_seq2 = _aligned_rows(alignment)
+        if aligned_seq1 and aligned_seq2:
 
             matches = 0
             mismatches = 0
@@ -750,4 +740,4 @@ def detailed_alignment_stats():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='alignment_routes.detailed_alignment_stats')

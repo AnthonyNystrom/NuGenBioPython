@@ -39,7 +39,7 @@
         }
         .nav-link.active { transition: none !important; }
     </style>
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // D17: apply saved theme BEFORE any paint to avoid FOUC.
         // Default is dark — users can flip to light via the topbar toggle.
         (function () {
@@ -314,7 +314,7 @@
         </main>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // D17: dark-mode toggle in topbar.
         (function () {
             var btn = document.getElementById('topbarThemeBtn');
@@ -345,7 +345,7 @@
             }
         })();
     </script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // Tool split-pane mobile tabs. On narrow viewports the split collapses
         // to a single pane; the mobile-tabs row switches which one is visible.
         (function () {
@@ -374,7 +374,7 @@
             }).observe(resultsPane, { childList: true, subtree: true });
         })();
     </script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
         // Mobile navigation toggle. No-op on desktop since the hamburger is
         // hidden by CSS there.
         (function () {

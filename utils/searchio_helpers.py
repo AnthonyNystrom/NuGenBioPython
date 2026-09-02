@@ -2,10 +2,36 @@
 Helper functions for Bio.SearchIO operations
 Handles parsing, reading, indexing, converting, filtering, and writing search results
 """
+import logging
+
 from Bio import SearchIO
 from io import StringIO
 import os
 import tempfile
+
+log = logging.getLogger(__name__)
+
+
+def _within(value, threshold, direction, hit=None, field=''):
+    """Return True when `value` satisfies `threshold`.
+
+    direction 'max' means value must be <= threshold (e-value);
+    direction 'min' means value must be >= threshold (bit score, identity).
+
+    Returns False — excluding the hit — when either side cannot be read as a
+    number. A filter that cannot be evaluated must not silently pass.
+    """
+    try:
+        v = float(value)
+        t = float(threshold)
+    except (TypeError, ValueError):
+        log.warning(
+            'Could not apply %s filter to hit %s (value=%r, threshold=%r); '
+            'excluding it rather than returning an unchecked hit.',
+            field or 'threshold', getattr(hit, 'id', '?'), value, threshold,
+        )
+        return False
+    return v <= t if direction == 'max' else v >= t
 
 
 def searchio_parse(file_path, format_name):
@@ -222,29 +248,27 @@ def searchio_filter(file_path, format_name, evalue_threshold=None, bitscore_thre
                 if hasattr(hit, 'hsps') and len(hit.hsps) > 0:
                     hsp = hit.hsps[0]
 
-                    # E-value filter
+                    # Threshold filters. These fail CLOSED: if the value a
+                    # filter is meant to test cannot be read as a number, the
+                    # hit is excluded rather than kept. Swallowing the error
+                    # and leaving passes_filter True — as this did — returned
+                    # hits that were never actually checked against the
+                    # threshold, so a search filtered at "e-value < 1e-5"
+                    # could still contain hits well above it.
                     if evalue_threshold is not None and hasattr(hsp, 'evalue'):
-                        try:
-                            if float(hsp.evalue) > float(evalue_threshold):
-                                passes_filter = False
-                        except Exception:
-                            pass
+                        if not _within(hsp.evalue, evalue_threshold, 'max',
+                                       hit, 'evalue'):
+                            passes_filter = False
 
-                    # Bit score filter
                     if bitscore_threshold is not None and hasattr(hsp, 'bitscore'):
-                        try:
-                            if float(hsp.bitscore) < float(bitscore_threshold):
-                                passes_filter = False
-                        except Exception:
-                            pass
+                        if not _within(hsp.bitscore, bitscore_threshold, 'min',
+                                       hit, 'bitscore'):
+                            passes_filter = False
 
-                    # Identity filter
                     if min_identity is not None and hasattr(hsp, 'ident_pct'):
-                        try:
-                            if float(hsp.ident_pct) < float(min_identity):
-                                passes_filter = False
-                        except Exception:
-                            pass
+                        if not _within(hsp.ident_pct, min_identity, 'min',
+                                       hit, 'ident_pct'):
+                            passes_filter = False
 
                     if passes_filter:
                         hit_data = {

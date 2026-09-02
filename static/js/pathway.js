@@ -29,7 +29,7 @@ function addReactant() {
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
-                    onclick="this.parentElement.parentElement.remove()">
+                    data-action="removeParentRow">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -54,7 +54,7 @@ function addProduct() {
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
-                    onclick="this.parentElement.parentElement.remove()">
+                    data-action="removeParentRow">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -74,7 +74,7 @@ function addCatalyst() {
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
-                    onclick="this.parentElement.parentElement.remove()">
+                    data-action="removeParentRow">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -174,7 +174,7 @@ function updateReactionsList() {
                 <div class="card-body p-2">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <h6 class="mb-0 small"><i class="fas fa-flask"></i> ${escapeHtml(rxn.name)}</h6>
-                        <button class="btn-app-sm btn-app-danger" onclick="removeReaction(${idx})">
+                        <button class="btn-app-sm btn-app-danger" data-action="removeReaction" data-action-args="[${idx}]">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -508,6 +508,7 @@ function displayVisualization(viz) {
 
     const image = `<div class="text-center">
         <img src="${viz.graph_image}" class="img-fluid" alt="Pathway Graph" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
+        ${FigureExport.controls(viz.graph_image, 'pathway_graph')}
     </div>`;
 
     if (typeof ResultsCard !== 'undefined') {

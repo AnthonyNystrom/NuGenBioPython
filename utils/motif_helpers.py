@@ -1,12 +1,15 @@
 """
 Helper functions for motif analysis using Bio.motifs
 """
+import logging
 from io import StringIO
 import numpy as np
 from Bio import motifs
 from Bio.Seq import Seq
 from scipy.stats import pearsonr
 
+
+log = logging.getLogger(__name__)
 
 def create_motif_from_sequences(sequences):
     """
@@ -331,4 +334,5 @@ def calculate_motif_statistics(m, sequence, pseudocounts=0.5):
             'num_positions': len(scores)
         }
     except Exception:
+        log.exception('motif statistics calculation failed')
         return None

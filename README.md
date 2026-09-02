@@ -256,6 +256,10 @@ conda activate nugenbio
 3. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
+
+# To also run the test suite:
+pip install -r requirements-dev.txt
+npm install --prefix tests/formatters   # enables the JS formatter tests
 ```
 
 4. **Run the application:**
@@ -265,6 +269,35 @@ python app.py
 
 5. **Open your browser:**
 Navigate to `http://localhost:9000`
+
+## Configuration
+
+All configuration is via environment variables; a `.env` file in the project
+root is loaded automatically if `python-dotenv` is installed.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `SECRET_KEY` | random per process | Flask session signing. **Set this in production** — without it sessions do not survive a restart. |
+| `PORT` | `9000` | Port the development server binds to. |
+| `FLASK_DEBUG` | `False` | Set to `true` for the Werkzeug debugger. Never enable in production. |
+| `LOG_LEVEL` | `INFO` | Root logging level. |
+| `UPLOAD_FOLDER` | `uploads` | Where uploaded files are staged. Files are removed after each request. |
+| `MAX_CONTENT_LENGTH` | `16777216` | Maximum upload size in bytes (16 MB). |
+| `STATIC_MAX_AGE` | `3600` (`86400` in production) | `Cache-Control` max-age for static assets. |
+| `ENTREZ_EMAIL` | *unset* | Contact address sent to NCBI. NCBI's usage policy asks every request to identify a real address; without one you are more likely to be throttled. |
+| `ENTREZ_API_KEY` | *unset* | NCBI API key. Raises the Entrez rate ceiling from 3 to 10 requests/second. [Get one here](https://www.ncbi.nlm.nih.gov/account/). |
+
+### NCBI usage
+
+The Database, BLAST and literature-mining tools call NCBI on your behalf.
+Setting `ENTREZ_EMAIL` (and ideally `ENTREZ_API_KEY`) is strongly recommended
+for any deployment that more than one person will use — NCBI rate-limits and
+can block by IP, and an unidentified request is the first to be dropped.
+
+```bash
+export ENTREZ_EMAIL="you@institution.edu"
+export ENTREZ_API_KEY="your-ncbi-api-key"
+```
 
 ## Requirements
 
@@ -460,6 +493,18 @@ The application provides RESTful API endpoints for programmatic access:
 ## Testing
 
 NuGenBioPython includes comprehensive validation and testing:
+
+### Running the tests
+
+```bash
+pip install -r requirements-dev.txt
+npm install --prefix tests/formatters   # optional: enables the JS tests
+SECRET_KEY=test pytest tests -q
+```
+
+Tests run in CI on Python 3.9 and 3.12 (see `.github/workflows/ci.yml`).
+The visual-regression suite under `tests/visual/` needs Playwright and a
+captured baseline; it skips cleanly when either is missing.
 
 ### Test Coverage
 - **Import Validation**: All BioPython modules and dependencies

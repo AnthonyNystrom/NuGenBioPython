@@ -91,7 +91,7 @@
                                         <label class="form-label small mb-1">File Upload (GenBank, EMBL, or FASTA)</label>
                                         <input type="file" class="form-control form-control-sm" id="basicSequenceFile"
                                                accept=".gb,.gbk,.genbank,.embl,.fasta,.fa,.fna"
-                                               onchange="handleBasicFileUpload(event)">
+                                               data-action-change="handleBasicFileUpload">
                                         <div class="form-text small">
                                             <i class="fas fa-upload text-muted"></i> Upload GenBank/EMBL to auto-extract features
                                         </div>
@@ -197,7 +197,7 @@
                                         <label class="form-label small mb-1">File Upload (auto-creates tracks by feature type)</label>
                                         <input type="file" class="form-control form-control-sm" id="multiTrackFile"
                                                accept=".gb,.gbk,.genbank,.embl"
-                                               onchange="handleMultiTrackFileUpload(event)">
+                                               data-action-change="handleMultiTrackFileUpload">
                                         <div id="multitrackFileInfo" class="mt-1" style="display:none;"></div>
                                     </div>
 
@@ -360,7 +360,7 @@
                                         <label class="form-label small mb-1">File Upload</label>
                                         <input type="file" class="form-control form-control-sm" id="advancedFile"
                                                accept=".gb,.gbk,.genbank,.embl"
-                                               onchange="handleAdvancedFileUpload(event)">
+                                               data-action-change="handleAdvancedFileUpload">
                                         <div id="advancedFileInfo" class="mt-1" style="display:none;"></div>
                                     </div>
 
@@ -399,7 +399,7 @@
                                     </button>
                                     {{ load_example_pair("loadAdvancedExample", "loadAdvancedExampleComplexGenome", simple_label="Minimal", complex_label="E.coli operons (17 features)") }}
                                     <button type="button" class="btn-app-secondary btn-app-sm w-100"
-                                            onclick="clearAdvancedFeatures(); clearCrossLinks()">
+                                            data-action="clearAdvancedFeaturesAndCrossLinks">
                                         <i class="fas fa-trash"></i> Clear All
                                     </button>
                                 </form>
@@ -436,16 +436,16 @@
                                 <p class="small mb-3">Export the current diagram in various formats:</p>
 
                                 <div class="d-grid gap-2">
-                                    <button class="btn-app-secondary" onclick="exportDiagram('png')" id="exportBtn">
+                                    <button class="btn-app-secondary" data-action="exportDiagram" data-action-args="[&quot;png&quot;]" id="exportBtn">
                                         <i class="fas fa-file-image"></i> Export as PNG
                                     </button>
-                                    <button class="btn-app-secondary" onclick="exportDiagram('svg')">
+                                    <button class="btn-app-secondary" data-action="exportDiagram" data-action-args="[&quot;svg&quot;]">
                                         <i class="fas fa-vector-square"></i> Export as SVG (Vector)
                                     </button>
-                                    <button class="btn-app-danger" onclick="exportDiagram('pdf')">
+                                    <button class="btn-app-danger" data-action="exportDiagram" data-action-args="[&quot;pdf&quot;]">
                                         <i class="fas fa-file-pdf"></i> Export as PDF
                                     </button>
-                                    <button class="btn-app-secondary" onclick="exportDiagram('eps')">
+                                    <button class="btn-app-secondary" data-action="exportDiagram" data-action-args="[&quot;eps&quot;]">
                                         <i class="fas fa-file-code"></i> Export as EPS (PostScript)
                                     </button>
                                 </div>

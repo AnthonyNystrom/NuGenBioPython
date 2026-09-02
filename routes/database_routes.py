@@ -2,6 +2,8 @@
 Complete routes for NCBI Entrez database access
 """
 from flask import Blueprint, request, jsonify
+
+from utils.request_helpers import error_response
 from utils.entrez_helpers import (
     search_entrez, fetch_summaries, global_query,
     fetch_records, find_related_records, get_database_info,
@@ -18,7 +20,7 @@ def search():
         data = request.get_json(silent=True) or {}
         database = data.get('database', 'pubmed')
         term = data.get('term', '')
-        email = data.get('email', 'user@example.com')
+        email = data.get('email', '')
         retmax = int(data.get('retmax', 20))
         sort = data.get('sort', 'relevance')
         date_from = data.get('date_from')
@@ -42,7 +44,7 @@ def search():
             return jsonify({'success': True, 'count': 0, 'results': []})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='database_routes.search')
 
 
 @bp.route('/database/global', methods=['POST'])
@@ -51,7 +53,7 @@ def global_search():
     try:
         data = request.get_json(silent=True) or {}
         term = data.get('term', '')
-        email = data.get('email', 'user@example.com')
+        email = data.get('email', '')
 
         results = global_query(term, email)
 
@@ -61,7 +63,7 @@ def global_search():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='database_routes.global_search')
 
 
 @bp.route('/database/fetch', methods=['POST'])
@@ -78,7 +80,7 @@ def fetch():
         else:
             ids = [i.strip() for i in ids_input.split(',') if i.strip()]
 
-        email = data.get('email', 'user@example.com')
+        email = data.get('email', '')
         format_type = data.get('rettype', data.get('format', 'fasta'))
 
         if not ids:
@@ -104,7 +106,7 @@ def fetch():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='database_routes.fetch')
 
 
 @bp.route('/database/link', methods=['POST'])
@@ -115,7 +117,7 @@ def link():
         record_id = data.get('id', '')
         from_db = data.get('from_db', 'nucleotide')
         to_db = data.get('to_db', 'protein')
-        email = data.get('email', 'user@example.com')
+        email = data.get('email', '')
 
         if not record_id:
             return jsonify({'success': False, 'error': 'No record ID provided'})
@@ -135,7 +137,7 @@ def link():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='database_routes.link')
 
 
 @bp.route('/database/info', methods=['POST'])
@@ -144,7 +146,7 @@ def info():
     try:
         data = request.get_json(silent=True) or {}
         database = data.get('database', '')
-        email = data.get('email', 'user@example.com')
+        email = data.get('email', '')
 
         results = get_database_info(database, email)
 
@@ -168,4 +170,4 @@ def info():
             return jsonify({'success': True, 'databases': db_list})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='database_routes.info')

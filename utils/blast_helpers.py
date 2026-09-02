@@ -66,7 +66,7 @@ def run_ncbi_blast(sequence, program='blastn', database='nt', **kwargs):
     sequence = sequence.strip().replace(' ', '').replace('\n', '')
 
     # Run BLAST — 180s ceiling matches the frontend URL_TIMEOUT_MS
-    with remote_timeout(180):
+    with remote_timeout(180, service='blast'):
         result_handle = NCBIWWW.qblast(
             program=program,
             database=database,

@@ -11,7 +11,7 @@ from utils.plot_helpers import (
     figure_to_svg_data_url, style_axes, set_title,
     LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
 )
-from utils.request_helpers import clamp_int, clamp_float
+from utils.request_helpers import clamp_int, clamp_float, error_response
 
 bp = Blueprint('clustering', __name__, url_prefix='/api')
 
@@ -109,7 +109,7 @@ def clustering_analyze():
 
         return jsonify({'success': True, 'results': results, 'method': method})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.clustering_analyze')
 
 
 # Bio.Cluster endpoints
@@ -144,7 +144,7 @@ def biocluster_kmeans():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_kmeans')
 
 
 @bp.route('/clustering/biocluster/kmedoids', methods=['POST'])
@@ -177,7 +177,7 @@ def biocluster_kmedoids():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_kmedoids')
 
 
 @bp.route('/clustering/biocluster/treecluster', methods=['POST'])
@@ -214,7 +214,7 @@ def biocluster_hierarchical():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_hierarchical')
 
 
 @bp.route('/clustering/biocluster/somcluster', methods=['POST'])
@@ -243,7 +243,7 @@ def biocluster_som():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_som')
 
 
 @bp.route('/clustering/biocluster/pca', methods=['POST'])
@@ -271,7 +271,7 @@ def biocluster_pca():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_pca')
 
 
 @bp.route('/clustering/biocluster/distancematrix', methods=['POST'])
@@ -306,4 +306,4 @@ def biocluster_distance():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='clustering_routes.biocluster_distance')

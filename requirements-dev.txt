@@ -1,0 +1,21 @@
+# Development and test dependencies.
+#
+# The runtime deps in requirements.txt are not enough to run the test suite:
+# pytest is imported by every test module, and the visual-regression scripts
+# under tests/visual/ need Playwright. Installing only requirements.txt leaves
+# a fresh clone unable to run `pytest` at all.
+#
+#     pip install -r requirements.txt -r requirements-dev.txt
+#
+# The jsdom harness for static/js/formatters.js is a Node dependency and is
+# installed separately (tests/test_formatters.py skips cleanly without it):
+#
+#     npm install --prefix tests/formatters
+-r requirements.txt
+
+pytest>=8.0,<10.0
+
+# Visual regression / README screenshots (tests/visual/). Optional — the
+# visual tests skip cleanly when these are absent.
+playwright>=1.40,<2.0
+pytest-playwright>=0.4,<1.0

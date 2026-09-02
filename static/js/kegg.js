@@ -39,7 +39,7 @@ function displaySearchResults(results, count) {
     }
     _keggRenderTableCard('searchResults', 'KEGG Search', results, count,
         ['ID', 'Definition', 'Actions'],
-        r => [`<code>${r.id}</code>`, r.definition || '', `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`]);
+        r => [`<code>${r.id}</code>`, r.definition || '', `<button class="btn-app-sm btn-app-secondary" data-action="viewEntry" data-action-args="[&quot;${r.id}&quot;]"><i class="fas fa-eye"></i> View</button>`]);
 }
 
 function loadSearchExample() {
@@ -85,7 +85,7 @@ function displayListResults(results, total, displayed) {
     }
     _keggRenderTableCard('listResults', 'KEGG List', results, displayed,
         ['ID', 'Definition', 'Actions'],
-        r => [`<code>${r.id}</code>`, r.definition || 'N/A', `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.id}')"><i class="fas fa-eye"></i> View</button>`],
+        r => [`<code>${r.id}</code>`, r.definition || 'N/A', `<button class="btn-app-sm btn-app-secondary" data-action="viewEntry" data-action-args="[&quot;${r.id}&quot;]"><i class="fas fa-eye"></i> View</button>`],
         `${displayed} of ${total}`);
 }
 
@@ -167,7 +167,7 @@ function displayLinkResults(results, count) {
     _keggRenderTableCard('linkResults', 'KEGG Links', results, count,
         ['Source', 'Target', 'Actions'],
         r => [`<code>${r.source}</code>`, `<code>${r.target}</code>`,
-              `<button class="btn-app-sm btn-app-secondary" onclick="viewEntry('${r.target}')"><i class="fas fa-eye"></i></button>`]);
+              `<button class="btn-app-sm btn-app-secondary" data-action="viewEntry" data-action-args="[&quot;${r.target}&quot;]"><i class="fas fa-eye"></i></button>`]);
 }
 
 function loadLinkExample() {
@@ -292,7 +292,7 @@ function displayEntryInModal(data) {
     const entryId = (document.getElementById('entryModalLabel').textContent || '').replace(/^Entry:\s*/, '');
     let image = '';
     if (data.image_url) {
-        image = `<div class="text-center mb-3"><img src="${data.image_url}" class="img-fluid border" alt="Pathway diagram" style="max-width: 100%;" onerror="this.style.display='none'"></div>`;
+        image = `<div class="text-center mb-3"><img src="${data.image_url}" class="img-fluid border" alt="Pathway diagram" style="max-width: 100%;" data-hide-on-error="1"></div>`;
     }
 
     if (typeof ResultsCard !== 'undefined') {

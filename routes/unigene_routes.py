@@ -4,7 +4,7 @@ Handles Bio.UniGene parsing and reading operations
 """
 from flask import Blueprint, request, jsonify
 from utils.upload_helpers import saved_upload, UploadError
-from utils.request_helpers import clamp_int
+from utils.request_helpers import clamp_int, error_response
 from utils.unigene_helpers import unigene_parse, unigene_read
 
 bp = Blueprint('unigene', __name__, url_prefix='/api/unigene')
@@ -24,7 +24,7 @@ def parse():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='unigene_routes.parse')
 
 
 @bp.route('/read', methods=['POST'])
@@ -40,4 +40,4 @@ def read():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='unigene_routes.read')

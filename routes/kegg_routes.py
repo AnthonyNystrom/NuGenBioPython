@@ -2,6 +2,8 @@
 Complete routes for KEGG database operations using Bio.KEGG.REST
 """
 from flask import Blueprint, request, jsonify
+
+from utils.request_helpers import error_response
 from utils.kegg_helpers import (
     kegg_find_search, kegg_list_entries, kegg_link_entries,
     kegg_convert_ids, kegg_get_info, kegg_get_entry, parse_kegg_entry
@@ -31,7 +33,7 @@ def search():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.search')
 
 
 @bp.route('/kegg/list', methods=['POST'])
@@ -53,7 +55,7 @@ def list_database():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.list_database')
 
 
 @bp.route('/kegg/link', methods=['POST'])
@@ -77,7 +79,7 @@ def link():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.link')
 
 
 @bp.route('/kegg/convert', methods=['POST'])
@@ -105,7 +107,7 @@ def convert():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.convert')
 
 
 @bp.route('/kegg/info', methods=['POST'])
@@ -124,7 +126,7 @@ def info():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.info')
 
 
 @bp.route('/kegg/get/<entry_id>', methods=['GET'])
@@ -152,4 +154,4 @@ def get_entry(entry_id):
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='kegg_routes.get_entry')

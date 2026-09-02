@@ -1,7 +1,13 @@
 """
 Routes for sequence analysis and SeqIO operations
 """
+import logging
 from flask import Blueprint, request, jsonify, send_file, current_app
+
+from utils.request_helpers import error_response, require_json, clamp_int
+from utils.sequence_plots import (
+    render_gc_skew, render_dot_plot, dot_plot_points, MAX_DOTPLOT_LEN,
+)
 import os
 from werkzeug.utils import secure_filename
 from io import StringIO
@@ -9,6 +15,7 @@ from io import StringIO
 from dependencies import Seq, SeqUtils, SeqIO, SeqRecord
 import re
 
+log = logging.getLogger(__name__)
 bp = Blueprint('sequence', __name__, url_prefix='/api')
 
 
@@ -78,7 +85,7 @@ def analyze_sequence():
 
         return jsonify({'success': True, 'analysis': analysis})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.analyze_sequence')
 
 
 @bp.route('/sequence/melting_temp', methods=['POST'])
@@ -116,7 +123,7 @@ def melting_temp():
 
         return jsonify({'success': True, **result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.melting_temp')
 
 @bp.route('/sequence/find_orfs', methods=['POST'])
 def find_orfs():
@@ -169,7 +176,7 @@ def find_orfs():
 
         return jsonify({'success': True, 'orfs': orfs[:20], 'total_found': len(orfs)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.find_orfs')
 
 @bp.route('/sequence/codon_usage_analysis', methods=['POST'])
 def codon_usage():
@@ -209,7 +216,7 @@ def codon_usage():
             'top_codons': top_codons
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.codon_usage')
 
 @bp.route('/sequence/checksums', methods=['POST'])
 def checksums():
@@ -233,7 +240,7 @@ def checksums():
             'crc64': crc64(seq)
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.checksums')
 
 @bp.route('/sequence/protparam_advanced', methods=['POST'])
 def protparam_advanced():
@@ -259,7 +266,7 @@ def protparam_advanced():
             'flexibility': analyzed_seq.flexibility()[:50] if len(analyzed_seq.flexibility()) > 0 else []
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.protparam_advanced')
 
 @bp.route('/sequence/molecular_weight_advanced', methods=['POST'])
 def molecular_weight_advanced():
@@ -289,7 +296,7 @@ def molecular_weight_advanced():
 
         return jsonify({'success': True, 'molecular_weights': molecular_weights})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.molecular_weight_advanced')
 
 @bp.route('/sequence/reference_data', methods=['GET'])
 def reference_data():
@@ -320,7 +327,7 @@ def reference_data():
             'iupac_protein': iupac_protein
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.reference_data')
 
 @bp.route('/sequence/transcribe', methods=['POST'])
 def transcribe():
@@ -355,7 +362,7 @@ def transcribe():
             'result': result
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.transcribe')
 
 @bp.route('/sequence/gc_analysis', methods=['POST'])
 def gc_analysis():
@@ -381,7 +388,7 @@ def gc_analysis():
             try:
                 gc123 = GC123(seq)
             except Exception:
-                pass
+                log.warning('GC123 unavailable for this sequence', exc_info=True)
 
         # GC Skew
         gc_skew_values = []
@@ -389,17 +396,82 @@ def gc_analysis():
             try:
                 gc_skew_values = GC_skew(seq, window=window)
             except Exception:
-                pass
+                log.warning('GC skew unavailable for this sequence', exc_info=True)
+
+        # The skew values were previously returned only as a list of numbers
+        # and shown to the user as "First 10 values: ..." — which conveys
+        # nothing. The cumulative curve is the point: its minimum marks the
+        # replication origin and its maximum the terminus.
+        skew_plot = None
+        if len(sequence) >= window * 3:
+            try:
+                skew_plot = render_gc_skew(sequence, window=window,
+                                           title='GC skew')
+            except Exception:
+                log.warning('GC skew plot failed', exc_info=True)
 
         return jsonify({
             'success': True,
             'gc_content': gc_content,
             'gc123': gc123,
             'gc_skew': gc_skew_values,
-            'window_size': window
+            'window_size': window,
+            'skew_plot': skew_plot,
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.gc_analysis')
+
+
+@bp.route('/sequence/dotplot', methods=['POST'])
+def dotplot():
+    """Render a dot plot comparing two sequences (or one against itself).
+
+    Diagonal runs are conserved segments, parallel diagonals are repeats or
+    duplications, and runs perpendicular to the main diagonal are inversions —
+    structure that a single alignment score cannot show.
+    """
+    try:
+        data = require_json()
+        seq1 = (data.get('sequence1') or '').strip().upper()
+        seq2 = (data.get('sequence2') or '').strip().upper() or seq1
+        word_size = clamp_int(data.get('word_size', 8), 8, lo=2, hi=64)
+        include_reverse = bool(data.get('include_reverse', True))
+
+        if not seq1:
+            return jsonify({'success': False,
+                            'error': 'Please provide a sequence'})
+
+        for name, seq in (('sequence1', seq1), ('sequence2', seq2)):
+            if len(seq) > MAX_DOTPLOT_LEN:
+                return jsonify({
+                    'success': False,
+                    'error': (f'{name} is {len(seq):,} bp; the dot plot is '
+                              f'limited to {MAX_DOTPLOT_LEN:,} bp per '
+                              f'sequence.')})
+
+        (fx, _fy), (rx, _ry), truncated = dot_plot_points(
+            seq1, seq2, word_size, include_reverse)
+
+        self_comparison = seq1 == seq2
+        plot = render_dot_plot(
+            seq1, seq2, word_size=word_size,
+            label1='Sequence 1 (bp)',
+            label2='Sequence 1 (bp)' if self_comparison else 'Sequence 2 (bp)',
+            title='Self-comparison' if self_comparison else 'Dot plot',
+            include_reverse=include_reverse)
+
+        return jsonify({
+            'success': True,
+            'plot': plot,
+            'forward_matches': len(fx),
+            'reverse_matches': len(rx),
+            'truncated': truncated,
+            'word_size': word_size,
+            'self_comparison': self_comparison,
+            'lengths': {'sequence1': len(seq1), 'sequence2': len(seq2)},
+        })
+    except Exception as e:
+        return error_response(e, context='sequence_routes.dotplot')
 
 @bp.route('/sequence/protein_convert', methods=['POST'])
 def protein_convert():
@@ -430,7 +502,7 @@ def protein_convert():
             'result': result
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.protein_convert')
 
 @bp.route('/sequence/manipulate', methods=['POST'])
 def manipulate():
@@ -469,7 +541,7 @@ def manipulate():
             'result_length': len(result)
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.manipulate')
 
 @bp.route('/sequence/search', methods=['POST'])
 def search():
@@ -523,4 +595,4 @@ def search():
             'result': result
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='sequence_routes.search')

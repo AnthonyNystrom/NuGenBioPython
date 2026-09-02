@@ -1,4 +1,4 @@
-<script>
+<script nonce="{{ csp_nonce }}">
 let currentMotif = null;
 
 // Update threshold display
@@ -85,7 +85,8 @@ function uploadMotifFile() {
 function displayMotifInCreate(motif) {
     const logoDiv = document.getElementById('createLogoView');
     if (motif.logo) {
-        logoDiv.innerHTML = `<img src="${motif.logo}" class="img-fluid" alt="Sequence Logo" style="max-height: 400px;">`;
+        logoDiv.innerHTML = `<img src="${motif.logo}" class="img-fluid" alt="Sequence Logo" style="max-height: 400px;">`
+            + FigureExport.controls(motif.logo, 'sequence_logo');
     } else {
         logoDiv.innerHTML = '<p class="text-muted small">Logo generation failed</p>';
     }
@@ -279,10 +280,12 @@ function displayComparison(data) {
 
     // Display logos
     if (data.motif1.logo) {
-        logo1Div.innerHTML = `<img src="${data.motif1.logo}" class="img-fluid" style="max-height: 250px;">`;
+        logo1Div.innerHTML = `<img src="${data.motif1.logo}" class="img-fluid" alt="Sequence logo, motif 1" style="max-height: 250px;">`
+            + FigureExport.controls(data.motif1.logo, 'sequence_logo_1');
     }
     if (data.motif2.logo) {
-        logo2Div.innerHTML = `<img src="${data.motif2.logo}" class="img-fluid" style="max-height: 250px;">`;
+        logo2Div.innerHTML = `<img src="${data.motif2.logo}" class="img-fluid" alt="Sequence logo, motif 2" style="max-height: 250px;">`
+            + FigureExport.controls(data.motif2.logo, 'sequence_logo_2');
     }
 }
 

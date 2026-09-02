@@ -667,6 +667,21 @@ function displayRamaResults(data) {
         `<div class="col-md-4"><div class="border rounded p-2 bg-danger text-white text-center"><strong>Outliers:</strong> ${data.classification.outliers}</div></div>` +
         '</div>';
 
+    // A Ramachandran plot is inherently a scatter — the table of angles below
+    // is the backing data, not the readout. Basin contours are drawn behind
+    // the points so the classification is legible rather than asserted.
+    if (data.plot) {
+        summary +=
+            '<div class="text-center mb-3">' +
+            `<img src="${data.plot}" class="img-fluid" alt="Ramachandran plot" style="max-width:100%">` +
+            FigureExport.controls(data.plot, 'ramachandran') +
+            '</div>';
+    }
+    if (data.outlier_residues && data.outlier_residues.length) {
+        summary += '<div class="small text-muted mb-3"><strong>Outliers:</strong> ' +
+            data.outlier_residues.map(escapeHtml).join(', ') + '</div>';
+    }
+
     let table = '<h6 class="mb-2"><i class="fas fa-table"></i> Phi/Psi Angles (first 100)</h6>';
     table += '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Residue</th><th>Phi (°)</th><th>Psi (°)</th></tr></thead><tbody>';
     data.phi_psi_data.forEach(r => { table += `<tr><td>${escapeHtml(r.residue)}</td><td>${r.phi}</td><td>${r.psi}</td></tr>`; });

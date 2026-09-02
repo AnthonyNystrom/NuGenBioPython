@@ -10,6 +10,8 @@ from functools import lru_cache
 
 from flask import Blueprint, jsonify
 
+from utils.request_helpers import safe_error_message
+
 try:
     import requests
 except ImportError:  # pragma: no cover
@@ -45,7 +47,7 @@ def _probe(url: str, timeout: float = 3.0, method: str = 'HEAD') -> dict:
     except requests.ConnectionError:
         return {'ok': False, 'error': 'connection_error'}
     except Exception as e:  # pragma: no cover
-        return {'ok': False, 'error': str(e)[:80]}
+        return {'ok': False, 'error': safe_error_message(e)[:80]}
 
 
 @status_bp.route('/kegg')

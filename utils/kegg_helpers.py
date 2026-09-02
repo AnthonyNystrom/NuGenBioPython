@@ -24,7 +24,7 @@ def kegg_find_search(database, query, organism=None):
 
     try:
         # Construct search query
-        with remote_timeout(_KEGG_TIMEOUT):
+        with remote_timeout(_KEGG_TIMEOUT, service='kegg'):
             if database == 'genes' and organism:
                 search_result = REST.kegg_find(organism, query)
             else:
@@ -71,7 +71,7 @@ def kegg_list_entries(database, organism=None):
 
     try:
         # Get list of entries
-        with remote_timeout(_KEGG_TIMEOUT):
+        with remote_timeout(_KEGG_TIMEOUT, service='kegg'):
             if organism:
                 list_result = REST.kegg_list(f"{organism}:{database}")
             else:
@@ -123,7 +123,7 @@ def kegg_link_entries(target_db, source_db, source_id=None):
 
     try:
         # Get links
-        with remote_timeout(_KEGG_TIMEOUT):
+        with remote_timeout(_KEGG_TIMEOUT, service='kegg'):
             if source_id:
                 link_result = REST.kegg_link(target_db, source_id)
             else:
@@ -171,7 +171,7 @@ def kegg_convert_ids(target_db, source_db, ids=None):
 
     try:
         # Perform conversion
-        with remote_timeout(_KEGG_TIMEOUT):
+        with remote_timeout(_KEGG_TIMEOUT, service='kegg'):
             if ids:
                 # Convert specific IDs
                 if isinstance(ids, list):
@@ -219,7 +219,7 @@ def kegg_get_info(database):
     """
     try:
         # Get info
-        with remote_timeout(_KEGG_TIMEOUT):
+        with remote_timeout(_KEGG_TIMEOUT, service='kegg'):
             if database:
                 info_result = REST.kegg_info(database)
             else:

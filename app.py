@@ -8,6 +8,7 @@ matplotlib.use('Agg')
 
 import logging
 import os
+import secrets
 
 try:
     from dotenv import load_dotenv
@@ -20,7 +21,7 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s %(name)s: %(message)s',
 )
 
-from flask import Flask
+from flask import Flask, g
 from utils.config import configure_app
 from routes import register_blueprints
 
@@ -45,34 +46,55 @@ def _static_cache_bust(endpoint, values):
                 pass
 
 
-# Content-Security-Policy. 'unsafe-inline' on script-src is retained for now
-# because ~73 inline onclick handlers with arguments + inline <script> blocks
-# remain (simple fn() cases are migrated to data-action via utils.js). A
-# future pass can externalize those and drop 'unsafe-inline' entirely.
+# Content-Security-Policy.
+#
+# script-src no longer carries 'unsafe-inline'. Every inline <script> block
+# carries a per-request nonce (see _csp_nonce below), and the ~54 inline
+# onclick= handlers that previously made a nonce impossible — inline event
+# handlers can never be nonce-covered — have been migrated to the data-action
+# dispatcher in static/js/utils.js.
+#
+# style-src keeps 'unsafe-inline': inline style="..." attributes are
+# widespread in the templates and, like event handlers, cannot be nonced.
+# That is a much smaller risk than script injection.
+#
 # Connect-src allowlists the external biology APIs the app talks to.
-_CSP = (
-    "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' "
-        "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://3Dmol.org; "
-    "style-src 'self' 'unsafe-inline' "
-        "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
-    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
-    "img-src 'self' data: https:; "
-    "connect-src 'self' "
-        "https://eutils.ncbi.nlm.nih.gov https://www.ncbi.nlm.nih.gov "
-        "https://rest.kegg.jp https://rest.uniprot.org https://www.uniprot.org "
-        # RCSB PDB — /structure fetches .pdb files directly from the browser
-        # (see structure.js fetchFromPDB).
-        "https://files.rcsb.org "
-        # CDN hosts — needed so DevTools can fetch .js.map / .css.map
-        # sourcemaps for bootstrap.bundle.min.js and Font Awesome.
-        "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-    # 3Dmol.js spawns Web Workers from blob: URLs for surface computation.
-    "worker-src 'self' blob:; "
-    "object-src 'none'; "
-    "base-uri 'self'; "
-    "frame-ancestors 'none'"
-)
+def _build_csp(nonce):
+    return (
+        "default-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}' "
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://3Dmol.org; "
+        "style-src 'self' 'unsafe-inline' "
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' "
+            "https://eutils.ncbi.nlm.nih.gov https://www.ncbi.nlm.nih.gov "
+            "https://rest.kegg.jp https://rest.uniprot.org https://www.uniprot.org "
+            # RCSB PDB — /structure fetches .pdb files directly from the browser
+            # (see structure.js fetchFromPDB).
+            "https://files.rcsb.org "
+            # CDN hosts — needed so DevTools can fetch .js.map / .css.map
+            # sourcemaps for bootstrap.bundle.min.js and Font Awesome.
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        # 3Dmol.js spawns Web Workers from blob: URLs for surface computation.
+        "worker-src 'self' blob:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'"
+    )
+
+
+@app.before_request
+def _csp_nonce():
+    """Mint a fresh nonce per request for inline <script> blocks."""
+    g.csp_nonce = secrets.token_urlsafe(16)
+
+
+@app.context_processor
+def _inject_csp_nonce():
+    """Expose the nonce to templates as {{ csp_nonce }}."""
+    return {'csp_nonce': getattr(g, 'csp_nonce', '')}
 
 
 @app.after_request
@@ -80,7 +102,8 @@ def _apply_security_headers(response):
     response.headers.setdefault('X-Content-Type-Options', 'nosniff')
     response.headers.setdefault('X-Frame-Options', 'DENY')
     response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.headers.setdefault('Content-Security-Policy', _CSP)
+    response.headers.setdefault(
+        'Content-Security-Policy', _build_csp(getattr(g, 'csp_nonce', '')))
     response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
     return response
 

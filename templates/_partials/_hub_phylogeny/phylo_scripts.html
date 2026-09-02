@@ -1,5 +1,5 @@
 
-<script>
+<script nonce="{{ csp_nonce }}">
 // Global variable to track if tree is loaded
 let treeLoaded = false;
 
@@ -112,11 +112,7 @@ function displayTreeResults(data) {
     if (data.tree_image) {
         treeVisDiv.innerHTML = `
             <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree" style="max-width: 100%; height: auto;">
-            <div class="mt-2">
-                <button class="btn-app-ghost btn-app-sm" onclick="downloadTreeImage('${data.tree_image}')">
-                    <i class="fas fa-download"></i> Download Image
-                </button>
-            </div>
+            ${FigureExport.controls(data.tree_image, 'phylogenetic_tree')}
         `;
     }
 
@@ -565,11 +561,7 @@ function updateVisualization() {
             const treeVisDiv = document.getElementById('treeVisualization');
             treeVisDiv.innerHTML = `
                 <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree">
-                <div class="mt-2">
-                    <button class="btn-app-ghost btn-app-sm" onclick="downloadTreeImage('${data.tree_image}')">
-                        <i class="fas fa-download"></i> Download Image
-                    </button>
-                </div>
+                ${FigureExport.controls(data.tree_image, 'phylogenetic_tree')}
             `;
             showAlert('Visualization updated', 'success');
         } else {
@@ -643,12 +635,11 @@ function clearTreeString() {
     document.getElementById('treeString').value = '';
 }
 
+// Thin alias for anything still calling this by name. The tree image is an
+// SVG data URL, and this used to save it under a hardcoded .png filename,
+// producing a file that would not open. FigureExport derives the extension
+// from the payload's actual MIME type.
 function downloadTreeImage(imageSrc) {
-    const link = document.createElement('a');
-    link.href = imageSrc;
-    link.download = 'phylogenetic_tree.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    FigureExport.download(imageSrc, 'phylogenetic_tree');
 }
 </script>

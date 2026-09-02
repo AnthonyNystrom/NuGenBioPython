@@ -210,7 +210,7 @@ API_EXAMPLES = [
             "mode": "global",
         },
         "expect_keys": ["alignment", "score", "statistics"],
-        "notes": "mirror of alignment.html Load Pairwise Example",
+        "notes": "mirror of the Compare hub Load Pairwise Example",
     },
     {
         "endpoint": "/api/alignment/multiple",

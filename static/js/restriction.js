@@ -571,7 +571,7 @@ function displayEnzymeBrowser(enzymes) {
         const colorClass = enzyme.is_blunt ? 'bg-secondary' : 'bg-success';
         html += `
             <span class="badge ${colorClass} enzyme-badge"
-                  onclick="showEnzymeDetails('${enzyme.name}')"
+                  data-action="showEnzymeDetails" data-action-args="[&quot;${enzyme.name}&quot;]"
                   title="${enzyme.site} - ${enzyme.overhang_type}">
                 ${enzyme.name}
             </span>

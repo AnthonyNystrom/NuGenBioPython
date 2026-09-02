@@ -8,9 +8,10 @@ import os
 from collections import OrderedDict
 from werkzeug.utils import secure_filename
 
+from utils.entrez_helpers import configure_entrez
 from dependencies import SearchIO, SwissProt, ProtParam, CodonTable, Seq
 from utils.upload_helpers import saved_upload, UploadError
-from utils.request_helpers import remote_timeout, clamp_int
+from utils.request_helpers import remote_timeout, clamp_int, error_response, safe_error_message
 import time
 import uuid
 
@@ -64,7 +65,7 @@ def api_sequence_protparam():
 
         return jsonify({'success': True, 'analysis': result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_sequence_protparam')
 
 
 # ============================================================================
@@ -147,7 +148,7 @@ def api_hmm_build():
 
         return jsonify({'success': True, 'model': model_info})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_hmm_build')
 
 
 @bp.route('/advanced/hmm/train', methods=['POST'])
@@ -248,7 +249,7 @@ def api_hmm_train():
 
         return jsonify({'success': True, 'training': training_results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_hmm_train')
 
 
 @bp.route('/advanced/hmm/decode', methods=['POST'])
@@ -286,7 +287,7 @@ def api_hmm_decode():
         try:
             state_path, log_probability = hmm_model.viterbi(emissions, state_alphabet)
         except Exception as e:
-            return jsonify({'success': False, 'error': f'Viterbi decoding failed: {str(e)}'})
+            return jsonify({'success': False, 'error': f'Viterbi decoding failed: {safe_error_message(e)}'})
 
         decoding_time = int((time.time() - start_time) * 1000)
 
@@ -312,7 +313,7 @@ def api_hmm_decode():
 
         return jsonify({'success': True, 'decoding': decoding_results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_hmm_decode')
 
 
 # Bio.Data - Biological Reference Data
@@ -349,7 +350,7 @@ def api_blast_search_real():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_blast_search_real')
 
 
 # Literature Mining - Medline/PubMed
@@ -385,7 +386,7 @@ def api_medline_parse():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_medline_parse')
 
 
 # Nexus Phylogenetic Format
@@ -419,7 +420,7 @@ def api_nexus_parse():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_nexus_parse')
 
 
 def _parse_nexus_file(filepath):
@@ -459,7 +460,7 @@ def api_scop_info():
 
         return jsonify({'success': True, 'results': results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_scop_info')
 
 
 # Codon Alignment (Experimental)
@@ -482,7 +483,7 @@ def api_codonalign_info():
 
         return jsonify({'success': True, 'results': results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_codonalign_info')
 
 # Additional endpoints to match frontend JavaScript
 
@@ -501,10 +502,10 @@ def api_literature_search():
             return jsonify({'success': False, 'error': 'Query required'})
 
         # Set email for NCBI (required by Entrez)
-        Entrez.email = os.environ.get('ENTREZ_EMAIL', 'your.email@example.com')
+        configure_entrez()
 
         # Search PubMed (timeout-bounded so a hung NCBI socket can't pin the worker)
-        with remote_timeout(_ENTREZ_TIMEOUT):
+        with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
             handle = Entrez.esearch(db='pubmed', term=query, retmax=max_results)
             search_results = Entrez.read(handle)
             handle.close()
@@ -515,7 +516,7 @@ def api_literature_search():
             return jsonify({'success': True, 'results': []})
 
         # Fetch details for the articles
-        with remote_timeout(_ENTREZ_TIMEOUT):
+        with remote_timeout(_ENTREZ_TIMEOUT, service='ncbi'):
             handle = Entrez.efetch(db='pubmed', id=id_list, rettype='abstract', retmode='xml')
             records = Entrez.read(handle)
             handle.close()
@@ -566,7 +567,7 @@ def api_literature_search():
 
         return jsonify({'success': True, 'results': results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_literature_search')
 
 
 @bp.route('/advanced/scop/lookup', methods=['POST'])
@@ -598,7 +599,7 @@ def api_scop_lookup():
 
         return jsonify({'success': True, 'classification': classification})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_scop_lookup')
 
 
 @bp.route('/advanced/codon/align', methods=['POST'])
@@ -650,4 +651,4 @@ def api_codon_align():
 
         return jsonify({'success': True, 'alignment': alignment})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='advanced_routes.api_codon_align')

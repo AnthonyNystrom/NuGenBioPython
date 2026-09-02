@@ -1,10 +1,13 @@
 """
 Routes for comprehensive motif analysis
 """
+import logging
 import os
 from collections import OrderedDict
 
 from flask import Blueprint, request, jsonify, session
+
+from utils.request_helpers import error_response
 import base64
 from io import BytesIO
 import numpy as np
@@ -16,11 +19,16 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+from utils.plot_helpers import (
+    PALETTE, MUTED_COLOR, style_axes,
+    figure_to_svg_data_url, figure_to_png_data_url,
+)
 from utils.motif_helpers import (
     create_motif_from_sequences, parse_motif_from_file, get_motif_info,
     search_motif_advanced, compare_motifs, export_motif, calculate_motif_statistics
 )
 
+log = logging.getLogger(__name__)
 bp = Blueprint('motifs', __name__, url_prefix='/api')
 
 # Bounded in-memory motif cache. Evicts oldest entries at the cap.
@@ -69,7 +77,7 @@ def create_motif():
             'motif': info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.create_motif')
 
 
 @bp.route('/motifs/upload', methods=['POST'])
@@ -118,7 +126,7 @@ def upload_motif():
             'multiple_motifs': multiple
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.upload_motif')
 
 
 @bp.route('/motifs/search', methods=['POST'])
@@ -154,7 +162,7 @@ def search_motif():
             'statistics': stats
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.search_motif')
 
 
 @bp.route('/motifs/compare', methods=['POST'])
@@ -200,7 +208,7 @@ def compare_motifs_route():
             'motif2': info2
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.compare_motifs_route')
 
 
 @bp.route('/motifs/export', methods=['GET'])
@@ -225,7 +233,7 @@ def export_motif_route():
             'format': format_type
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.export_motif_route')
 
 
 @bp.route('/motifs/info', methods=['GET'])
@@ -252,7 +260,7 @@ def get_motif_info_route():
             'motif': info
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='motif_routes.get_motif_info_route')
 
 
 def generate_sequence_logo(m, use_information_content=True):
@@ -300,10 +308,10 @@ def generate_sequence_logo(m, use_information_content=True):
             df = pd.DataFrame(rows)
 
             color_scheme = {
-                'A': '#059669',  # green
-                'C': '#2563eb',  # blue
-                'G': '#ca8a04',  # gold
-                'T': '#dc2626',  # red
+                'A': PALETTE['green'],
+                'C': PALETTE['blue'],
+                'G': PALETTE['yellow'],
+                'T': PALETTE['red'],
             }
 
             fig, ax = plt.subplots(figsize=(width, height), dpi=100)
@@ -315,32 +323,24 @@ def generate_sequence_logo(m, use_information_content=True):
                 baseline_width=0.0,
                 show_spines=False,
             )
-            ax.set_xlabel('Position', fontsize=9, color='#64748b')
+            ax.set_xlabel('Position', fontsize=9, color=MUTED_COLOR)
             ax.set_ylabel('Bits' if use_information_content else 'Frequency',
-                          fontsize=9, color='#64748b')
+                          fontsize=9, color=MUTED_COLOR)
             ax.set_xticks(range(len(m)))
             ax.set_xticklabels([str(i + 1) for i in range(len(m))])
-            ax.tick_params(axis='both', labelsize=8, colors='#94a3b8')
             ax.set_ylim(0, 2.05 if use_information_content else 1.02)
-            ax.spines['left'].set_color('#cbd5e1')
-            ax.spines['bottom'].set_color('#cbd5e1')
-            ax.spines['left'].set_linewidth(0.6)
-            ax.spines['bottom'].set_linewidth(0.6)
+            style_axes(ax)
 
-            from io import StringIO as _SIO
-            buf = _SIO()
-            fig.savefig(buf, format='svg', bbox_inches='tight',
-                        facecolor='none', transparent=True, pad_inches=0.2)
-            plt.close(fig)
-            return 'data:image/svg+xml;base64,' + \
-                base64.b64encode(buf.getvalue().encode('utf-8')).decode()
+            # Transparent so the logo sits on the card, but the chrome is
+            # still themed — see figure_to_svg_data_url.
+            return figure_to_svg_data_url(fig, transparent=True)
 
         except ImportError:
             # Fallback: stacked bar chart with lettered segments — better
             # contrast than the previous version (dark letter on white
             # boxes instead of white letter on saturated color).
-            colors = {'A': '#059669', 'C': '#2563eb',
-                      'G': '#ca8a04', 'T': '#dc2626'}
+            colors = {'A': PALETTE['green'], 'C': PALETTE['blue'],
+                      'G': PALETTE['yellow'], 'T': PALETTE['red']}
             fig, ax = plt.subplots(figsize=(width, height), dpi=100)
             fig.patch.set_alpha(0.0)
             ax.set_facecolor('none')
@@ -359,23 +359,19 @@ def generate_sequence_logo(m, use_information_content=True):
                                 ha='center', va='center', fontsize=13,
                                 fontweight='700', color='white')
                     bottom += h
-            ax.set_xlabel('Position', fontsize=9, color='#64748b')
+            ax.set_xlabel('Position', fontsize=9, color=MUTED_COLOR)
             ax.set_ylabel('Bits' if use_information_content else 'Frequency',
-                          fontsize=9, color='#64748b')
+                          fontsize=9, color=MUTED_COLOR)
             ax.set_xticks(range(len(m)))
             ax.set_xticklabels([str(i + 1) for i in range(len(m))])
-            ax.tick_params(axis='both', labelsize=8, colors='#94a3b8')
             ax.set_ylim(0, 2.05 if use_information_content else 1.02)
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['left'].set_color('#cbd5e1')
-            ax.spines['bottom'].set_color('#cbd5e1')
-            buf = BytesIO()
-            fig.savefig(buf, format='png', bbox_inches='tight',
-                        facecolor='none', transparent=True, dpi=150, pad_inches=0.2)
-            plt.close(fig)
-            return 'data:image/png;base64,' + \
-                base64.b64encode(buf.getvalue()).decode()
+            style_axes(ax)
+
+            return figure_to_png_data_url(fig, transparent=True)
 
     except Exception:
+        # A missing logo is not fatal — the caller renders the rest of the
+        # motif — but it used to vanish with no trace at all, leaving no way
+        # to tell a malformed motif from a broken renderer.
+        log.exception('sequence logo generation failed')
         return None

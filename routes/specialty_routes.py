@@ -2,6 +2,8 @@
 Routes for specialty BioPython modules (PopGen, Pathway, UniGene, HMM, Graphics)
 """
 from flask import Blueprint, request, jsonify, current_app
+
+from utils.request_helpers import error_response, safe_error_message
 import os
 import base64
 import tempfile
@@ -12,7 +14,7 @@ from contextlib import contextmanager
 
 from dependencies import PopGen, Pathway, UniGene, HMM, BasicChromosome, ColorSpiral, plt, np
 from utils import popgen_stats
-from utils.upload_helpers import saved_upload
+from utils.upload_helpers import saved_upload, cleanup_upload
 
 bp = Blueprint('specialty', __name__, url_prefix='/api')
 
@@ -155,7 +157,7 @@ def load_popgen_example_complex():
         }
         return jsonify({'success': True, 'results': results})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='specialty_routes.load_popgen_example_complex')
 
 
 @bp.route('/popgen/load_example', methods=['POST'])
@@ -201,7 +203,7 @@ def load_popgen_example():
             'results': results
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         return jsonify({'success': False, 'error': error_msg})
 
 
@@ -254,7 +256,7 @@ def parse_popgen():
             'results': results
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -283,11 +285,8 @@ def popgen_allele_frequencies_python():
                 with open(filepath, 'r') as f:
                     record = GenePop.read(f)
             finally:
-                if should_cleanup and os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except Exception as e:
-                        pass
+                if should_cleanup:
+                    cleanup_upload(filepath)
 
         results = popgen_stats.calculate_allele_frequencies(record)
 
@@ -297,7 +296,7 @@ def popgen_allele_frequencies_python():
             'method': 'Pure Python (no external binary)'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='specialty_routes.popgen_allele_frequencies_python')
 
 
 @bp.route('/popgen/heterozygosity_python', methods=['POST'])
@@ -320,11 +319,8 @@ def popgen_heterozygosity_python():
                 with open(filepath, 'r') as f:
                     record = GenePop.read(f)
             finally:
-                if should_cleanup and os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except Exception as e:
-                        pass
+                if should_cleanup:
+                    cleanup_upload(filepath)
 
         results = popgen_stats.calculate_heterozygosity(record)
 
@@ -334,7 +330,7 @@ def popgen_heterozygosity_python():
             'method': 'Pure Python (no external binary)'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='specialty_routes.popgen_heterozygosity_python')
 
 
 @bp.route('/popgen/hardy_weinberg_python', methods=['POST'])
@@ -357,11 +353,8 @@ def popgen_hardy_weinberg_python():
                 with open(filepath, 'r') as f:
                     record = GenePop.read(f)
             finally:
-                if should_cleanup and os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except Exception as e:
-                        pass
+                if should_cleanup:
+                    cleanup_upload(filepath)
 
         results = popgen_stats.hardy_weinberg_test(record)
 
@@ -371,7 +364,7 @@ def popgen_hardy_weinberg_python():
             'method': 'Pure Python (chi-square test)'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='specialty_routes.popgen_hardy_weinberg_python')
 
 
 @bp.route('/popgen/fst_python', methods=['POST'])
@@ -394,11 +387,8 @@ def popgen_fst_python():
                 with open(filepath, 'r') as f:
                     record = GenePop.read(f)
             finally:
-                if should_cleanup and os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except Exception as e:
-                        pass
+                if should_cleanup:
+                    cleanup_upload(filepath)
 
         results = popgen_stats.calculate_fst(record)
 
@@ -408,7 +398,7 @@ def popgen_fst_python():
             'method': 'Pure Python (Weir & Cockerham method)'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='specialty_routes.popgen_fst_python')
 
 
 @bp.route('/popgen/linkage_disequilibrium', methods=['POST'])
@@ -440,20 +430,17 @@ def popgen_linkage_disequilibrium():
                     ld_result = ctrl.test_ld_all_pair(locus1, locus2)
                     ld_results[pair_key] = ld_result
                 except Exception as e:
-                    ld_results[pair_key] = {'error': str(e)}
+                    ld_results[pair_key] = {'error': safe_error_message(e)}
 
             return jsonify({
                 'success': True,
                 'results': ld_results
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -482,13 +469,10 @@ def popgen_multilocus_fstats():
                 'results': ml_fstats
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -533,20 +517,17 @@ def popgen_heterozygosity():
                             'observed_heterozygotes': het_data[3]
                         }
                     except Exception as e:
-                        het_results[f'population_{pop_idx + 1}'][locus] = {'error': str(e)}
+                        het_results[f'population_{pop_idx + 1}'][locus] = {'error': safe_error_message(e)}
 
             return jsonify({
                 'success': True,
                 'results': het_results
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -575,13 +556,10 @@ def popgen_fst_pairwise():
                 'results': fst_pair
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -619,7 +597,7 @@ def popgen_fis_analysis():
                         fis_value = ctrl.get_fis(pop_idx, locus)
                         fis_results[f'population_{pop_idx + 1}'][locus] = fis_value
                     except Exception as e:
-                        fis_results[f'population_{pop_idx + 1}'][locus] = {'error': str(e)}
+                        fis_results[f'population_{pop_idx + 1}'][locus] = {'error': safe_error_message(e)}
 
             # Get average Fis across all populations
             avg_fis = ctrl.get_avg_fis()
@@ -632,13 +610,10 @@ def popgen_fis_analysis():
                 }
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -667,13 +642,10 @@ def popgen_nm_estimation():
                 'results': {'nm': nm_estimate}
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -712,13 +684,10 @@ def popgen_hw_per_population():
                 'results': hw_results
             })
         finally:
-            if should_cleanup and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                except Exception as e:
-                    pass
+            if should_cleanup:
+                cleanup_upload(filepath)
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -805,7 +774,7 @@ def analyze_pathway():
             }
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -875,7 +844,7 @@ def pathway_network():
             }
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -980,7 +949,7 @@ def build_hmm():
                 'sequence_length': len(sequence),
                 'alphabet': alphabet,
                 'training_time': int((time.time() - start_time) * 1000),
-                'error': f'HMM creation failed: {str(e)}',
+                'error': f'HMM creation failed: {safe_error_message(e)}',
                 'model_created': False
             }
 
@@ -989,7 +958,7 @@ def build_hmm():
             'model': model_info
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):
@@ -1054,7 +1023,7 @@ def create_chromosome_visualization():
             'chromosome_count': len(chr_data)
         })
     except Exception as e:
-        error_msg = str(e)
+        error_msg = safe_error_message(e)
         # Check if error is due to missing GenePop binary
         if ('No such file or directory' in error_msg or 'command not found' in error_msg or
             'Genepop' in error_msg or 'Non-zero return code 127' in error_msg):

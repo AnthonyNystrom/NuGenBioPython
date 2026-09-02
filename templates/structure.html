@@ -64,6 +64,9 @@
                     <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dToggleSurface" id="view3dSurfaceBtn" title="Toggle solvent surface">
                         <i class="fas fa-globe"></i> <span class="d-none d-md-inline">Surface</span>
                     </button>
+                    <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dToggleWaters" id="view3dWatersBtn" title="Show crystallographic waters (hidden by default)">
+                        <i class="fas fa-tint"></i> <span class="d-none d-md-inline">Waters</span>
+                    </button>
                     <button type="button" class="btn-app-ghost btn-app-sm" data-action="view3dToggleSpin" id="view3dSpinBtn" title="Toggle spin">
                         <i class="fas fa-sync"></i> <span class="d-none d-md-inline">Spin</span>
                     </button>
@@ -590,7 +593,7 @@
 <!-- 3Dmol.js persistent viewer. Exposes window.NuGenStructureViewer so any
      analysis can drive it (load, recolor, highlight a residue, etc.). -->
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
     const container = document.getElementById('view3dContainer');
     const statusEl  = document.getElementById('view3dStatus');
@@ -658,10 +661,34 @@
         return spec;
     }
 
+    // Crystallographic waters are HETATM records, so styling every HETATM as a
+    // stick drew all of them — 350 in 4INS alone — as red specks scattered
+    // around the protein. Worse, 3Dmol infers bonds by distance, and 4INS has
+    // 49 water pairs closer than 2 A (alternate, partially-occupied sites, the
+    // closest 0.83 A apart), so it drew bonds *between* waters, turning them
+    // into little red rods that look like a rendering fault.
+    //
+    // Every mainstream viewer (PyMOL, Chimera, Mol*) hides waters by default
+    // and lets you ask for them. Same here: hidden unless the Waters toggle is
+    // on. Real ligands and ions — the zincs in insulin, for instance — are
+    // still always shown.
+    const WATER_RESN = ['HOH', 'WAT', 'DOD', 'H2O', 'TIP', 'SOL'];
+    let showWaters = false;
+
     function applyStyle() {
         if (!viewer) return;
         viewer.setStyle({}, currentStyleSpec());
-        viewer.setStyle({ hetflag: true }, { stick: { colorscheme: 'Jmol', radius: 0.15 } });
+        // Non-water heteroatoms: ligands, ions, cofactors.
+        viewer.setStyle({ hetflag: true, resn: WATER_RESN, invert: true },
+                        { stick: { colorscheme: 'Jmol', radius: 0.15 } });
+        if (showWaters) {
+            // Spheres, not sticks — a water is a single atom, and sphere style
+            // sidesteps the spurious inferred bonds entirely.
+            viewer.setStyle({ resn: WATER_RESN },
+                            { sphere: { color: '#dc2626', radius: 0.28 } });
+        } else {
+            viewer.setStyle({ resn: WATER_RESN }, { hidden: true });
+        }
         viewer.render();
     }
 
@@ -754,6 +781,13 @@
         } catch (e) {
             statusEl.textContent = 'Could not build surface: ' + e.message;
         }
+    };
+    window.view3dToggleWaters = function () {
+        if (!viewer) return;
+        showWaters = !showWaters;
+        const btn = document.getElementById('view3dWatersBtn');
+        if (btn) btn.classList.toggle('active', showWaters);
+        applyStyle();
     };
     window.view3dDownloadPng = function () {
         if (!viewer) return;

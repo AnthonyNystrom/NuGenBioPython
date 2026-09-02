@@ -52,11 +52,11 @@
                         <div class="card">
                             <div class="card-body p-2">
                                 <h6 class="mb-2"><i class="fas fa-cogs"></i> Build HMM Model</h6>
-                                <form id="hmmForm" onsubmit="event.preventDefault(); buildHMM();">
+                                <form id="hmmForm" data-action-submit="buildHMM">
                                     <div class="row g-2 mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label small mb-0">Model Type</label>
-                                            <select class="form-select form-select-sm" id="hmmType" onchange="updateHmmDescription()">
+                                            <select class="form-select form-select-sm" id="hmmType" data-action-change="updateHmmDescription">
                                                 <option value="sequence">Sequence Pattern (DNA/RNA)</option>
                                                 <option value="emission">Emission Model (Weather/States)</option>
                                                 <option value="transition">Transition Model (Market/States)</option>
@@ -169,7 +169,7 @@
                         <div class="card">
                             <div class="card-body p-2">
                                 <h6 class="mb-2"><i class="fas fa-search"></i> PubMed Literature Search</h6>
-                                <form id="literatureForm" onsubmit="event.preventDefault(); searchLiterature();">
+                                <form id="literatureForm" data-action-submit="searchLiterature">
                                     <div class="row g-2 mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label small mb-0">Search Query</label>
@@ -230,7 +230,7 @@
                         <div class="card">
                             <div class="card-body p-2">
                                 <h6 class="mb-2"><i class="fas fa-upload"></i> Nexus File Parser</h6>
-                                <form id="nexusForm" onsubmit="event.preventDefault(); parseNexus();">
+                                <form id="nexusForm" data-action-submit="parseNexus">
                                     <div class="mb-2">
                                         <label class="form-label small mb-0">Upload File</label>
                                         <input type="file" class="form-control form-control-sm" id="nexusFile"
@@ -282,7 +282,7 @@
                         <div class="card">
                             <div class="card-body p-2">
                                 <h6 class="mb-2"><i class="fas fa-search"></i> SCOP Classification Lookup</h6>
-                                <form id="scopForm" onsubmit="event.preventDefault(); lookupSCOP();">
+                                <form id="scopForm" data-action-submit="lookupSCOP">
                                     <div class="row g-2 mb-2">
                                         <div class="col-md-8">
                                             <label class="form-label small mb-0">SCOP Identifier</label>
@@ -342,7 +342,7 @@
                         <div class="card">
                             <div class="card-body p-2">
                                 <h6 class="mb-2"><i class="fas fa-align-justify"></i> Codon-Aware Alignment</h6>
-                                <form id="codonForm" onsubmit="event.preventDefault(); alignCodons();">
+                                <form id="codonForm" data-action-submit="alignCodons">
                                     <div class="mb-2">
                                         <label class="form-label small mb-0">Nucleotide Sequences (FASTA)</label>
                                         <textarea class="form-control form-control-sm" id="codonSequences" rows="5"

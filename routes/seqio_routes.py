@@ -11,7 +11,7 @@ import gzip
 import tempfile
 
 from utils.upload_helpers import saved_upload, UploadError
-from utils.request_helpers import clamp_int, clamp_float
+from utils.request_helpers import clamp_int, clamp_float, error_response, safe_error_message
 
 bp = Blueprint('seqio', __name__, url_prefix='/api')
 
@@ -41,7 +41,7 @@ def parse_sequence_file():
                         'length': len(record.seq)
                     })
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Failed to parse file: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Failed to parse file: {safe_error_message(e)}'})
 
         return jsonify({
             'success': True,
@@ -52,7 +52,7 @@ def parse_sequence_file():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.parse_sequence_file')
 
 
 @bp.route('/seqio/convert', methods=['POST'])
@@ -88,7 +88,7 @@ def convert_sequence_format():
             'count': len(seq_records)
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.convert_sequence_format')
 
 
 @bp.route('/seqio/write', methods=['POST'])
@@ -138,7 +138,7 @@ def write_sequences():
         return send_file(temp_path, as_attachment=True, download_name=filename)
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.write_sequences')
 
 
 @bp.route('/seqio/to_dict', methods=['POST'])
@@ -160,7 +160,7 @@ def sequences_to_dict():
             'ids': list(seq_dict.keys())
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.sequences_to_dict')
 
 
 # ============================================================================
@@ -186,7 +186,7 @@ def parse_fastq():
                     for record in SeqIO.parse(filepath, file_format):
                         sequences.append(_extract_fastq_record(record))
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Failed to parse FASTQ: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Failed to parse FASTQ: {safe_error_message(e)}'})
 
         return jsonify({
             'success': True,
@@ -197,7 +197,7 @@ def parse_fastq():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.parse_fastq')
 
 
 def _extract_fastq_record(record):
@@ -267,7 +267,7 @@ def fastq_filter_quality():
             'min_percent': min_percent
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.fastq_filter_quality')
 
 
 @bp.route('/seqio/fastq_trim_quality', methods=['POST'])
@@ -373,7 +373,7 @@ def fastq_trim_quality():
             'quality_cutoff': quality_cutoff
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.fastq_trim_quality')
 
 
 # ============================================================================
@@ -407,7 +407,7 @@ def extract_features():
                                 feature_data['sequence'] = None
                             extracted_features.append(feature_data)
             except Exception as e:
-                return jsonify({'success': False, 'error': f'Failed to extract features: {str(e)}'})
+                return jsonify({'success': False, 'error': f'Failed to extract features: {safe_error_message(e)}'})
 
         return jsonify({
             'success': True,
@@ -418,7 +418,7 @@ def extract_features():
     except UploadError as e:
         return jsonify({'success': False, 'error': str(e)})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.extract_features')
 
 
 # ============================================================================
@@ -474,7 +474,7 @@ def filter_sequences():
             'filtered_count': len(filtered)
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.filter_sequences')
 
 
 @bp.route('/seqio/sort', methods=['POST'])
@@ -508,7 +508,7 @@ def sort_sequences():
             'reverse': reverse
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.sort_sequences')
 
 
 # ============================================================================
@@ -557,7 +557,7 @@ def slice_sequences():
             'slice_type': slice_type
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.slice_sequences')
 
 
 # ============================================================================
@@ -612,7 +612,7 @@ def sequence_statistics():
 
         return jsonify({'success': True, 'statistics': stats})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.sequence_statistics')
 
 
 # ============================================================================
@@ -662,4 +662,4 @@ def batch_convert():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='seqio_routes.batch_convert')

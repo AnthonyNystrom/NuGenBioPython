@@ -281,5 +281,55 @@ t(rcErr.includes('role="alert"'), 'showError sets role=alert');
 t(rcErr.includes('BLAST failed'), 'showError shows the title');
 t(rcErr.includes('NCBI returned 503'), 'showError shows the message');
 
+
+// ---------- FigureExport ----------
+// Regression: the phylo page saved SVG data URLs under a hardcoded .png
+// filename, producing a file that would not open. The extension must come
+// from the payload's actual MIME type.
+const FE = global.window.FigureExport;
+
+t(FE.mimeType('data:image/svg+xml;base64,AAA') === 'image/svg+xml',
+  'FigureExport reads the MIME type from a data URL');
+t(FE.mimeType('') === '', 'FigureExport tolerates an empty URL');
+
+t(FE.extension('data:image/svg+xml;base64,AAA') === 'svg',
+  'FigureExport maps svg+xml -> .svg');
+t(FE.extension('data:image/png;base64,AAA') === 'png',
+  'FigureExport maps png -> .png');
+t(FE.extension('data:application/octet-stream,AAA') === 'img',
+  'FigureExport falls back to .img for unknown types');
+
+t(FE.filename('phylogenetic_tree', 'data:image/svg+xml;base64,AAA') === 'phylogenetic_tree.svg',
+  'FigureExport names an SVG payload .svg (was .png)');
+t(FE.filename('my tree/../etc', 'data:image/png;base64,AAA') === 'my_tree_.._etc.png',
+  'FigureExport sanitizes path separators out of the filename');
+t(FE.filename('', 'data:image/png;base64,AAA') === 'figure.png',
+  'FigureExport falls back to a default basename');
+t(FE.filename('!!!', 'data:image/svg+xml;base64,AAA') === 'figure.svg',
+  'FigureExport falls back when the basename sanitizes to nothing');
+
+const controls = FE.controls('data:image/svg+xml;base64,AAA', 'tree');
+t(controls.includes('data-action="downloadFigure"'),
+  'FigureExport.controls emits an SVG button');
+t(controls.includes('data-action="downloadFigureAsPng"'),
+  'FigureExport.controls emits a PNG button');
+t(!controls.includes('onclick='),
+  'FigureExport.controls uses data-action, not inline onclick (CSP)');
+t(FE.controls('', 'tree') === '',
+  'FigureExport.controls renders nothing without a figure');
+
+// The args payload must survive being embedded in an HTML attribute.
+const quoted = FE.controls('data:image/svg+xml;base64,A"B', 'tree');
+t(!/data-action-args="[^"]*"[^ >]/.test(quoted),
+  'FigureExport.controls escapes quotes in its args attribute');
+
+// ---------- theme header ----------
+t(typeof global.window.currentTheme === 'function',
+  'currentTheme is exported for theme-aware rendering');
+global.document.documentElement.setAttribute('data-theme', 'dark');
+t(global.window.currentTheme() === 'dark', 'currentTheme reflects data-theme');
+global.document.documentElement.removeAttribute('data-theme');
+t(global.window.currentTheme() === 'light', 'currentTheme defaults to light');
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail === 0 ? 0 : 1);

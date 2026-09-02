@@ -77,7 +77,8 @@ def database_tools():
 @bp.route('/motifs')
 def motifs_tools():
     # Phase-3 hub: /motifs renders the Patterns hub with Motifs tab active.
-    # The old motifs.html template is preserved on disk for rollback.
+    # The old motifs.html template was removed once the hub was settled;
+    # recover it from the pre-orphan-template-removal tag if ever needed.
     return render_template('patterns.html', active_tab='motifs')
 
 

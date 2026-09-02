@@ -13,7 +13,7 @@ from utils.blast_helpers import (
     filter_results_by_evalue, filter_results_by_identity,
     get_result_statistics, extract_sequence_from_file
 )
-from utils.request_helpers import clamp_int, clamp_float
+from utils.request_helpers import clamp_int, clamp_float, error_response
 
 bp = Blueprint('blast', __name__, url_prefix='/api')
 
@@ -136,7 +136,7 @@ def blast_search():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='blast_routes.blast_search')
 
 
 @bp.route('/blast/alignment/<int:hit_index>', methods=['GET'])
@@ -164,7 +164,7 @@ def get_alignment(hit_index):
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='blast_routes.get_alignment')
 
 
 @bp.route('/blast/filter', methods=['POST'])
@@ -198,7 +198,7 @@ def filter_results():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='blast_routes.filter_results')
 
 
 @bp.route('/blast/export', methods=['GET'])
@@ -252,7 +252,7 @@ def export_results():
             return jsonify({'success': False, 'error': 'Unsupported format'})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='blast_routes.export_results')
 
 
 @bp.route('/blast/validate', methods=['POST'])
@@ -284,7 +284,7 @@ def validate_blast_sequence():
             })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return error_response(e, context='blast_routes.validate_blast_sequence')
 
 
 @bp.route('/blast/programs', methods=['GET'])
