@@ -356,7 +356,7 @@ def generate_sequence_logo(m, use_information_content=True):
                     if h > 0.18:
                         ax.text(i, bottom + h / 2, base,
                                 ha='center', va='center', fontsize=13,
-                                fontweight='700', color='white')
+                                fontweight='bold', color='white')
                     bottom += h
             ax.set_xlabel('Position', fontsize=9, color=MUTED_COLOR)
             ax.set_ylabel('Bits' if use_information_content else 'Frequency',

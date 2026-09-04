@@ -239,7 +239,7 @@ def render_linear_feature_diagram(genome_length, tracks, title='',
         if show_track_labels and track.get('name'):
             ax.text(-genome_length * 0.01, y, track['name'],
                     ha='right', va='center',
-                    fontsize=9, fontweight='600',
+                    fontsize=9, fontweight='semibold',
                     color=LABEL_COLOR, clip_on=False)
 
     # Draw cross-links behind features so feature patches sit on top.
@@ -314,7 +314,7 @@ def render_linear_feature_diagram(genome_length, tracks, title='',
 
     ax.set_xlabel('Position (bp)', fontsize=9, color=LABEL_COLOR, labelpad=6)
     if title:
-        ax.set_title(title, fontsize=12, fontweight='600',
+        ax.set_title(title, fontsize=12, fontweight='semibold',
                      color=TITLE_COLOR, pad=14, loc='left')
 
     return svg_markup(fig, pad_inches=0.25, title='Genome diagram')
@@ -431,7 +431,7 @@ def render_circular_feature_diagram(genome_length, tracks, title='',
     # Center text — total length
     ax.text(0, 0, f'{_fmt(genome_length)}\n{genome_length:,} bp',
             ha='center', va='center', fontsize=10, color=LABEL_COLOR,
-            fontweight='600')
+            fontweight='semibold')
 
     # Track legend at top-left (shows track names)
     if any(t.get('name') for t in tracks):
@@ -460,7 +460,7 @@ def render_circular_feature_diagram(genome_length, tracks, title='',
         spine.set_visible(False)
 
     if title:
-        fig.suptitle(title, fontsize=13, fontweight='600',
+        fig.suptitle(title, fontsize=13, fontweight='semibold',
                      color=TITLE_COLOR, y=0.97)
 
     return svg_markup(fig, pad_inches=0.25, title='Genome diagram')
@@ -564,7 +564,7 @@ def render_data_tracks(genome_length, graphs, title='', diagram_type='linear'):
         axes[-1].set_xticklabels([_fmt(t) for t in ticks])
 
     if title:
-        fig.suptitle(title, fontsize=12, fontweight='600',
+        fig.suptitle(title, fontsize=12, fontweight='semibold',
                      color=TITLE_COLOR, y=0.98)
     fig.tight_layout(rect=(0, 0, 1, 0.96) if title else None)
 

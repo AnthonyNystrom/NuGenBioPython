@@ -418,9 +418,9 @@ def style_axes(ax, hide=('top', 'right'), spine_color=AXIS_COLOR,
 
 def set_title(ax_or_fig, text, **kw):
     """Set a title with the app's consistent styling."""
-    defaults = dict(fontsize=12, fontweight='600', color=TITLE_COLOR, pad=10)
+    defaults = dict(fontsize=12, fontweight='semibold', color=TITLE_COLOR, pad=10)
     if hasattr(ax_or_fig, 'suptitle') and not hasattr(ax_or_fig, 'set_title'):
-        defaults = dict(fontsize=13, fontweight='600', color=TITLE_COLOR, y=0.98)
+        defaults = dict(fontsize=13, fontweight='semibold', color=TITLE_COLOR, y=0.98)
     defaults.update(kw)
     if hasattr(ax_or_fig, 'set_title'):
         ax_or_fig.set_title(text, **defaults)
