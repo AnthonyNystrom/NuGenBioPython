@@ -3,7 +3,7 @@ Routes for specialty BioPython modules (PopGen, Pathway, UniGene, HMM, Graphics)
 """
 from flask import Blueprint, request, jsonify, current_app
 
-from utils.request_helpers import error_response, safe_error_message
+from utils.request_helpers import error_response, safe_error_message, check_sequence_length
 import os
 import base64
 import tempfile
@@ -865,7 +865,7 @@ def build_hmm():
         data = request.get_json(silent=True) or {}
         hmm_type = data.get('type', 'sequence')
         states = data.get('states', 3)
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
 
         if not sequence:
             return jsonify({'success': False, 'error': 'No sequence provided'})

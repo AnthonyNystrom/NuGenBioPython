@@ -47,7 +47,8 @@ def _render(motif, theme, monkeypatch):
     url = generate_sequence_logo(motif)
     plt.close("all")
     assert url, "logo generation returned None"
-    svg = base64.b64decode(url.split(",", 1)[1]).decode()
+    svg = (url if url.lstrip().startswith("<svg")
+           else base64.b64decode(url.split(",", 1)[1]).decode())
     return svg, set(c.lower() for c in re.findall(r"#[0-9a-fA-F]{6}", svg))
 
 

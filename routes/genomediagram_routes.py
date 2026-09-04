@@ -12,13 +12,12 @@ File upload (GenBank/EMBL/FASTA) still uses BioPython for parsing only.
 """
 from flask import Blueprint, request, jsonify
 
-from utils.request_helpers import error_response, safe_error_message
+from utils.request_helpers import error_response, safe_error_message, check_sequence_length
 from io import StringIO
 import math
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import Rectangle, Polygon, FancyArrowPatch, PathPatch
 from matplotlib.path import Path
@@ -26,8 +25,10 @@ import numpy as np
 
 from dependencies import SeqIO, Seq
 from utils.plot_helpers import (
+    svg_markup,
     PALETTE, EDGE_COLOR, TITLE_COLOR, LABEL_COLOR, AXIS_COLOR, GRID_COLOR,
-    resolve_color, figure_to_svg_data_url, fmt_bp as _fmt,
+    resolve_color, fmt_bp as _fmt,
+    subplots as oo_subplots,
 )
 
 bp = Blueprint('genomediagram', __name__, url_prefix='/api')
@@ -222,7 +223,7 @@ def render_linear_feature_diagram(genome_length, tracks, title='',
     # Recompute with placeholder later, but we need some estimate for height.
     fig_w = 13
     base_h = 1.4 + n * 1.4
-    fig, ax = plt.subplots(figsize=(fig_w, base_h), dpi=100)
+    fig, ax = oo_subplots(figsize=(fig_w, base_h), dpi=100)
 
     # Track positions: track 0 at top, track n-1 at bottom.
     # y_center[i] = top_y - i * (track_height + track_gap)
@@ -316,14 +317,14 @@ def render_linear_feature_diagram(genome_length, tracks, title='',
         ax.set_title(title, fontsize=12, fontweight='600',
                      color=TITLE_COLOR, pad=14, loc='left')
 
-    return figure_to_svg_data_url(fig, pad_inches=0.25)
+    return svg_markup(fig, pad_inches=0.25, title='Genome diagram')
 
 
 def render_circular_feature_diagram(genome_length, tracks, title='',
                                     cross_links=None):
     """Render a circular genome diagram. Tracks stack concentrically."""
     n = max(1, len(tracks))
-    fig, ax = plt.subplots(figsize=(9, 9), dpi=100,
+    fig, ax = oo_subplots(figsize=(9, 9), dpi=100,
                            subplot_kw={'projection': 'polar'})
 
     # Outer tracks drawn at larger radii. Reserve inner 35% for a clean hub
@@ -462,7 +463,7 @@ def render_circular_feature_diagram(genome_length, tracks, title='',
         fig.suptitle(title, fontsize=13, fontweight='600',
                      color=TITLE_COLOR, y=0.97)
 
-    return figure_to_svg_data_url(fig, pad_inches=0.25)
+    return svg_markup(fig, pad_inches=0.25, title='Genome diagram')
 
 
 # --------------------------------------------------------------------------
@@ -473,7 +474,7 @@ def render_data_tracks(genome_length, graphs, title='', diagram_type='linear'):
     """Render one or more data graphs (GC content, GC skew, custom)."""
     n = max(1, len(graphs))
     if diagram_type == 'circular':
-        fig, ax = plt.subplots(figsize=(9, 9), dpi=100,
+        fig, ax = oo_subplots(figsize=(9, 9), dpi=100,
                                subplot_kw={'projection': 'polar'})
         r_outer = 1.0
         r_inner = 0.4
@@ -516,7 +517,7 @@ def render_data_tracks(genome_length, graphs, title='', diagram_type='linear'):
         for s in ax.spines.values():
             s.set_visible(False)
     else:
-        fig, axes = plt.subplots(n, 1, figsize=(13, 1.5 + n * 1.6),
+        fig, axes = oo_subplots(n, 1, figsize=(13, 1.5 + n * 1.6),
                                  dpi=100, sharex=True)
         if n == 1:
             axes = [axes]
@@ -567,7 +568,7 @@ def render_data_tracks(genome_length, graphs, title='', diagram_type='linear'):
                      color=TITLE_COLOR, y=0.98)
     fig.tight_layout(rect=(0, 0, 1, 0.96) if title else None)
 
-    return figure_to_svg_data_url(fig, pad_inches=0.25)
+    return svg_markup(fig, pad_inches=0.25, title='Genome diagram')
 
 
 # ============================================================================
@@ -753,7 +754,7 @@ def create_data_tracks():
     try:
         data = request.get_json(silent=True) or {}
         genome_length = int(data.get('genome_length', 10000))
-        sequence = data.get('sequence', '')
+        sequence = check_sequence_length(data.get('sequence', ''))
         graphs = data.get('graphs', [])
         title = data.get('title', 'Genome Data Visualization')
         diagram_type = data.get('diagram_type', 'linear')

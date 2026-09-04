@@ -21,11 +21,11 @@ function addReactant() {
     div.innerHTML = `
         <div class="col-md-6">
             <input type="text" class="form-control form-control-sm reactant-species"
-                   placeholder="Species name (e.g., Glucose)">
+                   placeholder="Species name (e.g., Glucose)" aria-label="Species name">
         </div>
         <div class="col-md-3">
             <input type="number" class="form-control form-control-sm reactant-coeff"
-                   value="1" min="1" max="10">
+                   value="1" min="1" max="10" aria-label="Reactant coeff">
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
@@ -46,11 +46,11 @@ function addProduct() {
     div.innerHTML = `
         <div class="col-md-6">
             <input type="text" class="form-control form-control-sm product-species"
-                   placeholder="Species name (e.g., Pyruvate)">
+                   placeholder="Species name (e.g., Pyruvate)" aria-label="Species name">
         </div>
         <div class="col-md-3">
             <input type="number" class="form-control form-control-sm product-coeff"
-                   value="1" min="1" max="10">
+                   value="1" min="1" max="10" aria-label="Product coeff">
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
@@ -70,7 +70,7 @@ function addCatalyst() {
     div.innerHTML = `
         <div class="col-md-9">
             <input type="text" class="form-control form-control-sm catalyst-name"
-                   placeholder="Enzyme/Catalyst name">
+                   placeholder="Enzyme/Catalyst name" aria-label="Enzyme/Catalyst name">
         </div>
         <div class="col-md-3">
             <button type="button" class="btn-app-sm btn-app-danger w-100"
@@ -507,8 +507,7 @@ function displayVisualization(viz) {
     ).join('') + '</div>';
 
     const image = `<div class="text-center">
-        <img src="${viz.graph_image}" class="img-fluid" alt="Pathway Graph" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
-        ${FigureExport.controls(viz.graph_image, 'pathway_graph')}
+        ${FigureExport.inline(viz.graph_image, 'pathway_graph', 'Pathway graph')}
     </div>`;
 
     if (typeof ResultsCard !== 'undefined') {

@@ -181,8 +181,8 @@
                 '</header>' +
                 '<div class="results-card-body">' +
                     '<div class="rc-skeleton-row"></div>' +
-                    '<div class="rc-skeleton-row" style="width:80%"></div>' +
-                    '<div class="rc-skeleton-row" style="width:60%"></div>' +
+                    '<div class="rc-skeleton-row u-width80"></div>' +
+                    '<div class="rc-skeleton-row u-width60"></div>' +
                     '<div class="rc-skeleton-block"></div>' +
                 '</div>' +
             '</section>';

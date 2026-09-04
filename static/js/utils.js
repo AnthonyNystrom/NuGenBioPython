@@ -769,6 +769,9 @@
         download: downloadFigure,
         downloadPng: downloadFigureAsPng,
         controls: figureExportControls,
+        inline: inlineFigure,
+        inlineControls: inlineFigureControls,
+        svgToDataUrl: svgElementToDataUrl,
     };
 
     // ---- Generic DOM actions for the data-action dispatcher -------------
@@ -797,6 +800,117 @@
         if (el) el.remove();
     }
 
+    // ---- data-css: dynamic styles under a strict CSP ---------------------
+    // A style="..." attribute in markup is refused when style-src drops
+    // 'unsafe-inline' (verified in Chromium: markup style= and
+    // setAttribute('style', ...) are blocked, while el.style.prop = x and
+    // el.style.cssText are exempt — the CSSOM is not covered by style-src).
+    //
+    // Most inline styles became utility classes, but a handful carry a value
+    // only known at render time (a cluster's colour, a bar's width). Those
+    // are emitted as data-css="..." and applied here through the CSSOM.
+    // A MutationObserver catches them however they are inserted, so callers
+    // building HTML strings need no extra step.
+    function applyDataCss(root) {
+        if (!root || !root.querySelectorAll) return;
+        if (root.hasAttribute && root.hasAttribute('data-css')) {
+            try { root.style.cssText = root.getAttribute('data-css'); } catch (e) {}
+        }
+        root.querySelectorAll('[data-css]').forEach(function (el) {
+            try { el.style.cssText = el.getAttribute('data-css'); } catch (e) {}
+        });
+    }
+
+    function watchDataCss() {
+        applyDataCss(document.body || document.documentElement);
+        if (!global.MutationObserver) return;
+        new MutationObserver(function (records) {
+            records.forEach(function (rec) {
+                rec.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) applyDataCss(node);
+                });
+            });
+        }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchDataCss);
+    } else {
+        watchDataCss();
+    }
+
+    // ---- Inline-SVG figures ---------------------------------------------
+    // Figures are injected into the page rather than shipped as opaque
+    // <img src="data:...">, so labels are selectable text and CSS can reach
+    // inside them. Export therefore has to serialise the live element rather
+    // than hand back a URL it was given.
+
+    function findFigureSvg(from) {
+        if (!from) return null;
+        const scope = from.closest('.figure-container') || from.parentElement
+            || document;
+        return scope.querySelector('svg.figure-svg')
+            || document.querySelector('svg.figure-svg');
+    }
+
+    function svgElementToDataUrl(svg) {
+        const clone = svg.cloneNode(true);
+        // A standalone file needs the namespace declared; inline it is implied.
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        const markup = new XMLSerializer().serializeToString(clone);
+        return 'data:image/svg+xml;base64,' +
+            btoa(unescape(encodeURIComponent(markup)));
+    }
+
+    // data-action handlers, bound to the button that was clicked.
+    function downloadInlineSvg(basename) {
+        const svg = findFigureSvg(this);
+        if (svg) downloadFigure(svgElementToDataUrl(svg), basename || 'figure');
+    }
+
+    function downloadInlineSvgAsPng(basename) {
+        const svg = findFigureSvg(this);
+        if (svg) downloadFigureAsPng(svgElementToDataUrl(svg),
+                                     basename || 'figure');
+    }
+
+    // Export controls for an inline figure. Unlike FigureExport.controls(),
+    // which is handed a data URL, these resolve the figure at click time.
+    function inlineFigureControls(basename) {
+        const name = escapeHtml(basename || 'figure');
+        const args = escapeHtml(JSON.stringify([basename || 'figure']));
+        return '' +
+            '<div class="figure-export-controls d-flex gap-2 mt-2 justify-content-end">' +
+              '<button type="button" class="btn-app-ghost btn-app-sm" ' +
+                'data-action="downloadInlineSvg" data-action-args="' + args + '" ' +
+                'title="Download the vector figure">' +
+                '<i class="fas fa-download"></i> SVG</button>' +
+              '<button type="button" class="btn-app-ghost btn-app-sm" ' +
+                'data-action="downloadInlineSvgAsPng" data-action-args="' + args + '" ' +
+                'title="Download a high-resolution raster copy">' +
+                '<i class="fas fa-image"></i> PNG</button>' +
+            '</div>';
+    }
+
+    // Wrap a server-rendered figure in a container with export controls.
+    //
+    // Accepts either inline SVG markup (the normal case) or a data: URL.
+    // The fallback matters: the sequence-logo renderer drops to a PNG when
+    // logomaker is unavailable, and a PNG cannot be inlined as SVG.
+    function inlineFigure(figure, basename, altText) {
+        if (!figure) return '';
+        const isSvgMarkup = String(figure).trim().slice(0, 4) === '<svg';
+        if (isSvgMarkup) {
+            return '<div class="figure-container">' + figure +
+                   inlineFigureControls(basename) + '</div>';
+        }
+        const alt = escapeHtml(altText || basename || 'Figure');
+        return '<div class="figure-container">' +
+               '<img src="' + figure + '" class="img-fluid u-maxw100" alt="' +
+               alt + '">' + figureExportControls(figure, basename) + '</div>';
+    }
+
     global.showLoading = showLoading;
     global.hideLoading = hideLoading;
     global.showAlert = showAlert;
@@ -807,6 +921,9 @@
     global.currentTheme = currentTheme;
     global.removeParentRow = removeParentRow;
     global.removeElementById = removeElementById;
+    global.applyDataCss = applyDataCss;
+    global.downloadInlineSvg = downloadInlineSvg;
+    global.downloadInlineSvgAsPng = downloadInlineSvgAsPng;
     global.disableConsensusAndTrimButtons = disableConsensusAndTrimButtons;
     global.FigureExport = FigureExport;
     global.downloadFigure = downloadFigure;

@@ -239,7 +239,7 @@ function displayReadResults(record) {
                 ${record.tissue_details && record.tissue_details.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Expression Tissues (${record.tissue_details.length}):</strong></p>
-                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                    <div class="table-responsive u-maxh200px-ovyauto">
                         <table class="table table-sm table-bordered small mb-0">
                             <thead class="table-light sticky-top">
                                 <tr>
@@ -262,7 +262,7 @@ function displayReadResults(record) {
                 ${record.sequences && record.sequences.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Sequences (${record.sequences.length}):</strong></p>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div class="table-responsive u-maxh300px-ovyauto">
                         <table class="table table-sm table-bordered small mb-0">
                             <thead class="table-light sticky-top">
                                 <tr>
@@ -298,7 +298,7 @@ function displayReadResults(record) {
                 ${record.protein_similarities && record.protein_similarities.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Protein Similarities (${record.protein_similarities.length}):</strong></p>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div class="table-responsive u-maxh300px-ovyauto">
                         <table class="table table-sm table-bordered small mb-0">
                             <thead class="table-light sticky-top">
                                 <tr>

@@ -17,20 +17,24 @@ try:
 except ImportError:  # pragma: no cover
     requests = None  # type: ignore
 
+from utils.shared_store import SharedStore
+
 status_bp = Blueprint('status', __name__, url_prefix='/api/status')
 
-_CACHE: dict[str, tuple[float, dict]] = {}
 _CACHE_TTL = 60  # seconds
+# Shared across workers when REDIS_URL is set, so N workers make one probe per
+# minute between them rather than N. JSON serializer: these payloads are plain
+# dicts, and this cache has no need for pickle.
+_CACHE = SharedStore('status', max_entries=32, ttl=_CACHE_TTL,
+                     serializer='json')
 
 
 def _cached(key: str, fn):
-    now = time.time()
-    if key in _CACHE:
-        ts, payload = _CACHE[key]
-        if now - ts < _CACHE_TTL:
-            return payload
+    payload = _CACHE.get(key)
+    if payload is not None:
+        return payload
     payload = fn()
-    _CACHE[key] = (now, payload)
+    _CACHE.set(key, payload)
     return payload
 
 

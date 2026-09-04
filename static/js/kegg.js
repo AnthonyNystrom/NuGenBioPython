@@ -262,7 +262,7 @@ function displayInfoResults(info, database) {
         });
     } else {
         document.getElementById('infoResults').innerHTML =
-            `<div class="p-3"><h6>Database: ${escapeHtml(database)}</h6><pre class="border p-3" style="max-height: 400px; overflow-y: auto; font-size: 11px; background: var(--color-bg); color: var(--color-text);">${escapeHtml(info.raw_data)}</pre></div>`;
+            `<div class="p-3"><h6>Database: ${escapeHtml(database)}</h6><pre class="border p-3 u-s1cc113d5">${escapeHtml(info.raw_data)}</pre></div>`;
     }
 }
 
@@ -292,7 +292,7 @@ function displayEntryInModal(data) {
     const entryId = (document.getElementById('entryModalLabel').textContent || '').replace(/^Entry:\s*/, '');
     let image = '';
     if (data.image_url) {
-        image = `<div class="text-center mb-3"><img src="${data.image_url}" class="img-fluid border" alt="Pathway diagram" style="max-width: 100%;" data-hide-on-error="1"></div>`;
+        image = `<div class="text-center mb-3"><img src="${data.image_url}" class="img-fluid border u-maxw100" alt="Pathway diagram" data-hide-on-error="1"></div>`;
     }
 
     if (typeof ResultsCard !== 'undefined') {
@@ -310,6 +310,6 @@ function displayEntryInModal(data) {
         });
     } else {
         document.getElementById('entryModalContent').innerHTML = image +
-            '<pre class="border p-3" style="max-height: 500px; overflow-y: auto; font-size: 11px; background: var(--color-bg); color: var(--color-text);">' + escapeHtml(data.raw_data) + '</pre>';
+            '<pre class="border p-3 u-s8dc56dcd">' + escapeHtml(data.raw_data) + '</pre>';
     }
 }

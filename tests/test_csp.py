@@ -106,3 +106,72 @@ def test_every_inline_script_block_is_nonced(repo_root):
             if re.search(r"<script\s*>", line):
                 offenders.append(f"{path.name}:{i}")
     assert not offenders, f"inline <script> without a nonce: {offenders}"
+
+# --------------------------------------------------------------------------
+# style-src
+# --------------------------------------------------------------------------
+
+def test_style_src_no_longer_allows_unsafe_inline(client):
+    """139 inline style attributes became classes or data-css."""
+    style_src = re.search(r"style-src ([^;]*)", _csp(client)).group(1)
+    assert "'unsafe-inline'" not in style_src, style_src
+
+
+def test_style_src_carries_the_nonce(client):
+    style_src = re.search(r"style-src ([^;]*)", _csp(client)).group(1)
+    assert re.search(r"'nonce-[A-Za-z0-9_-]{16,}'", style_src), style_src
+
+
+def test_no_style_attributes_remain_in_markup(repo_root):
+    """A style= attribute in markup is refused outright under this CSP.
+
+    Verified in Chromium: markup style= and setAttribute('style', ...) are
+    blocked, while el.style.prop = x and el.style.cssText are exempt because
+    the CSSOM is not covered by style-src. Dynamic values therefore travel as
+    data-css and are applied through the CSSOM.
+    """
+    offenders = []
+    for path in _source_files(repo_root):
+        text = path.read_text()
+        for i, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith(("//", "*", "#")):
+                continue
+            # (?<![\w-]) rather than \s: an earlier version of this pattern
+            # missed a style attribute written as `style="..."` inside a JS
+            # template literal, which would have violated CSP the moment a
+            # restriction map rendered.
+            if re.search(r'(?<![\w-])style\s*=\s*["\']', line):
+                offenders.append(f"{path.name}:{i}  {stripped[:60]}")
+    assert not offenders, (
+        "inline style attributes are blocked; use a utility class, or "
+        f"data-css for a value only known at render time: {offenders}")
+
+
+def test_no_style_set_via_setattribute(repo_root):
+    """setAttribute('style', ...) is blocked too, unlike el.style.prop."""
+    offenders = []
+    for path in _source_files(repo_root):
+        for i, line in enumerate(path.read_text().splitlines(), 1):
+            if line.strip().startswith(("//", "*", "#")):
+                continue          # prose describing the rule, not code
+            if re.search(r"""setAttribute\(\s*['"]style['"]""", line):
+                offenders.append(f"{path.name}:{i}")
+    assert not offenders, offenders
+
+
+def test_every_inline_style_block_is_nonced(repo_root):
+    offenders = []
+    for path in pathlib.Path(repo_root, "templates").rglob("*.html"):
+        for i, line in enumerate(path.read_text().splitlines(), 1):
+            if re.search(r"<style\s*>", line):
+                offenders.append(f"{path.name}:{i}")
+    assert not offenders, f"inline <style> without a nonce: {offenders}"
+
+
+def test_data_css_applier_exists(repo_root):
+    """The CSSOM shim dynamic values depend on."""
+    utils = pathlib.Path(repo_root, "static", "js", "utils.js").read_text()
+    assert "applyDataCss" in utils
+    assert "cssText" in utils
+    assert "MutationObserver" in utils

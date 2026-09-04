@@ -13,6 +13,7 @@ from collections import Counter
 
 from dependencies import Seq
 from utils.upload_helpers import saved_upload, UploadError
+from utils.request_helpers import check_alignment_inputs, check_sequence_length
 
 bp = Blueprint('alignment', __name__, url_prefix='/api')
 
@@ -37,8 +38,11 @@ def _aligned_rows(alignment):
 def pairwise_alignment():
     try:
         data = request.get_json(silent=True) or {}
-        seq1 = Seq.Seq(data.get('sequence1', ''))
-        seq2 = Seq.Seq(data.get('sequence2', ''))
+        raw1 = data.get('sequence1', '')
+        raw2 = data.get('sequence2', '')
+        check_alignment_inputs(raw1, raw2)
+        seq1 = Seq.Seq(raw1)
+        seq2 = Seq.Seq(raw2)
 
         aligner = PairwiseAligner()
 
@@ -149,6 +153,7 @@ def multiple_sequence_alignment():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
 
         if len(sequences) < 2:
             return jsonify({'success': False, 'error': 'At least 2 sequences required'})
@@ -216,6 +221,7 @@ def generate_consensus():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
 
         if len(sequences) < 2:
             return jsonify({'success': False, 'error': 'At least 2 sequences required'})
@@ -262,6 +268,7 @@ def analyze_conservation():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
 
         if len(sequences) < 2:
             return jsonify({'success': False, 'error': 'At least 2 sequences required'})
@@ -350,6 +357,7 @@ def export_alignment():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
         output_format = data.get('format', 'fasta')
 
         if not sequences:
@@ -390,6 +398,7 @@ def trim_alignment():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
         min_conservation = data.get('min_conservation', 50)
 
         if len(sequences) < 2:
@@ -437,8 +446,11 @@ def get_all_alignments():
     """Generate all possible alignments (not just top 1)"""
     try:
         data = request.get_json(silent=True) or {}
-        seq1 = Seq.Seq(data.get('sequence1', ''))
-        seq2 = Seq.Seq(data.get('sequence2', ''))
+        raw1 = data.get('sequence1', '')
+        raw2 = data.get('sequence2', '')
+        check_alignment_inputs(raw1, raw2)
+        seq1 = Seq.Seq(raw1)
+        seq2 = Seq.Seq(raw2)
         max_alignments = data.get('max_alignments', 10)
 
         aligner = PairwiseAligner()
@@ -479,6 +491,7 @@ def pairwise_identity_matrix():
     try:
         data = request.get_json(silent=True) or {}
         sequences = data.get('sequences', [])
+        check_alignment_inputs(*sequences, name='sequence')
 
         if len(sequences) < 2:
             return jsonify({'success': False, 'error': 'At least 2 sequences required'})
@@ -528,8 +541,11 @@ def alignment_coordinates():
     """Get alignment coordinates and path information"""
     try:
         data = request.get_json(silent=True) or {}
-        seq1 = Seq.Seq(data.get('sequence1', ''))
-        seq2 = Seq.Seq(data.get('sequence2', ''))
+        raw1 = data.get('sequence1', '')
+        raw2 = data.get('sequence2', '')
+        check_alignment_inputs(raw1, raw2)
+        seq1 = Seq.Seq(raw1)
+        seq2 = Seq.Seq(raw2)
 
         aligner = PairwiseAligner()
         aligner.mode = data.get('mode', 'global')
@@ -584,6 +600,7 @@ def codon_aware_alignment():
         data = request.get_json(silent=True) or {}
         seq1_str = data.get('sequence1', '')
         seq2_str = data.get('sequence2', '')
+        check_alignment_inputs(seq1_str, seq2_str)
 
         # Validate sequences are multiples of 3
         if len(seq1_str) % 3 != 0 or len(seq2_str) % 3 != 0:
@@ -659,8 +676,11 @@ def detailed_alignment_stats():
     """Get detailed statistics for an alignment"""
     try:
         data = request.get_json(silent=True) or {}
-        seq1 = Seq.Seq(data.get('sequence1', ''))
-        seq2 = Seq.Seq(data.get('sequence2', ''))
+        raw1 = data.get('sequence1', '')
+        raw2 = data.get('sequence2', '')
+        check_alignment_inputs(raw1, raw2)
+        seq1 = Seq.Seq(raw1)
+        seq2 = Seq.Seq(raw2)
 
         aligner = PairwiseAligner()
         aligner.mode = data.get('mode', 'global')

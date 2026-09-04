@@ -3,7 +3,7 @@ Routes for Bio.Data operations (CodonTable, IUPACData, PDBData)
 """
 from flask import Blueprint, request, jsonify
 
-from utils.request_helpers import error_response
+from utils.request_helpers import error_response, check_sequence_length
 from utils.biodata_helpers import (
     get_codon_tables, translate_sequence, get_iupac_codes,
     convert_protein_letters, calculate_molecular_weight,
@@ -29,7 +29,7 @@ def translate():
     """Translate DNA sequence using specified codon table"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         table_id = int(data.get('table_id', 1))
 
         if not sequence:
@@ -92,7 +92,7 @@ def molecular_weight():
     """Calculate molecular weight of a sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '')
+        sequence = check_sequence_length(data.get('sequence', ''))
         seq_type = data.get('seq_type', 'protein')
         weight_type = data.get('weight_type', 'average')
 

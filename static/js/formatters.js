@@ -182,10 +182,10 @@
             }
 
             if (abstract) {
-                html += '<div class="mb-3"><strong>Abstract</strong><div class="small mt-1" style="line-height:1.5">' + abstract + '</div></div>';
+                html += '<div class="mb-3"><strong>Abstract</strong><div class="small mt-1 u-lh15">' + abstract + '</div></div>';
             }
             if (otherAbstract) {
-                html += '<details class="mb-3"><summary><strong>Other abstract</strong></summary><div class="small mt-1" style="line-height:1.5">' + otherAbstract + '</div></details>';
+                html += '<details class="mb-3"><summary><strong>Other abstract</strong></summary><div class="small mt-1 u-lh15">' + otherAbstract + '</div></details>';
             }
 
             if (keywords.length) {
@@ -228,7 +228,7 @@
 
             if (references.length) {
                 html += '<details class="mb-0"><summary><strong>References</strong> <span class="text-muted small">(' + references.length + ')</span></summary>' +
-                    '<ol class="small mt-2 mb-0" style="line-height:1.5">' +
+                    '<ol class="small mt-2 mb-0 u-lh15">' +
                     references.map(r => '<li class="mb-1">' + r + '</li>').join('') +
                     '</ol></details>';
             }
@@ -313,7 +313,7 @@
 
         if (features.length) {
             html += '<details class="mb-2" open><summary><strong>Features</strong> <span class="text-muted small">(' + features.length + ')</span></summary>';
-            html += '<div class="table-responsive mt-2"><table class="table table-sm table-striped mb-0"><thead><tr><th style="width:120px">Type</th><th style="width:200px">Location</th><th>Qualifiers</th></tr></thead><tbody>';
+            html += '<div class="table-responsive mt-2"><table class="table table-sm table-striped mb-0 u-width120px u-width200px"><thead><tr><th>Type</th><th>Location</th><th>Qualifiers</th></tr></thead><tbody>';
             features.forEach(function (f) {
                 const q = Object.keys(f.qualifiers).map(function (k) {
                     const v = String(f.qualifiers[k]).replace(/^"|"$/g, '');
@@ -327,7 +327,7 @@
         if (sequence) {
             const chunks = sequence.match(/.{1,60}/g) || [];
             html += '<details><summary><strong>Sequence</strong> <span class="text-muted small">(' + sequence.length + ' bp/aa)</span></summary>';
-            html += '<pre class="code-block mt-2" style="max-height:400px; overflow:auto; font-size:11px; line-height:1.4;">' +
+            html += '<pre class="code-block mt-2 u-fs11px-lh14-maxh400px-ovauto">' +
                 esc(chunks.join('\n')) + '</pre></details>';
         }
 
@@ -357,7 +357,7 @@
                 .replace(/&lt;(\/?\w[\w:-]*)/g, '&lt;<span class="xml-tag">$1</span>')
                 .replace(/(\w+)=&quot;([^&]*)&quot;/g, '<span class="xml-attr">$1</span>=<span class="xml-value">&quot;$2&quot;</span>');
         }).join('\n');
-        return '<pre class="code-block" style="max-height:500px; overflow:auto; font-size:11px; line-height:1.4">' + colored + '</pre>';
+        return '<pre class="code-block u-fs11px-lh14-maxh500px-ovauto">' + colored + '</pre>';
     }
 
     // --- FASTA / sequence-text records ----------------------------------
@@ -384,7 +384,7 @@
         if (!records.length) return empty('No FASTA records found.');
 
         let html = '<div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr>' +
-            '<th>ID</th><th>Description</th><th style="width:80px">Length</th><th>Preview</th></tr></thead><tbody>';
+            '<th>ID</th><th>Description</th><th class="u-width80px">Length</th><th>Preview</th></tr></thead><tbody>';
         records.forEach(function (r) {
             html += '<tr>' +
                 '<td><code>' + esc(r.id) + '</code></td>' +
@@ -430,7 +430,7 @@
             }
         }
         flushToken();
-        return '<pre class="p-3 border rounded small" style="max-height:500px; overflow:auto; background:var(--color-bg); color:var(--color-text);">' + out + '</pre>';
+        return '<pre class="p-3 border rounded small u-backgroundvarcolorbg-colorvarcolorte-maxh500px-ovauto">' + out + '</pre>';
     }
 
     // --- Pairwise alignment (BioPython str format) -----------------------
@@ -465,7 +465,7 @@
             '<span class="align-match">match</span> ' +
             '<span class="align-mismatch">mismatch</span> ' +
             '<span class="align-gap">gap</span></div>';
-        html += '<pre class="code-block font-monospace" style="max-height:500px; overflow:auto; line-height:1.4">';
+        html += '<pre class="code-block font-monospace u-lh14-maxh500px-ovauto">';
         for (let pos = 0; pos < joinedT.length; pos += width) {
             const tChunk = joinedT.slice(pos, pos + width);
             const qChunk = joinedQ.slice(pos, pos + width);

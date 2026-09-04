@@ -704,14 +704,13 @@ function renderDotPlot() {
                     ${data.self_comparison ? 'Self-comparison' : 'Dot plot'}
                     (word size ${data.word_size})
                 </div>
-                <img src="${data.plot}" class="img-fluid" alt="Dot plot" style="max-width:100%">
+                ${FigureExport.inline(data.plot, 'dot_plot', 'Dot plot')}
                 <div class="small text-muted mt-1">
                     ${data.forward_matches.toLocaleString()} forward
                     ${includeReverse ? ' · ' + data.reverse_matches.toLocaleString() + ' reverse-complement' : ''}
                     matches
                 </div>
                 ${note}
-                ${FigureExport.controls(data.plot, 'dot_plot')}
             </div>
         `;
     })
@@ -912,12 +911,11 @@ function displayGCAnalysisResults(data) {
         if (data.skew_plot) {
             html += `
                 <div class="border rounded p-2 mt-2">
-                    <img src="${data.skew_plot}" class="img-fluid" alt="GC skew plot" style="max-width:100%">
+                    ${FigureExport.inline(data.skew_plot, 'gc_skew', 'GC skew plot')}
                     <div class="small text-muted mt-1">
                         The cumulative curve's minimum marks the likely replication
                         origin and its maximum the terminus.
                     </div>
-                    ${FigureExport.controls(data.skew_plot, 'gc_skew')}
                 </div>
             `;
         }
@@ -1114,8 +1112,8 @@ function displayORFResults(data) {
                         <div class="col-4">Length: ${orf.length} bp</div>
                         <div class="col-4">Protein: ${orf.protein_length} aa</div>
                         <div class="col-12 mt-1">
-                            <div class="text-muted" style="font-size: 0.7rem;">Protein:</div>
-                            <div class="sequence-display" style="font-size: 0.75rem;">${orf.protein_sequence.substring(0, 60)}${orf.protein_sequence.length > 60 ? '...' : ''}</div>
+                            <div class="text-muted u-fs07rem">Protein:</div>
+                            <div class="sequence-display u-fs075rem">${orf.protein_sequence.substring(0, 60)}${orf.protein_sequence.length > 60 ? '...' : ''}</div>
                         </div>
                     </div>
                 </div>
@@ -1420,7 +1418,7 @@ function displayReferenceData(data) {
 
         <div class="border rounded p-2 bg-light mb-2">
             <div class="small fw-bold text-primary mb-2">Standard Genetic Code (Table 1)</div>
-            <div class="row g-1 small" style="max-height: 200px; overflow-y: auto;">
+            <div class="row g-1 small u-maxh200px-ovyauto">
     `;
 
     // Display codon table

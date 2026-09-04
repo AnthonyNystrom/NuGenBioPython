@@ -258,14 +258,14 @@ function displayReadResults(record) {
 
                 <hr class="my-2">
                 <p class="small mb-1"><strong>Sequence:</strong></p>
-                <div class="bg-light p-2 rounded" style="font-family: monospace; font-size: 12px; word-break: break-all; max-height: 200px; overflow-y: auto;">
+                <div class="bg-light p-2 rounded u-ffmonospace-fs12px-maxh200px-ovyauto-wbbreakall">
                     ${escapeHtml(record.sequence)}
                 </div>
 
                 ${record.features && record.features.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Features (${record.features.length}):</strong></p>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div class="table-responsive u-maxh300px-ovyauto">
                         <table class="table table-sm table-bordered small mb-0">
                             <thead class="table-light sticky-top">
                                 <tr>
@@ -290,7 +290,7 @@ function displayReadResults(record) {
                 ${record.cross_references && record.cross_references.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Cross-References (${record.cross_references.length}):</strong></p>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div class="table-responsive u-maxh300px-ovyauto">
                         <table class="table table-sm table-bordered small mb-0">
                             <thead class="table-light sticky-top">
                                 <tr>
@@ -315,7 +315,7 @@ function displayReadResults(record) {
                 ${record.comments && record.comments.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>Comments (${record.comments.length}):</strong></p>
-                    <div style="max-height: 300px; overflow-y: auto;">
+                    <div class="u-maxh300px-ovyauto">
                         ${record.comments.map(comment => {
                             const s = String(comment);
                             const m = s.match(/^([A-Z][A-Z0-9 _-]*?):\s*([\s\S]*)$/);
@@ -331,7 +331,7 @@ function displayReadResults(record) {
                 ${record.references && record.references.length > 0 ? `
                     <hr class="my-2">
                     <p class="small mb-1"><strong>References (${record.references.length}):</strong></p>
-                    <div style="max-height: 300px; overflow-y: auto;">
+                    <div class="u-maxh300px-ovyauto">
                         ${record.references.map((ref, idx) => `
                             <div class="alert alert-secondary p-2 mb-1 small">
                                 <strong>[${idx + 1}]</strong> ${escapeHtml(ref.authors || 'N/A')}<br>

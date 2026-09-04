@@ -5,13 +5,13 @@ Note: SwissProt routes moved to routes/swissprot_routes.py
 """
 from flask import Blueprint, request, jsonify, current_app
 import os
-from collections import OrderedDict
 from werkzeug.utils import secure_filename
 
+from utils.shared_store import SharedStore
 from utils.entrez_helpers import configure_entrez
 from dependencies import SearchIO, SwissProt, ProtParam, CodonTable, Seq
 from utils.upload_helpers import saved_upload, UploadError
-from utils.request_helpers import remote_timeout, clamp_int, error_response, safe_error_message
+from utils.request_helpers import remote_timeout, clamp_int, error_response, safe_error_message, check_sequence_length
 import time
 import uuid
 
@@ -20,20 +20,16 @@ bp = Blueprint('advanced', __name__, url_prefix='/api')
 # Socket-timeout budget for Entrez/PubMed calls in this module (seconds).
 _ENTREZ_TIMEOUT = 30
 
-# In-memory HMM model cache. Bounded to prevent unbounded growth in long-running
-# processes; oldest entries are evicted once the cap is reached. For multi-worker
-# deployments, replace with Redis or a shared store.
+# HMM model cache. Shared across workers when REDIS_URL is set; otherwise a
+# per-process LRU exactly as before. As a plain module dict this silently lost
+# models under more than one gunicorn worker. See utils/shared_store.py.
 _HMM_CACHE_MAX = int(os.environ.get('HMM_CACHE_MAX', '64'))
-_hmm_models = OrderedDict()
+_hmm_models = SharedStore('hmm', max_entries=_HMM_CACHE_MAX)
 
 
 def _store_hmm_model(model_id, model_data):
     """Insert/update an HMM model, evicting the oldest if over capacity."""
-    if model_id in _hmm_models:
-        _hmm_models.move_to_end(model_id)
-    _hmm_models[model_id] = model_data
-    while len(_hmm_models) > _HMM_CACHE_MAX:
-        _hmm_models.popitem(last=False)
+    _hmm_models.set(model_id, model_data)
 
 # Enhanced Sequence Utils
 @bp.route('/sequence/protparam', methods=['POST'])
@@ -43,7 +39,7 @@ def api_sequence_protparam():
             return jsonify({'success': False, 'error': 'Bio.SeqUtils.ProtParam not available'})
 
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
 
         if not sequence:
             return jsonify({'success': False, 'error': 'No sequence provided'})
@@ -84,7 +80,7 @@ def api_hmm_build():
         data = request.get_json(silent=True) or {}
         hmm_type = data.get('type', 'sequence')
         states = data.get('states', 3)
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
 
         if not sequence:
             return jsonify({'success': False, 'error': 'No sequence provided'})
@@ -162,7 +158,7 @@ def api_hmm_train():
 
         data = request.get_json(silent=True) or {}
         model_id = data.get('model_id', '')
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
         iterations = data.get('iterations', 10)
 
         if not model_id or model_id not in _hmm_models:
@@ -235,7 +231,10 @@ def api_hmm_train():
         training_time = int((time.time() - start_time) * 1000)
 
         # Update stored model
-        _hmm_models[model_id]['model'] = hmm_model
+        # Read/modify/write rather than mutating in place: with the Redis
+        # backend the object returned by a get() is a fresh copy, so an
+        # in-place assignment would be silently discarded.
+        _hmm_models.update_entry(model_id, model=hmm_model)
 
         training_results = {
             'iterations': len(iteration_history),
@@ -261,7 +260,7 @@ def api_hmm_decode():
 
         data = request.get_json(silent=True) or {}
         model_id = data.get('model_id', '')
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
 
         if not model_id or model_id not in _hmm_models:
             return jsonify({'success': False, 'error': 'Invalid model ID'})
@@ -327,7 +326,7 @@ def api_blast_search_real():
         from Bio.Blast import NCBIWWW, NCBIXML
 
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
         program = data.get('program', 'blastn')
         database = data.get('database', 'nt')
 

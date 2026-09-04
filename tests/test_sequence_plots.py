@@ -68,7 +68,7 @@ def test_cumulative_skew_locates_origin_and_terminus():
 def test_gc_skew_renders_svg():
     seq, _, _ = _synthetic_replicon(n=8000)
     url = render_gc_skew(seq, window=500)
-    assert url.startswith("data:image/svg+xml;base64,")
+    assert url.lstrip().startswith("<svg")
 
 
 def test_gc_skew_render_returns_none_for_empty():
@@ -150,15 +150,14 @@ def test_sequences_shorter_than_the_word_are_handled():
 
 def test_dot_plot_renders_svg():
     seq = _rand_seq(400, seed=13)
-    assert render_dot_plot(seq, seq, word_size=8).startswith(
-        "data:image/svg+xml;base64,")
+    assert render_dot_plot(seq, seq, word_size=8).lstrip().startswith("<svg")
 
 
 def test_dot_plot_renders_with_no_matches():
     """Must not blow up when nothing matches."""
     url = render_dot_plot(_rand_seq(200, seed=14), _rand_seq(200, seed=15),
                           word_size=20)
-    assert url.startswith("data:image/svg+xml;base64,")
+    assert url.lstrip().startswith("<svg")
 
 
 # --------------------------------------------------------------------------
@@ -175,7 +174,7 @@ def test_dotplot_endpoint_reports_both_orientations(client):
     data = resp.get_json()
     assert data["success"] is True
     assert data["reverse_matches"] > 100
-    assert data["plot"].startswith("data:image/svg+xml;base64,")
+    assert data["plot"].lstrip().startswith("<svg")
 
 
 def test_dotplot_endpoint_rejects_oversized_input(client):
@@ -203,4 +202,4 @@ def test_gc_analysis_returns_a_plot(client):
     data = client.post("/api/sequence/gc_analysis",
                        json={"sequence": seq, "window": 500}).get_json()
     assert data["success"] is True
-    assert data["skew_plot"].startswith("data:image/svg+xml;base64,")
+    assert data["skew_plot"].lstrip().startswith("<svg")

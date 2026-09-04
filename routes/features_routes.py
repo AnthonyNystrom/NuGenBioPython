@@ -3,7 +3,7 @@ Routes for sequence feature operations (ORF, CDS, annotations)
 """
 from flask import Blueprint, request, jsonify, current_app
 
-from utils.request_helpers import error_response, safe_error_message
+from utils.request_helpers import error_response, safe_error_message, check_sequence_length
 import os
 from werkzeug.utils import secure_filename
 import re
@@ -21,7 +21,7 @@ def find_orfs():
     """Find Open Reading Frames in a sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         min_length = int(data.get('min_length', 100))  # Minimum ORF length in nucleotides
         strand = data.get('strand', 'both')  # 'forward', 'reverse', 'both'
 
@@ -120,7 +120,7 @@ def create_feature():
     """Create a SeqFeature and add it to a sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         feature_type = data.get('feature_type', 'CDS')
         start = int(data.get('start', 0))
         end = int(data.get('end', 0))
@@ -220,7 +220,7 @@ def extract_feature():
     """Extract and optionally translate a feature from a sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         start = int(data.get('start', 0))
         end = int(data.get('end', 0))
         strand = int(data.get('strand', 1))
@@ -272,7 +272,7 @@ def create_compound_location():
     """Create a compound location (for split features like introns/exons)"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         locations = data.get('locations', [])  # List of [start, end, strand]
 
         if not sequence or not locations:
@@ -317,7 +317,7 @@ def annotate_sequence():
     """Add annotations to a sequence and export as GenBank"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').upper().strip()
+        sequence = check_sequence_length(data.get('sequence', '')).upper().strip()
         seq_id = data.get('seq_id', 'sequence')
         description = data.get('description', 'Annotated sequence')
         features_data = data.get('features', [])

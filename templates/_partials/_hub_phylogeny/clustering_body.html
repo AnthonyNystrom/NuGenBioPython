@@ -62,7 +62,7 @@
                         </div>
                     </div>
                     
-                    <div id="dbscanParameters" style="display: none;">
+                    <div id="dbscanParameters" class="u-hidden">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-2">
@@ -81,7 +81,7 @@
                         </div>
                     </div>
 
-                    <div id="bioclusterParameters" style="display: none;">
+                    <div id="bioclusterParameters" class="u-hidden">
                         <div class="row">
                             <div class="col-md-6" id="distanceMethodGroup">
                                 <div class="mb-2">
@@ -106,7 +106,7 @@
                             </div>
                         </div>
 
-                        <div class="row" id="linkageMethodGroup" style="display: none;">
+                        <div class="row u-hidden" id="linkageMethodGroup">
                             <div class="col-md-6">
                                 <div class="mb-2">
                                     <label for="linkageMethod" class="form-label small">Linkage Method</label>
@@ -120,7 +120,7 @@
                             </div>
                         </div>
 
-                        <div class="row" id="somParametersGroup" style="display: none;">
+                        <div class="row u-hidden" id="somParametersGroup">
                             <div class="col-md-4">
                                 <div class="mb-2">
                                     <label for="somXDim" class="form-label small">Grid X Dimension</label>
@@ -156,7 +156,7 @@
             {{ card_header("Clustering Results", icon="fa-info-circle") }}
             <div class="card-body py-3" id="clusteringInfo">
                 <div class="text-muted text-center py-4">
-                    <i class="fas fa-arrow-left fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <i class="fas fa-arrow-left fa-3x mb-3 u-opacity03"></i>
                     <p class="mb-0">Perform clustering to see results</p>
                 </div>
             </div>
@@ -170,7 +170,7 @@
             {{ card_header("Cluster Visualization", icon="fa-chart-scatter") }}
             <div class="card-body py-4" id="clusterVisualization">
                 <div class="text-muted text-center py-5">
-                    <i class="fas fa-chart-scatter fa-3x mb-3" style="opacity: 0.2;"></i>
+                    <i class="fas fa-chart-scatter fa-3x mb-3 u-opacity02"></i>
                     <p class="mb-0">Cluster visualization will appear here</p>
                 </div>
             </div>

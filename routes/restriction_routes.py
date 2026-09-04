@@ -10,14 +10,14 @@ from utils.request_helpers import error_response, safe_error_message
 from io import StringIO, BytesIO
 import csv
 import json
-
-import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from dependencies import Seq, Restriction, SeqIO
 from utils.plot_helpers import (
+    svg_markup,
     PALETTE, LABEL_COLOR, MUTED_COLOR, AXIS_COLOR, GRID_COLOR,
-    figure_to_svg_data_url, set_title, fmt_bp, nice_ticks,
+    set_title, fmt_bp, nice_ticks,
+    subplots as oo_subplots,
 )
 
 log = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def render_restriction_map(analysis, sequence_length):
 
     # Height: base + extra row per stacked label (~0.25in per row)
     fig_h = max(2.6, 2.0 + label_rows * 0.28)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
+    fig, ax = oo_subplots(figsize=(fig_w, fig_h), dpi=100)
 
     # Baseline — a thick rounded bar for the sequence
     bar_y = 0
@@ -119,7 +119,7 @@ def render_restriction_map(analysis, sequence_length):
     ax.set_xlabel('Position (bp)', fontsize=9, color=LABEL_COLOR, labelpad=4)
     set_title(ax, f'Restriction Map · {sequence_length:,} bp', pad=10)
 
-    return figure_to_svg_data_url(fig)
+    return svg_markup(fig, title='Restriction map')
 
 
 @bp.route('/restriction/analyze', methods=['POST'])

@@ -356,11 +356,11 @@ function buildFragmentHistogram(fragments) {
     });
     const max = Math.max(...counts);
     let html = '<div class="mt-3"><div class="small text-muted mb-2">Fragment size distribution</div>' +
-               '<div class="d-flex align-items-end gap-2" style="height:80px;">';
+               '<div class="d-flex align-items-end gap-2 u-height80px">';
     counts.forEach((c, i) => {
         const h = max > 0 ? Math.max((c / max) * 100, 3) : 3;
         html += '<div class="text-center flex-fill">' +
-            '<div style="height:' + h + '%; background:var(--color-primary); border-radius:var(--radius-sm); min-height:3px;"></div>' +
+            '<div data-css="height:' + h + '%; background:var(--color-primary); border-radius:var(--radius-sm); min-height:3px;"></div>' +
             '<div class="rc-stat-sub mt-1">' + c + '</div>' +
             '<div class="rc-stat-sub">' + labels[i] + '</div>' +
         '</div>';
@@ -704,21 +704,22 @@ function displayRestrictionMap(analysis, sequenceLength, mapSvg) {
     // proper scale axis). If absent, fall back to the legacy HTML map.
     let html = '<div class="restriction-map">';
     if (mapSvg) {
-        html += `<img src="${mapSvg}" alt="Restriction map" class="img-fluid" `
-             + `style="width:100%; height:auto; border:1px solid var(--color-border, #e2e8f0); `
-             + `border-radius:6px; background:#fff;">`;
+        // Inline SVG rather than an <img>: the map's enzyme labels become
+        // selectable text, and the style attribute this used to carry is
+        // refused under our CSP anyway.
+        html += FigureExport.inline(mapSvg, 'restriction_map', 'Restriction map');
     } else {
     html += `<h6 class="small mb-3">Linear Restriction Map (${sequenceLength} bp)</h6>`;
 
     // Draw scale
-    html += '<div style="position: relative; height: 100px; margin-bottom: 20px;">';
+    html += '<div class="u-height100px-marginbottom20px-positionrelative">';
 
     // Main sequence line
-    html += '<div style="position: absolute; top: 50px; left: 0; right: 0; height: 3px; background: var(--color-text);"></div>';
+    html += '<div class="u-s1682e692"></div>';
 
     // Start and end markers
-    html += '<div style="position: absolute; top: 45px; left: 0; font-size: 10px;">0 bp</div>';
-    html += `<div style="position: absolute; top: 45px; right: 0; font-size: 10px;">${sequenceLength} bp</div>`;
+    html += '<div class="u-fs10px-left0-positionabsolute-top45px">0 bp</div>';
+    html += `<div class="u-fs10px-positionabsolute-right0-top45px">${sequenceLength} bp</div>`;
 
     // Plot cut sites
     const colors = ['#dc3545', '#0d6efd', '#198754', '#fd7e14', '#6f42c1', '#0dcaf0'];
@@ -732,8 +733,8 @@ function displayRestrictionMap(analysis, sequenceLength, mapSvg) {
             result.cut_positions.forEach(pos => {
                 const percentage = (pos / sequenceLength) * 100;
                 html += `
-                    <div style="position: absolute; top: 30px; left: ${percentage}%; width: 2px; height: 40px; background: ${color};">
-                        <div style="position: absolute; top: -20px; left: -20px; font-size: 9px; color: ${color}; white-space: nowrap;">
+                    <div data-css="position: absolute; top: 30px; left: ${percentage}%; width: 2px; height: 40px; background: ${color};">
+                        <div data-css="position: absolute; top: -20px; left: -20px; font-size: 9px; color: ${color}; white-space: nowrap;">
                             ${enzyme}<br>${pos}
                         </div>
                     </div>
@@ -756,7 +757,7 @@ function displayRestrictionMap(analysis, sequenceLength, mapSvg) {
             colorIndex++;
 
             html += `
-                <span class="badge" style="background-color: ${color};">
+                <span class="badge" data-css="background-color: ${color};">
                     ${enzyme} (${result.number_of_cuts} cuts)
                 </span>
             `;

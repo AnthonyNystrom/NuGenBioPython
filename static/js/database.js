@@ -265,7 +265,7 @@ function displayFetchedRecords(data, format) {
             ],
         });
     } else {
-        resultsDiv.innerHTML = `<pre class="mb-0" style="max-height: 500px; overflow-y: auto; font-size: 12px;">${escapeHtml(data)}</pre>`;
+        resultsDiv.innerHTML = `<pre class="mb-0 u-fs12px-maxh500px-ovyauto">${escapeHtml(data)}</pre>`;
     }
 }
 
@@ -514,7 +514,7 @@ function viewFullRecord(recordId, database) {
 }
 
 function displayRecordInModal(recordData, database, recordId) {
-    const raw = `<pre class="code-block" style="max-height: 500px; overflow-y: auto; font-size: 11px; margin: 0;">${escapeHtml(recordData)}</pre>`;
+    const raw = `<pre class="code-block u-fs11px-margin0-maxh500px-ovyauto">${escapeHtml(recordData)}</pre>`;
     ResultsPanel.render('recordModalContent', [
         { id: 'raw', title: 'Raw Data', content: raw, active: true },
         { id: 'fmt', title: 'Formatted', content: formatRecordData(recordData, database) },
@@ -539,7 +539,7 @@ function formatRecordData(data, database) {
     if (looksXml && F.formatXMLPretty) {
         return '<div class="p-2">' + F.formatXMLPretty(data) + '</div>';
     }
-    return '<div class="p-3 small font-monospace" style="white-space:pre-wrap;">' + escapeHtml(data) + '</div>';
+    return '<div class="p-3 small font-monospace u-wsprewrap">' + escapeHtml(data) + '</div>';
 }
 
 function escapeHtml(text) {

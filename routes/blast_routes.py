@@ -1,8 +1,10 @@
 """
 Routes for BLAST operations
 """
+import logging
 import os
-from collections import OrderedDict
+import threading
+import time
 
 from flask import Blueprint, request, jsonify, session
 import json
@@ -13,27 +15,122 @@ from utils.blast_helpers import (
     filter_results_by_evalue, filter_results_by_identity,
     get_result_statistics, extract_sequence_from_file
 )
-from utils.request_helpers import clamp_int, clamp_float, error_response
+from utils.request_helpers import (
+    clamp_int, clamp_float, error_response, safe_error_message,
+)
 
+from utils.shared_store import SharedStore
+
+log = logging.getLogger(__name__)
 bp = Blueprint('blast', __name__, url_prefix='/api')
 
 # Bounded in-memory BLAST result cache. Evicts oldest entries at the cap.
 # For multi-worker deployments, replace with Redis or shared storage.
 _BLAST_CACHE_MAX = int(os.environ.get('BLAST_CACHE_MAX', '64'))
-blast_results_cache = OrderedDict()
+blast_results_cache = SharedStore('blast', max_entries=_BLAST_CACHE_MAX)
 
 
 def _store_blast_result(result_id, payload):
-    if result_id in blast_results_cache:
-        blast_results_cache.move_to_end(result_id)
-    blast_results_cache[result_id] = payload
-    while len(blast_results_cache) > _BLAST_CACHE_MAX:
-        blast_results_cache.popitem(last=False)
+    blast_results_cache.set(result_id, payload)
+
+
+def _collect_blast_request():
+    """Parse and validate a BLAST request.
+
+    Returns (params, error_message). Shared by the synchronous endpoint and
+    the async submitter so the two cannot drift apart in what they accept.
+    """
+    uploaded_file = request.files.get('sequenceFile')
+    sequence = request.form.get('sequence', '').strip()
+
+    if uploaded_file and uploaded_file.filename:
+        file_content = uploaded_file.read().decode('utf-8')
+        file_ext = uploaded_file.filename.rsplit('.', 1)[-1].lower()
+        format_map = {
+            'fasta': 'fasta', 'fa': 'fasta', 'fna': 'fasta', 'faa': 'fasta',
+            'gb': 'genbank', 'gbk': 'genbank', 'genbank': 'genbank',
+            'txt': 'txt',
+        }
+        try:
+            sequence = extract_sequence_from_file(
+                file_content, format_map.get(file_ext, 'fasta'))
+        except ValueError as exc:
+            return None, str(exc)
+
+    program = request.form.get('program', 'blastn')
+    database = request.form.get('database', 'nt')
+    hitlist_size = clamp_int(request.form.get('hitlist_size'), 50, lo=1, hi=500)
+
+    if not sequence:
+        return None, 'No sequence provided'
+
+    prog_info = get_blast_program_info(program)
+    if not prog_info:
+        return None, 'Invalid BLAST program'
+
+    is_valid, error_msg = validate_sequence(sequence, prog_info['query_type'])
+    if not is_valid:
+        return None, error_msg
+
+    kwargs = {
+        'expect': clamp_float(request.form.get('expect'), 10.0, lo=0.0, hi=1e6),
+        'hitlist_size': hitlist_size,
+        'filter': request.form.get('filter', 'F'),
+    }
+    for form_key, kwarg, caster in (
+        ('word_size', 'word_size', int),
+        ('matrix_name', 'matrix_name', str),
+        ('gap_costs', 'gapcosts', str),
+        ('genetic_code', 'genetic_code', int),
+        ('nucl_penalty', 'nucl_penalty', int),
+        ('nucl_reward', 'nucl_reward', int),
+    ):
+        value = request.form.get(form_key)
+        if value:
+            kwargs[kwarg] = caster(value)
+
+    return {
+        'sequence': sequence,
+        'program': program,
+        'database': database,
+        'hitlist_size': hitlist_size,
+        'kwargs': kwargs,
+    }, None
+
+
+def _run_blast_and_store(params, result_id):
+    """Execute a BLAST search and return the formatted payload.
+
+    Shared by the blocking endpoint and the background worker.
+    """
+    blast_xml = run_ncbi_blast(params['sequence'], params['program'],
+                               params['database'], **params['kwargs'])
+    _store_blast_result(result_id, {
+        'xml': blast_xml,
+        'params': {
+            'program': params['program'],
+            'database': params['database'],
+            'sequence_length': len(params['sequence'].replace(' ', '')
+                                   .replace('\n', '')),
+        },
+    })
+    results = format_blast_results(parse_blast_xml(blast_xml),
+                                   params['hitlist_size'])
+    return {
+        'results': results,
+        'statistics': get_result_statistics(results),
+        'num_hits': len(results),
+    }
 
 
 @bp.route('/blast/search', methods=['POST'])
 def blast_search():
-    """Run BLAST search against NCBI"""
+    """Run BLAST against NCBI, blocking until it completes.
+
+    Kept for callers that want a single round trip. A BLAST can take minutes,
+    so prefer /blast/submit + /blast/job/<id>, which does not hold a worker
+    open for the whole search.
+    """
     try:
         # Check if file was uploaded
         uploaded_file = request.files.get('sequenceFile')
@@ -138,6 +235,91 @@ def blast_search():
     except Exception as e:
         return error_response(e, context='blast_routes.blast_search')
 
+
+
+# ---------------------------------------------------------------------------
+# Asynchronous submission
+# ---------------------------------------------------------------------------
+# A BLAST against NCBI routinely takes 30-180 seconds. Running it inline holds
+# a worker open for the whole search, and any proxy or browser in between is
+# free to time out first and leave the user with nothing. Submitting returns
+# immediately with a job id the client polls.
+#
+# Jobs live in the shared store, so with REDIS_URL set the poll can be served
+# by a different worker than the one that ran the search.
+
+_JOB_TTL = int(os.environ.get('BLAST_JOB_TTL', '3600'))
+blast_jobs = SharedStore('blast_jobs', max_entries=256, ttl=_JOB_TTL,
+                         serializer='json')
+
+
+def _set_job(job_id, **fields):
+    job = blast_jobs.get(job_id) or {'job_id': job_id}
+    job.update(fields)
+    blast_jobs.set(job_id, job)
+    return job
+
+
+def _blast_worker(job_id, params, result_id):
+    """Background thread body. Never raises into the thread runner."""
+    _set_job(job_id, status='running', started_at=time.time())
+    try:
+        payload = _run_blast_and_store(params, result_id)
+        _set_job(job_id, status='done', finished_at=time.time(), **payload)
+    except Exception as exc:                     # noqa: BLE001 - reported below
+        log.exception('blast job %s failed', job_id)
+        _set_job(job_id, status='error', finished_at=time.time(),
+                 error=safe_error_message(exc))
+
+
+@bp.route('/blast/submit', methods=['POST'])
+def blast_submit():
+    """Start a BLAST search and return a job id immediately."""
+    try:
+        params, error = _collect_blast_request()
+        if error:
+            return jsonify({'success': False, 'error': error})
+
+        job_id = str(uuid.uuid4())
+
+        # Allocate the result id here, in the request context, and put it in
+        # the session now — the worker has no request context, and
+        # /blast/alignment and /blast/export read this key.
+        result_id = session.get('blast_result_id') or str(uuid.uuid4())
+        session['blast_result_id'] = result_id
+
+        _set_job(job_id, status='queued', submitted_at=time.time(),
+                 program=params['program'], database=params['database'],
+                 sequence_length=len(params['sequence']))
+
+        threading.Thread(target=_blast_worker,
+                         args=(job_id, params, result_id),
+                         name=f'blast-{job_id[:8]}',
+                         daemon=True).start()
+
+        return jsonify({'success': True, 'job_id': job_id, 'status': 'queued'})
+    except Exception as e:
+        return error_response(e, context='blast_routes.blast_submit')
+
+
+@bp.route('/blast/job/<job_id>', methods=['GET'])
+def blast_job_status(job_id):
+    """Poll a submitted BLAST job.
+
+    status is one of queued / running / done / error. Results are included
+    once status is 'done'.
+    """
+    try:
+        job = blast_jobs.get(job_id)
+        if job is None:
+            return jsonify({
+                'success': False,
+                'error': ('That BLAST job is unknown or has expired. Jobs are '
+                          f'kept for {_JOB_TTL // 60} minutes.'),
+            }), 404
+        return jsonify({'success': True, **job})
+    except Exception as e:
+        return error_response(e, context='blast_routes.blast_job_status')
 
 @bp.route('/blast/alignment/<int:hit_index>', methods=['GET'])
 def get_alignment(hit_index):

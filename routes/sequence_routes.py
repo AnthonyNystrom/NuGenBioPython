@@ -4,7 +4,7 @@ Routes for sequence analysis and SeqIO operations
 import logging
 from flask import Blueprint, request, jsonify, send_file, current_app
 
-from utils.request_helpers import error_response, require_json, clamp_int
+from utils.request_helpers import error_response, require_json, clamp_int, check_sequence_length
 from utils.sequence_plots import (
     render_gc_skew, render_dot_plot, dot_plot_points, MAX_DOTPLOT_LEN,
 )
@@ -93,7 +93,7 @@ def melting_temp():
     """Calculate melting temperature of DNA sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
 
         if not sequence:
             return jsonify({'success': False, 'error': 'Please provide a DNA sequence'})
@@ -130,7 +130,7 @@ def find_orfs():
     """Find Open Reading Frames in sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         min_length = data.get('min_length', 75)
 
         if not sequence:
@@ -183,7 +183,7 @@ def codon_usage():
     """Analyze codon usage in sequence"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
 
         if not sequence:
             return jsonify({'success': False, 'error': 'Please provide a sequence'})
@@ -223,7 +223,7 @@ def checksums():
     """Calculate sequence checksums"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
 
         if not sequence:
             return jsonify({'success': False, 'error': 'Please provide a sequence'})
@@ -247,7 +247,7 @@ def protparam_advanced():
     """Advanced ProtParam analysis"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
 
         if not sequence:
             return jsonify({'success': False, 'error': 'Please provide a protein sequence'})
@@ -273,7 +273,7 @@ def molecular_weight_advanced():
     """Calculate molecular weight with variations"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         seq_type = data.get('type', 'dna')
 
         if not sequence:
@@ -334,7 +334,7 @@ def transcribe():
     """Transcribe DNA to RNA or back-transcribe RNA to DNA"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         operation = data.get('operation', 'transcribe')
 
         if not sequence:
@@ -369,7 +369,7 @@ def gc_analysis():
     """Perform advanced GC analysis including GC skew and GC123"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         window = data.get('window', 100)
 
         if not sequence:
@@ -478,7 +478,7 @@ def protein_convert():
     """Convert protein sequences between 1-letter and 3-letter codes"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         conversion = data.get('conversion', 'to_three')
 
         if not sequence:
@@ -509,7 +509,7 @@ def manipulate():
     """Manipulate sequences (ungap, uppercase, lowercase)"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip()
+        sequence = check_sequence_length(data.get('sequence', '').strip())
         operation = data.get('operation', 'ungap')
 
         if not sequence:
@@ -548,7 +548,7 @@ def search():
     """Search for patterns in sequences"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '').strip().upper()
+        sequence = check_sequence_length(data.get('sequence', '').strip()).upper()
         pattern = data.get('pattern', '').strip().upper()
         search_type = data.get('search_type', 'find')
 

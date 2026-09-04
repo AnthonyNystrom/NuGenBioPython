@@ -48,7 +48,7 @@ function displayCodonResults(data) {
     const summary = tilesHtml + `
         <p class="small mb-2"><strong>Table:</strong> ${escapeHtml(data.table_name)}</p>
         <div class="mb-2"><label class="small"><strong>Translated:</strong></label>
-        <textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.translated_sequence)}</textarea></div>
+        <textarea aria-label="Sequence" class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.translated_sequence)}</textarea></div>
         <p class="small mb-1"><strong>Start codons:</strong> ${data.start_codons.map(c => '<code class="badge bg-success">'+escapeHtml(c)+'</code>').join(' ')}</p>
         <p class="small mb-0"><strong>Stop codons:</strong> ${data.stop_codons.map(c => '<code class="badge bg-danger">'+escapeHtml(c)+'</code>').join(' ')}</p>
     `;
@@ -243,7 +243,7 @@ function displayProteinConvert(data) {
 
     const summary = tilesHtml +
         `<p class="small mb-1"><strong>Converted:</strong></p>` +
-        `<textarea class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.result)}</textarea>`;
+        `<textarea aria-label="Sequence" class="form-control form-control-sm sequence-display" rows="3" readonly>${escapeHtml(data.result)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('iupacResults', {
@@ -402,7 +402,7 @@ function displayAtomWeightsTable(weights) {
         rows += `<tr><td class="small">${name}</td><td><code class="badge bg-primary">${symbol}</code></td><td>${weights[symbol]}</td></tr>`;
         tsv.push([name, symbol, weights[symbol]].join('\t'));
     });
-    const table = `<div class="table-responsive" style="max-height:400px;overflow-y:auto;"><table class="table table-sm table-hover mb-0">
+    const table = `<div class="table-responsive u-maxh400px-ovyauto"><table class="table table-sm table-hover mb-0">
         <thead class="sticky-top bg-white"><tr><th>Element</th><th>Symbol</th><th>Weight (Da)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 
     if (typeof ResultsCard !== 'undefined') {

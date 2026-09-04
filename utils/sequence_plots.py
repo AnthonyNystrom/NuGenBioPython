@@ -73,10 +73,11 @@ def gc_skew_series(sequence, window=1000, step=None):
 
 def render_gc_skew(sequence, window=1000, title='GC skew'):
     """Render windowed + cumulative GC skew as an SVG data URL."""
-    import matplotlib.pyplot as plt
 
     from utils.plot_helpers import (
-        PALETTE, MUTED_COLOR, GRID_COLOR, figure_to_svg_data_url,
+        svg_markup,
+        subplots as oo_subplots,
+        PALETTE, MUTED_COLOR, GRID_COLOR,
         set_title, style_axes, fmt_bp, nice_ticks,
     )
 
@@ -84,7 +85,7 @@ def render_gc_skew(sequence, window=1000, title='GC skew'):
     if not positions:
         return None
 
-    fig, (ax_top, ax_bot) = plt.subplots(
+    fig, (ax_top, ax_bot) = oo_subplots(
         2, 1, figsize=(11, 5.6), sharex=True,
         gridspec_kw={'height_ratios': [1, 1.3], 'hspace': 0.18})
 
@@ -128,7 +129,7 @@ def render_gc_skew(sequence, window=1000, title='GC skew'):
     ax_bot.set_xlim(0, len(str(sequence)))
 
     set_title(fig, f'{title} (window {fmt_bp(window)})')
-    return figure_to_svg_data_url(fig)
+    return svg_markup(fig, title='GC skew')
 
 
 _COMPLEMENT = str.maketrans('ACGTacgt', 'TGCAtgca')
@@ -224,17 +225,18 @@ def render_dot_plot(seq1, seq2, word_size=8, label1='Sequence 1',
     is a repeat or duplication, and a run perpendicular to it is an inversion.
     None of that is visible in a pairwise alignment score.
     """
-    import matplotlib.pyplot as plt
 
     from utils.plot_helpers import (
-        PALETTE, MUTED_COLOR, GRID_COLOR, figure_to_svg_data_url,
+        svg_markup,
+        subplots as oo_subplots,
+        PALETTE, MUTED_COLOR, GRID_COLOR,
         set_title, style_axes,
     )
 
     (fx, fy), (rx, ry), truncated = dot_plot_points(
         seq1, seq2, word_size, include_reverse)
 
-    fig, ax = plt.subplots(figsize=(7.2, 7.0))
+    fig, ax = oo_subplots(figsize=(7.2, 7.0))
     if fx:
         ax.scatter(fx, fy, s=1.2, c=PALETTE['darkblue'], alpha=0.55,
                    linewidths=0, marker='s',
@@ -263,4 +265,4 @@ def render_dot_plot(seq1, seq2, word_size=8, label1='Sequence 1',
     if truncated:
         subtitle += f' — first {MAX_DOTPLOT_POINTS:,} matches'
     set_title(ax, f'{title} ({subtitle})')
-    return figure_to_svg_data_url(fig)
+    return svg_markup(fig, title='Dot plot')

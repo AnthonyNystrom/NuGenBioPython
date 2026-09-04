@@ -205,7 +205,7 @@ function displayAdvancedResults(results, title) {
     const contentDiv = document.getElementById('advancedResultsContent');
 
     let html = `<h6 class="mb-3"><i class="fas fa-chart-bar"></i> ${title}</h6>`;
-    html += '<div class="table-responsive"><pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">';
+    html += '<div class="table-responsive"><pre class="bg-light p-3 rounded u-maxh400px-ovyauto">';
     html += JSON.stringify(results, null, 2);
     html += '</pre></div>';
 

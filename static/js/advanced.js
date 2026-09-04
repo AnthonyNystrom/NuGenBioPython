@@ -142,8 +142,8 @@ function displayHmmResults(model) {
     for (let i = 0; i < model.states; i++) {
         vizHtml += `
             <div class="text-center">
-                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                     style="width: 70px; height: 70px; font-weight: bold; font-size: 1.1rem;">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center u-fs11rem-fontweightbold-height70px-width70px"
+                    >
                     S${i + 1}
                 </div>
                 <small class="text-muted mt-1 d-block">State ${i + 1}</small>
@@ -328,7 +328,7 @@ function displayDecodingResults(decoding) {
             <div class="mt-3">
                 <h6>Predicted State Path:</h6>
                 <div class="bg-light p-3 rounded">
-                    <code style="word-break: break-all;">${decoding.state_path}</code>
+                    <code class="u-wbbreakall">${decoding.state_path}</code>
                 </div>
             </div>
         </div>

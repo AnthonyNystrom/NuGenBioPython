@@ -12,3 +12,7 @@ scikit-learn>=1.2.0,<2.0.0
 seaborn>=0.12.0,<1.0.0
 logomaker>=0.8,<1.0.0
 python-dotenv>=1.0.0,<2.0.0
+
+# Optional: shared cross-worker store. Required only when running more than
+# one gunicorn worker — see "Running in production" in the README.
+# redis>=5.0,<7.0

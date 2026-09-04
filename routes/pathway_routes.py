@@ -14,8 +14,10 @@ import matplotlib.patches as mpatches
 
 from dependencies import Pathway, plt, np
 from utils.plot_helpers import (
+    svg_markup,
     ROLE_COLORS, EDGE_COLOR, TITLE_COLOR, LABEL_COLOR,
-    figure_to_svg_data_url, set_title,
+    set_title,
+    subplots as oo_subplots,
 )
 
 bp = Blueprint('pathway', __name__, url_prefix='/api')
@@ -229,7 +231,7 @@ def visualize_pathway():
         # for tall paths.
         fig_w = max(9, min(20, 6 + math.sqrt(n) * 1.5))
         fig_h = max(6, min(14, 4 + math.sqrt(n) * 1.1))
-        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
+        fig, ax = oo_subplots(figsize=(fig_w, fig_h), dpi=100)
 
         # Node sizes grow with label length so text fits.
         max_label = max((len(str(node)) for node in G.nodes()), default=8)
@@ -294,7 +296,7 @@ def visualize_pathway():
         ax.margins(0.18)
         ax.set_axis_off()
 
-        graph_image = figure_to_svg_data_url(fig)
+        graph_image = svg_markup(fig, title='Pathway network')
 
         return jsonify({
             'success': True,

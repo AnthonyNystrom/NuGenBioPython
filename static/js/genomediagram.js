@@ -135,18 +135,18 @@ function loadMultiTrackFeaturesFromFile(data) {
             featureDiv.innerHTML = `
                 <div class="col-3">
                     <input type="text" class="form-control form-control-sm track-feature-name"
-                           placeholder="Name" value="${feature.name}">
+                           placeholder="Name" value="${feature.name}" aria-label="Name">
                 </div>
                 <div class="col-2">
                     <input type="number" class="form-control form-control-sm track-feature-start"
-                           min="1" value="${feature.start}">
+                           min="1" value="${feature.start}" aria-label="Track feature start">
                 </div>
                 <div class="col-2">
                     <input type="number" class="form-control form-control-sm track-feature-end"
-                           min="1" value="${feature.end}">
+                           min="1" value="${feature.end}" aria-label="Track feature end">
                 </div>
                 <div class="col-2">
-                    <select class="form-select form-select-sm track-feature-color">
+                    <select class="form-select form-select-sm track-feature-color" aria-label="Track feature color">
                         <option value="${feature.color || 'blue'}" selected>${feature.color || 'blue'}</option>
                         <option value="blue">Blue</option>
                         <option value="red">Red</option>
@@ -200,18 +200,18 @@ function addFeature() {
     featureDiv.innerHTML = `
         <div class="col-md-3">
             <input type="text" class="form-control form-control-sm feature-name"
-                   placeholder="Feature ${featureCount}" value="Feature ${featureCount}">
+                   placeholder="Feature ${featureCount}" value="Feature ${featureCount}" aria-label="Feature">
         </div>
         <div class="col-md-2">
             <input type="number" class="form-control form-control-sm feature-start"
-                   min="1" value="${1000 * featureCount}">
+                   min="1" value="${1000 * featureCount}" aria-label="Feature start">
         </div>
         <div class="col-md-2">
             <input type="number" class="form-control form-control-sm feature-end"
-                   min="1" value="${1000 * featureCount + 500}">
+                   min="1" value="${1000 * featureCount + 500}" aria-label="Feature end">
         </div>
         <div class="col-md-3">
-            <select class="form-select form-select-sm feature-color">
+            <select class="form-select form-select-sm feature-color" aria-label="Feature color">
                 <option value="blue">Blue</option>
                 <option value="red">Red</option>
                 <option value="green">Green</option>
@@ -284,7 +284,7 @@ function updateFeatureSummary() {
     Object.entries(colorCounts).forEach(([color, count]) => {
         html += `
             <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small"><i class="fas fa-square" style="color: ${color}"></i> ${color}</span>
+                <span class="small"><i class="fas fa-square" data-css="color: ${color}"></i> ${color}</span>
                 <span class="badge bg-secondary">${count}</span>
             </div>
         `;
@@ -340,16 +340,16 @@ function addTrack() {
                 <div class="col-md-3">
                     <label class="form-label small mb-0">Track Name</label>
                     <input type="text" class="form-control form-control-sm track-name"
-                           value="Track ${trackCount}">
+                           value="Track ${trackCount}" aria-label="Track name">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Height</label>
                     <input type="number" class="form-control form-control-sm track-height"
-                           min="0.1" max="2" step="0.1" value="0.5">
+                           min="0.1" max="2" step="0.1" value="0.5" aria-label="Track height">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Greytrack</label>
-                    <select class="form-select form-select-sm track-greytrack">
+                    <select class="form-select form-select-sm track-greytrack" aria-label="Track greytrack">
                         <option value="true">Yes</option>
                         <option value="false">No</option>
                     </select>
@@ -357,7 +357,7 @@ function addTrack() {
                 <div class="col-md-3">
                     <label class="form-label small mb-0">Track Number</label>
                     <input type="number" class="form-control form-control-sm track-number"
-                           min="1" value="${trackCount}">
+                           min="1" value="${trackCount}" aria-label="Track number">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">&nbsp;</label>
@@ -398,18 +398,18 @@ function addTrackFeature(trackId) {
     featureDiv.innerHTML = `
         <div class="col-md-3">
             <input type="text" class="form-control form-control-sm track-feature-name"
-                   placeholder="Feature name">
+                   placeholder="Feature name" aria-label="Feature name">
         </div>
         <div class="col-md-2">
             <input type="number" class="form-control form-control-sm track-feature-start"
-                   min="1" placeholder="Start">
+                   min="1" placeholder="Start" aria-label="Start">
         </div>
         <div class="col-md-2">
             <input type="number" class="form-control form-control-sm track-feature-end"
-                   min="1" placeholder="End">
+                   min="1" placeholder="End" aria-label="End">
         </div>
         <div class="col-md-2">
-            <select class="form-select form-select-sm track-feature-color">
+            <select class="form-select form-select-sm track-feature-color" aria-label="Track feature color">
                 <option value="blue">Blue</option>
                 <option value="red">Red</option>
                 <option value="green">Green</option>
@@ -425,7 +425,7 @@ function addTrackFeature(trackId) {
             </select>
         </div>
         <div class="col-md-1">
-            <select class="form-select form-select-sm track-feature-strand">
+            <select class="form-select form-select-sm track-feature-strand" aria-label="Track feature strand">
                 <option value="1">+</option>
                 <option value="-1">-</option>
                 <option value="0">None</option>
@@ -552,7 +552,7 @@ function addDataGraph() {
             <div class="row g-2 align-items-center">
                 <div class="col-md-3">
                     <label class="form-label small mb-0">Graph Type</label>
-                    <select class="form-select form-select-sm graph-type">
+                    <select class="form-select form-select-sm graph-type" aria-label="Graph type">
                         <option value="gc_content">GC Content</option>
                         <option value="gc_skew">GC Skew</option>
                         <option value="custom">Custom Data</option>
@@ -560,7 +560,7 @@ function addDataGraph() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Style</label>
-                    <select class="form-select form-select-sm graph-style">
+                    <select class="form-select form-select-sm graph-style" aria-label="Graph style">
                         <option value="line">Line</option>
                         <option value="bar">Bar</option>
                         <option value="heat">Heat</option>
@@ -569,11 +569,11 @@ function addDataGraph() {
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Window</label>
                     <input type="number" class="form-control form-control-sm graph-window"
-                           value="1000" min="10">
+                           value="1000" min="10" aria-label="Graph window">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small mb-0">Color</label>
-                    <select class="form-select form-select-sm graph-color">
+                    <select class="form-select form-select-sm graph-color" aria-label="Graph color">
                         <option value="blue">Blue</option>
                         <option value="red">Red</option>
                         <option value="green">Green</option>
@@ -591,10 +591,10 @@ function addDataGraph() {
             </div>
         </div>
         <div class="card-body p-2">
-            <div class="custom-data-section" style="display: none;">
+            <div class="custom-data-section u-hidden">
                 <label class="form-label small">Custom Data (comma-separated values)</label>
                 <textarea class="form-control form-control-sm graph-custom-data" rows="2"
-                          placeholder="0.5,0.6,0.4,0.7,0.5..."></textarea>
+                          placeholder="0.5,0.6,0.4,0.7,0.5..." aria-label="Custom data values, comma separated"></textarea>
             </div>
         </div>
     `;
@@ -706,21 +706,21 @@ function addAdvancedFeature() {
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Name</label>
                     <input type="text" class="form-control form-control-sm advanced-feature-name"
-                           value="Feature ${featureCount}">
+                           value="Feature ${featureCount}" aria-label="Advanced feature name">
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">Start</label>
                     <input type="number" class="form-control form-control-sm advanced-feature-start"
-                           min="1" value="${1000 * featureCount}">
+                           min="1" value="${1000 * featureCount}" aria-label="Advanced feature start">
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">End</label>
                     <input type="number" class="form-control form-control-sm advanced-feature-end"
-                           min="1" value="${1000 * featureCount + 500}">
+                           min="1" value="${1000 * featureCount + 500}" aria-label="Advanced feature end">
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">Strand</label>
-                    <select class="form-select form-select-sm advanced-feature-strand">
+                    <select class="form-select form-select-sm advanced-feature-strand" aria-label="Advanced feature strand">
                         <option value="1">+ (forward)</option>
                         <option value="-1">- (reverse)</option>
                         <option value="0">None</option>
@@ -728,7 +728,7 @@ function addAdvancedFeature() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Sigil</label>
-                    <select class="form-select form-select-sm advanced-feature-sigil">
+                    <select class="form-select form-select-sm advanced-feature-sigil" aria-label="Advanced feature sigil">
                         <option value="BOX">BOX (rectangle)</option>
                         <option value="ARROW">ARROW (directional)</option>
                         <option value="OCTO">OCTO (octagon)</option>
@@ -738,7 +738,7 @@ function addAdvancedFeature() {
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">Color</label>
-                    <select class="form-select form-select-sm advanced-feature-color">
+                    <select class="form-select form-select-sm advanced-feature-color" aria-label="Advanced feature color">
                         <option value="blue">Blue</option>
                         <option value="red">Red</option>
                         <option value="green">Green</option>
@@ -755,7 +755,7 @@ function addAdvancedFeature() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small mb-0">Label Position</label>
-                    <select class="form-select form-select-sm advanced-feature-label-pos">
+                    <select class="form-select form-select-sm advanced-feature-label-pos" aria-label="Advanced feature label pos">
                         <option value="start">Start</option>
                         <option value="middle">Middle</option>
                         <option value="end">End</option>
@@ -763,7 +763,7 @@ function addAdvancedFeature() {
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">Label</label>
-                    <select class="form-select form-select-sm advanced-feature-label">
+                    <select class="form-select form-select-sm advanced-feature-label" aria-label="Advanced feature label">
                         <option value="true">Yes</option>
                         <option value="false">No</option>
                     </select>
@@ -809,27 +809,27 @@ function addCrossLink() {
                     <label class="form-label small mb-0">Track 1 (Start - End)</label>
                     <div class="input-group input-group-sm">
                         <input type="number" class="form-control form-control-sm link-track1"
-                               value="1" min="1">
+                               value="1" min="1" aria-label="Link track1">
                         <input type="number" class="form-control form-control-sm link-start1"
-                               placeholder="Start" min="1">
+                               placeholder="Start" min="1" aria-label="Start">
                         <input type="number" class="form-control form-control-sm link-end1"
-                               placeholder="End" min="1">
+                               placeholder="End" min="1" aria-label="End">
                     </div>
                 </div>
                 <div class="col-md-5">
                     <label class="form-label small mb-0">Track 2 (Start - End)</label>
                     <div class="input-group input-group-sm">
                         <input type="number" class="form-control form-control-sm link-track2"
-                               value="2" min="1">
+                               value="2" min="1" aria-label="Link track2">
                         <input type="number" class="form-control form-control-sm link-start2"
-                               placeholder="Start" min="1">
+                               placeholder="Start" min="1" aria-label="Start">
                         <input type="number" class="form-control form-control-sm link-end2"
-                               placeholder="End" min="1">
+                               placeholder="End" min="1" aria-label="End">
                     </div>
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small mb-0">Color</label>
-                    <select class="form-select form-select-sm link-color">
+                    <select class="form-select form-select-sm link-color" aria-label="Link color">
                         <option value="lightblue">Light Blue</option>
                         <option value="lightgreen">Light Green</option>
                         <option value="lightcoral">Light Coral</option>
@@ -1204,13 +1204,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function displayDiagram(diagramData, containerId) {
     const displayDiv = document.getElementById(containerId);
 
-    displayDiv.innerHTML = `
-        <div>
-            <img src="${diagramData}" class="img-fluid" alt="Genome Diagram"
-                 style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;">
-            ${FigureExport.controls(diagramData, 'genome_diagram')}
-        </div>
-    `;
+    displayDiv.innerHTML =
+        FigureExport.inline(diagramData, 'genome_diagram', 'Genome diagram');
+}
+
+
+// The diagram is inline SVG in the DOM now rather than a data URL, so the
+// toolbar's export buttons serialise the live element.
+function _currentDiagramDataUrl() {
+    const svg = document.querySelector('.figure-container svg.figure-svg');
+    return svg ? FigureExport.svgToDataUrl(svg) : currentDiagramData;
 }
 
 function exportDiagram(format) {
@@ -1230,12 +1233,12 @@ function exportDiagram(format) {
     // (the server has no figure object left to re-render, and reportlab cannot
     // parse SVG), so they report honestly rather than emitting a broken file.
     if (format === 'svg') {
-        FigureExport.download(currentDiagramData, 'genome_diagram');
+        FigureExport.download(_currentDiagramDataUrl(), 'genome_diagram');
         showAlert('Diagram exported as SVG', 'success');
         return;
     }
     if (format === 'png') {
-        FigureExport.downloadPng(currentDiagramData, 'genome_diagram');
+        FigureExport.downloadPng(_currentDiagramDataUrl(), 'genome_diagram');
         showAlert('Diagram exported as PNG', 'success');
         return;
     }

@@ -54,9 +54,11 @@ def _static_cache_bust(endpoint, values):
 # handlers can never be nonce-covered — have been migrated to the data-action
 # dispatcher in static/js/utils.js.
 #
-# style-src keeps 'unsafe-inline': inline style="..." attributes are
-# widespread in the templates and, like event handlers, cannot be nonced.
-# That is a much smaller risk than script injection.
+# style-src no longer carries 'unsafe-inline' either. All 139 inline
+# style="..." attributes became utility classes (static values) or data-css
+# attributes applied through the CSSOM (dynamic values) — el.style.cssText is
+# not covered by style-src, unlike a style attribute in markup. The nonce
+# covers the inline <style> block in base.html.
 #
 # Connect-src allowlists the external biology APIs the app talks to.
 def _build_csp(nonce):
@@ -64,7 +66,7 @@ def _build_csp(nonce):
         "default-src 'self'; "
         f"script-src 'self' 'nonce-{nonce}' "
             "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://3Dmol.org; "
-        "style-src 'self' 'unsafe-inline' "
+        f"style-src 'self' 'nonce-{nonce}' "
             "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
         "img-src 'self' data: https:; "
@@ -108,17 +110,16 @@ def _apply_security_headers(response):
     return response
 
 
-# Belt-and-braces against matplotlib figure leaks. The plot helpers close their
-# figure on the success path (utils/plot_helpers.figure_to_*_data_url), but a
-# render that raises between plt.subplots() and serialization would leave the
-# figure in pyplot's global registry, growing memory across requests. Closing
-# all open figures at the end of every request reclaims those (a no-op on the
-# success path). Safe because the Agg/pyplot backend is single-threaded by
-# design — see the threading note in utils/request_helpers.remote_timeout.
-@app.teardown_request
-def _close_stale_figures(exc):
-    import matplotlib.pyplot as plt
-    plt.close('all')
+# Figures no longer need a global sweep. utils.plot_helpers.subplots()
+# constructs matplotlib Figure objects directly instead of going through
+# pyplot, so nothing is registered in pyplot's process-global figure dict and
+# each figure is collected with the request that made it.
+#
+# The teardown_request hook that used to live here called plt.close('all').
+# That reclaimed leaked figures, but it was also the third reason this app
+# could not run threaded workers: 'all' meant all, including figures still
+# being drawn by other in-flight requests.
+
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'

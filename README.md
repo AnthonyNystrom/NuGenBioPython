@@ -286,6 +286,45 @@ root is loaded automatically if `python-dotenv` is installed.
 | `STATIC_MAX_AGE` | `3600` (`86400` in production) | `Cache-Control` max-age for static assets. |
 | `ENTREZ_EMAIL` | *unset* | Contact address sent to NCBI. NCBI's usage policy asks every request to identify a real address; without one you are more likely to be throttled. |
 | `ENTREZ_API_KEY` | *unset* | NCBI API key. Raises the Entrez rate ceiling from 3 to 10 requests/second. [Get one here](https://www.ncbi.nlm.nih.gov/account/). |
+| `REDIS_URL` | *unset* | Shared store for motif / BLAST / HMM / status results. **Required if you run more than one worker** — see below. |
+| `WEB_CONCURRENCY` | CPU count (max 4) | Gunicorn worker processes. |
+| `GUNICORN_TIMEOUT` | `240` | Worker timeout; must exceed the longest external call (BLAST is capped at 180s). |
+| `MAX_ALIGNMENT_LEN` | `10000` | Per-sequence cap for pairwise alignment and anything built on it. |
+| `MAX_SEQUENCE_LEN` | `5000000` | Per-sequence cap for linear analyses (composition, translation, ORFs). |
+
+### Running in production
+
+The Flask dev server is single-process and prints its own warning; use
+gunicorn:
+
+```bash
+pip install gunicorn
+SECRET_KEY=... gunicorn -c gunicorn.conf.py app:app
+```
+
+Or with Docker:
+
+```bash
+docker build -t nugenbiopython .
+docker run -p 9000:9000 -e SECRET_KEY=... nugenbiopython
+```
+
+**Scale out with `REDIS_URL`, never `WEB_CONCURRENCY` alone.** Motif, BLAST
+and HMM results are addressed by an id handed back to the browser. Without a
+shared store those live in one worker's memory, so a follow-up request that
+lands on a different worker reports the result as missing. Measured with 3
+workers and no `REDIS_URL`: 6 of 15 reads failed. With `REDIS_URL` set: 0.
+`gunicorn.conf.py` warns at startup if you configure more than one worker
+without it.
+
+```bash
+REDIS_URL=redis://localhost:6379/0 WEB_CONCURRENCY=4 \
+  SECRET_KEY=... gunicorn -c gunicorn.conf.py app:app
+```
+
+Workers are `sync`, one request at a time, deliberately: the socket-timeout
+helper, matplotlib's pyplot registry and the outbound rate gate are all
+process-global. Scale with more processes, not threads.
 
 ### NCBI usage
 

@@ -3,11 +3,10 @@ Routes for comprehensive motif analysis
 """
 import logging
 import os
-from collections import OrderedDict
 
 from flask import Blueprint, request, jsonify, session
 
-from utils.request_helpers import error_response
+from utils.request_helpers import error_response, check_sequence_length
 import base64
 from io import BytesIO
 import numpy as np
@@ -17,11 +16,13 @@ from Bio import motifs
 from Bio.Seq import Seq
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
+from utils.shared_store import SharedStore
 from utils.plot_helpers import (
+    svg_markup,
     PALETTE, MUTED_COLOR, style_axes,
-    figure_to_svg_data_url, figure_to_png_data_url,
+    figure_to_png_data_url,
+    subplots as oo_subplots,
 )
 from utils.motif_helpers import (
     create_motif_from_sequences, parse_motif_from_file, get_motif_info,
@@ -31,17 +32,15 @@ from utils.motif_helpers import (
 log = logging.getLogger(__name__)
 bp = Blueprint('motifs', __name__, url_prefix='/api')
 
-# Bounded in-memory motif cache. Evicts oldest entries at the cap.
+# Motif cache. Shared across workers when REDIS_URL is set; otherwise a
+# per-process LRU exactly as before. See utils/shared_store.py — as a plain
+# module dict this silently lost results under more than one gunicorn worker.
 _MOTIF_CACHE_MAX = int(os.environ.get('MOTIF_CACHE_MAX', '64'))
-motif_cache = OrderedDict()
+motif_cache = SharedStore('motifs', max_entries=_MOTIF_CACHE_MAX)
 
 
 def _store_motif(motif_id, motif):
-    if motif_id in motif_cache:
-        motif_cache.move_to_end(motif_id)
-    motif_cache[motif_id] = motif
-    while len(motif_cache) > _MOTIF_CACHE_MAX:
-        motif_cache.popitem(last=False)
+    motif_cache.set(motif_id, motif)
 
 
 @bp.route('/motifs/create', methods=['POST'])
@@ -134,7 +133,7 @@ def search_motif():
     """Search for motif in sequence using PSSM scoring"""
     try:
         data = request.get_json(silent=True) or {}
-        sequence = data.get('sequence', '')
+        sequence = check_sequence_length(data.get('sequence', ''))
         threshold_type = data.get('threshold_type', 'rel')  # 'abs' or 'rel'
         threshold_value = float(data.get('threshold', 0.7))
         search_rc = data.get('search_rc', True)
@@ -314,7 +313,7 @@ def generate_sequence_logo(m, use_information_content=True):
                 'T': PALETTE['red'],
             }
 
-            fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            fig, ax = oo_subplots(figsize=(width, height), dpi=100)
             fig.patch.set_alpha(0.0)
             ax.set_facecolor('none')
             logomaker.Logo(
@@ -333,7 +332,7 @@ def generate_sequence_logo(m, use_information_content=True):
 
             # Transparent so the logo sits on the card, but the chrome is
             # still themed — see figure_to_svg_data_url.
-            return figure_to_svg_data_url(fig, transparent=True)
+            return svg_markup(fig, transparent=True, title='Sequence logo')
 
         except ImportError:
             # Fallback: stacked bar chart with lettered segments — better
@@ -341,7 +340,7 @@ def generate_sequence_logo(m, use_information_content=True):
             # boxes instead of white letter on saturated color).
             colors = {'A': PALETTE['green'], 'C': PALETTE['blue'],
                       'G': PALETTE['yellow'], 'T': PALETTE['red']}
-            fig, ax = plt.subplots(figsize=(width, height), dpi=100)
+            fig, ax = oo_subplots(figsize=(width, height), dpi=100)
             fig.patch.set_alpha(0.0)
             ax.set_facecolor('none')
             for i in range(len(m)):

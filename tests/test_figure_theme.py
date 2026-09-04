@@ -23,7 +23,8 @@ LIGHT_CHROME = {TITLE_COLOR.lower(), LABEL_COLOR.lower(), MUTED_COLOR.lower(),
 
 
 def _svg_colors(data_url):
-    svg = base64.b64decode(data_url.split(',', 1)[1]).decode()
+    svg = (data_url if data_url.lstrip().startswith("<svg")
+           else base64.b64decode(data_url.split(',', 1)[1]).decode())
     return set(c.lower() for c in re.findall(r'#[0-9a-fA-F]{6}', svg))
 
 
@@ -143,25 +144,24 @@ def test_opaque_chrome_is_still_remapped():
     plt.close(fig)
 
 
-def test_ramachandran_dark_render_keeps_transparent_regions_transparent():
-    """End-to-end on the plot that exposed the bug.
+def test_ramachandran_render_keeps_transparent_regions_transparent():
+    """End-to-end on the plot that exposed the transparency bug.
 
-    The glycine-only contours are drawn with facecolor='none'. If the
-    transparency guard regresses they become filled shapes, which shows up as
-    a large jump in the rendered SVG's fill count.
+    The glycine-only contours are drawn with facecolor='none'. If the guard
+    in _remap regresses they become filled shapes. Figures are now delivered
+    as inline SVG with presentation attributes, so the check is on fill="..."
+    rather than a CSS declaration.
     """
     import re
     from utils.structure_plots import classify_all, render_ramachandran
+    from utils.plot_helpers import DARK_TITLE
 
     _counts, annotated = classify_all([
         {'phi': -63, 'psi': -43, 'resname': 'GLY', 'residue': 'GLY1'},
         {'phi': -139, 'psi': 135, 'resname': 'ALA', 'residue': 'ALA2'},
     ])
-    svg = base64.b64decode(
-        render_ramachandran(annotated, theme_override='dark')
-        .split(',', 1)[1]).decode() if False else base64.b64decode(
-        render_ramachandran(annotated).split(',', 1)[1]).decode()
-    # No path should be filled with the near-white the bug produced.
-    from utils.plot_helpers import DARK_TITLE
-    filled = re.findall(r'fill:\s*(#[0-9a-fA-F]{6})', svg)
-    assert filled.count(DARK_TITLE.lower()) == 0
+    svg = render_ramachandran(annotated)
+    assert svg.lstrip().startswith("<svg")
+    fills = re.findall(r'fill="(#[0-9a-fA-F]{6})"', svg)
+    assert fills, "expected presentation-attribute fills"
+    assert DARK_TITLE.lower() not in [f.lower() for f in fills]

@@ -134,6 +134,11 @@ def throttle(service):
     return gate.wait()
 
 
+# Serialises the global-socket-timeout window in remote_timeout. See the note
+# in that function for why serialising is free in practice.
+_SOCKET_TIMEOUT_LOCK = threading.RLock()
+
+
 @contextmanager
 def remote_timeout(seconds, service=None):
     """Temporarily set the default socket timeout for remote calls.
@@ -147,22 +152,26 @@ def remote_timeout(seconds, service=None):
     instead of blocking a Flask worker indefinitely. The original timeout
     is always restored, even on exception.
 
-    THREAD-SAFETY CAVEAT: this mutates the process-global default socket
-    timeout via ``socket.setdefaulttimeout``. Under a threaded server
-    (Flask ``threaded=True`` or gunicorn ``--threads > 1``) concurrent
-    requests can stomp each other's timeout window. It is safe under a
-    single-threaded / one-request-per-worker model (gunicorn sync workers,
-    the default), which is how this app is intended to run. If you move to
-    threaded workers, replace this with a per-call timeout instead.
+    THREAD SAFETY: this mutates the process-global default socket timeout,
+    so two threads doing it at once would stomp each other's window — one
+    request could inherit another's timeout, or restore the wrong value. A
+    module-level lock serialises the whole call instead.
+
+    Serialising costs almost nothing here: every caller passes a `service`,
+    and the outbound RateGate already spaces those calls (0.34s for NCBI and
+    KEGG, 3s for BLAST submissions), so concurrent external calls to the same
+    service were never going to overlap anyway. What the lock buys is that a
+    threaded server no longer corrupts the timeout window.
     """
-    if service:
-        throttle(service)
-    old = socket.getdefaulttimeout()
-    socket.setdefaulttimeout(seconds)
-    try:
-        yield
-    finally:
-        socket.setdefaulttimeout(old)
+    with _SOCKET_TIMEOUT_LOCK:
+        if service:
+            throttle(service)
+        old = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(seconds)
+        try:
+            yield
+        finally:
+            socket.setdefaulttimeout(old)
 
 
 # Messages from these are written for the person using the tool — "Sequences
@@ -211,6 +220,95 @@ def safe_error_message(exc):
     return _GENERIC_ERROR
 
 
+
+# ---------------------------------------------------------------------------
+# Input size limits
+# ---------------------------------------------------------------------------
+# Bio.Align.PairwiseAligner is O(n*n) in BOTH time and memory. Measured on a
+# random DNA pair: 10 kb -> 1.0 s / 243 MB, 20 kb -> 4.0 s / 861 MB,
+# 40 kb -> 16.1 s / 4.0 GB, scaling cleanly 4x per doubling. With
+# MAX_CONTENT_LENGTH at 16 MB and no length check, a single request could
+# carry ~8,000,000 bp — roughly 179 hours of CPU, and an out-of-memory kill
+# long before that.
+#
+# Memory is the sharper edge: extrapolating the measured curve, an 8 GB host
+# is exhausted by a ~57 kb sequence. That is not an attack payload, it is one
+# assembly contig — an entirely ordinary thing to paste in. Since the app runs
+# one request per process (see remote_timeout's threading note), the OOM kill
+# takes the whole service down.
+#
+# Linear work (GC content, translation, reverse complement) is cheap by
+# comparison — 5 Mb in 0.18 s / 80 MB — so it gets a much higher ceiling.
+
+# Quadratic algorithms: pairwise alignment and anything built on it.
+MAX_ALIGNMENT_LEN = int(os.environ.get('MAX_ALIGNMENT_LEN', 10_000))
+
+# Linear scans: composition, translation, ORF finding, restriction search.
+MAX_SEQUENCE_LEN = int(os.environ.get('MAX_SEQUENCE_LEN', 5_000_000))
+
+
+class SequenceTooLong(ValueError):
+    """Raised when a submitted sequence exceeds the limit for an operation.
+
+    Subclasses ValueError so safe_error_message() passes the (deliberately
+    actionable) message through to the user unchanged.
+    """
+
+
+def _fmt_bp(n):
+    """Human-readable length that still carries the exact figure.
+
+    Rounding alone is misleading at the boundary: 10,001 bp against a 10,000
+    limit rendered as "is 10 kb; the limit is 10 kb", which reads as a bug.
+    """
+    if n >= 1000:
+        return f'{n:,} bp'
+    return f'{n} bp'
+
+
+def check_sequence_length(sequence, limit=None, name='sequence', quadratic=False):
+    """Validate a sequence's length, returning it unchanged when acceptable.
+
+    Raises SequenceTooLong with a message that names the actual limit, so the
+    user knows what to do rather than watching the request hang.
+    """
+    if sequence is None:
+        return sequence
+    if limit is None:
+        limit = MAX_ALIGNMENT_LEN if quadratic else MAX_SEQUENCE_LEN
+    length = len(sequence)
+    if length > limit:
+        detail = (' This operation scales with the square of the sequence '
+                  'length, so the limit is deliberately conservative.'
+                  if quadratic else '')
+        raise SequenceTooLong(
+            f'{name} is {_fmt_bp(length)}; the limit for this operation is '
+            f'{_fmt_bp(limit)}.{detail}'
+        )
+    return sequence
+
+
+def check_alignment_inputs(*sequences, name='sequence'):
+    """Length-check every sequence going into a quadratic alignment."""
+    for i, seq in enumerate(sequences, 1):
+        label = name if len(sequences) == 1 else f'{name} {i}'
+        check_sequence_length(seq, quadratic=True, name=label)
+    return sequences
+
+# Errors that mean "the request was not valid", not "the server broke".
+# SequenceTooLong is defined above; UploadError is imported lazily to avoid a
+# circular import between request_helpers and upload_helpers.
+def _input_validation_errors():
+    try:
+        from utils.upload_helpers import UploadError
+        return (SequenceTooLong, UploadError)
+    except Exception:
+        return (SequenceTooLong,)
+
+
+_INPUT_VALIDATION_ERRORS = _input_validation_errors()
+
+
 def error_response(exc, user_msg=None, *, context=None):
     """Log the exception server-side and return a safe JSON response.
 
@@ -221,7 +319,13 @@ def error_response(exc, user_msg=None, *, context=None):
     upload paths and internal structure.
     """
     label = context or 'route error'
-    log.exception('%s: %s', label, exc)
+    if isinstance(exc, _INPUT_VALIDATION_ERRORS):
+        # Someone pasted a sequence that is too long, or uploaded nothing.
+        # That is ordinary use, not a fault: record it at INFO with no
+        # traceback so real failures stay visible in the log.
+        log.info('%s: %s', label, exc)
+    else:
+        log.exception('%s: %s', label, exc)
     if user_msg is None:
         user_msg = safe_error_message(exc)
     return jsonify({'success': False, 'error': user_msg})

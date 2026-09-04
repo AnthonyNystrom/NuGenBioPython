@@ -2255,3 +2255,121 @@ body,
     .main-content { margin: 0; padding: 0; }
     .card, .results-card { border: 1px solid #ccc; box-shadow: none; }
 }
+
+
+/* ---------------------------------------------------------------------
+   Utility classes replacing inline style= attributes.
+
+   A style attribute in markup is blocked by a CSP without
+   'unsafe-inline' (verified in Chromium: markup style= and
+   setAttribute('style', ...) are refused, while el.style.prop = x and
+   el.style.cssText are exempt because the CSSOM is not covered by
+   style-src). Moving these into classes is what lets style-src drop
+   'unsafe-inline'; JS-driven styling keeps working untouched.
+   --------------------------------------------------------------------- */
+.u-hidden { display: none; }
+.u-maxh300px-ovyauto { max-height: 300px; overflow-y: auto; }
+.u-fs11px { font-size: 11px; }
+.u-maxh400px-ovyauto { max-height: 400px; overflow-y: auto; }
+.u-maxw100 { max-width: 100%; }
+.u-maxh200px-ovyauto { max-height: 200px; overflow-y: auto; }
+.u-lh15 { line-height: 1.5; }
+.u-minh100px { min-height: 100px; }
+.u-ffmonospace-fs9px-lh13 { font-family: monospace; font-size: 9px; line-height: 1.3; }
+.u-minh200px { min-height: 200px; }
+.u-maxh400px { max-height: 400px; }
+.u-maxh250px { max-height: 250px; }
+.u-borderradius8px-border1pxsoliddd-maxw100 { border-radius: 8px; border: 1px solid #ddd; max-width: 100%; }
+.u-minh60px { min-height: 60px; }
+.u-maxh500px-ovyauto { max-height: 500px; overflow-y: auto; }
+.u-fs11px-letterspacing1px { font-size: 11px; letter-spacing: 1px; }
+.u-fs07rem { font-size: 0.7rem; }
+.u-fs075rem { font-size: 0.75rem; }
+.u-maxw350px { max-width: 350px; }
+.u-ffmonospace-fs14px-lh14 { font-family: monospace; font-size: 14px; line-height: 1.4; }
+.u-ffmonospace-fs11px { font-family: monospace; font-size: 11px; }
+.u-fs10px-tablelayoutfixed-width100 { font-size: 10px; table-layout: fixed; width: 100%; }
+.u-width20 { width: 20%; }
+.u-fs10px { font-size: 10px; }
+.u-minh250px { min-height: 250px; }
+.u-maxh300px-minh200px-ovyauto { max-height: 300px; min-height: 200px; overflow-y: auto; }
+.u-heightauto-maxw100 { height: auto; max-width: 100%; }
+.u-height20px { height: 20px; }
+.u-colorwhite-fontweight600 { color: white; font-weight: 600; }
+.u-bordercolorrgba000008 { border-color: rgba(0,0,0,0.08) !important; }
+.u-color64748b-fs11px-minwidth20px { color: #64748b; font-size: 11px; min-width: 20px; }
+.u-color1e293b-fs13px-fontweight500 { color: #1e293b; font-size: 13px; font-weight: 500; }
+.u-boxshadow02px8pxrgb { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.u-opacity03 { opacity: 0.3; }
+.u-opacity02 { opacity: 0.2; }
+.u-fs12px-maxh500px-ovyauto { font-size: 12px; max-height: 500px; overflow-y: auto; }
+.u-fs11px-margin0-maxh500px-ovyauto { font-size: 11px; margin: 0; max-height: 500px; overflow-y: auto; }
+.u-wsprewrap { white-space: pre-wrap; }
+.u-ffmonospace-fs12px-maxh200px-ovyauto-wbbreakall { font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; word-break: break-all; }
+.u-width80 { width: 80%; }
+.u-width60 { width: 60%; }
+.u-fs11rem-fontweightbold-height70px-width70px { font-size: 1.1rem; font-weight: bold; height: 70px; width: 70px; }
+.u-wbbreakall { word-break: break-all; }
+.u-width120px { width: 120px; }
+.u-width200px { width: 200px; }
+.u-fs11px-lh14-maxh400px-ovauto { font-size: 11px; line-height: 1.4; max-height: 400px; overflow: auto; }
+.u-fs11px-lh14-maxh500px-ovauto { font-size: 11px; line-height: 1.4; max-height: 500px; overflow: auto; }
+.u-width80px { width: 80px; }
+.u-backgroundvarcolorbg-colorvarcolorte-maxh500px-ovauto { background: var(--color-bg); color: var(--color-text); max-height: 500px; overflow: auto; }
+.u-lh14-maxh500px-ovauto { line-height: 1.4; max-height: 500px; overflow: auto; }
+.u-s1cc113d5 { background: var(--color-bg); color: var(--color-text); font-size: 11px; max-height: 400px; overflow-y: auto; }
+.u-s8dc56dcd { background: var(--color-bg); color: var(--color-text); font-size: 11px; max-height: 500px; overflow-y: auto; }
+.u-height80px { height: 80px; }
+.u-height100px-marginbottom20px-positionrelative { height: 100px; margin-bottom: 20px; position: relative; }
+.u-s1682e692 { background: var(--color-text); height: 3px; left: 0; position: absolute; right: 0; top: 50px; }
+.u-fs10px-left0-positionabsolute-top45px { font-size: 10px; left: 0; position: absolute; top: 45px; }
+.u-fs10px-positionabsolute-right0-top45px { font-size: 10px; position: absolute; right: 0; top: 45px; }
+
+
+/* ---------------------------------------------------------------------
+   Cluster visualisation. These rules used to be injected at runtime as a
+   <style> block inside an innerHTML string. A style element inserted that
+   way is governed by style-src, and it carried no nonce — so it broke as
+   soon as 'unsafe-inline' was dropped. The rules are static; they belong
+   in the stylesheet.
+   --------------------------------------------------------------------- */
+.cluster-visualization {
+    padding-bottom: 20px;
+}
+.cluster-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 10px;
+}
+.cluster-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 10;
+}
+.stat-mini {
+    transition: transform 0.2s ease;
+}
+.stat-mini:hover {
+    transform: scale(1.05);
+}
+.stat-value-mini {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.stat-label-mini {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--secondary-600);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------
+   Inline figures. utils.plot_helpers.svg_markup() strips matplotlib's
+   <style> block (an inline style element, refused by our CSP) and rewrites
+   its style= attributes as SVG presentation attributes. These two rules are
+   what that block contained.
+   --------------------------------------------------------------------- */
+.figure-svg { max-width: 100%; height: auto; }
+.figure-svg * { stroke-linejoin: round; stroke-linecap: butt; }

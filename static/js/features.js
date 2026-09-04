@@ -180,9 +180,9 @@ function showORFDetails(index) {
                     <p><strong>Length:</strong> ${orf.length} bp</p>
                     <p><strong>Frame:</strong> ${orf.frame} | <strong>Strand:</strong> ${escapeHtml(orf.strand)}</p>
                     <p><strong>DNA Sequence:</strong></p>
-                    <textarea class="form-control sequence-display mb-2" rows="3" readonly>${escapeHtml(orf.sequence)}</textarea>
+                    <textarea class="form-control sequence-display mb-2" rows="3" readonly aria-label="Sequence">${escapeHtml(orf.sequence)}</textarea>
                     <p><strong>Protein Sequence (${orf.protein_length} aa):</strong></p>
-                    <textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(orf.protein)}</textarea>
+                    <textarea class="form-control sequence-display" rows="3" readonly aria-label="Sequence">${escapeHtml(orf.protein)}</textarea>
                 </div>
             </div>
         </div>
@@ -250,7 +250,7 @@ function displayCreatedFeature(feature) {
     const summary = tilesHtml +
         `<p class="mb-1"><strong>Location:</strong> ${feature.start}..${feature.end} (${feature.strand} strand)</p>` +
         `<p class="mb-1"><strong>Sequence:</strong></p>` +
-        `<textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
+        `<textarea class="form-control sequence-display" rows="3" readonly aria-label="Sequence">${escapeHtml(feature.sequence)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('createResults', {
@@ -424,10 +424,10 @@ function displayExtractedFeature(feature) {
 
     let summary = tilesHtml +
         '<p class="mb-1"><strong>Extracted Sequence:</strong></p>' +
-        `<textarea class="form-control sequence-display mb-2" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
+        `<textarea class="form-control sequence-display mb-2" rows="3" readonly aria-label="Sequence">${escapeHtml(feature.sequence)}</textarea>`;
     if (feature.protein) {
         summary += `<p class="mb-1"><strong>Protein Translation (${feature.protein_length} aa):</strong></p>` +
-            `<textarea class="form-control sequence-display" rows="2" readonly>${escapeHtml(feature.protein)}</textarea>`;
+            `<textarea class="form-control sequence-display" rows="2" readonly aria-label="Sequence">${escapeHtml(feature.protein)}</textarea>`;
     }
 
     const downloads = [
@@ -523,7 +523,7 @@ function displayCompoundFeature(feature) {
         locs += `<li>${loc.start}..${loc.end} (${loc.strand > 0 ? '+' : '-'})</li>`;
     });
     locs += '</ul>';
-    const textarea = `<p class="mb-1"><strong>Joined Sequence:</strong></p><textarea class="form-control sequence-display" rows="3" readonly>${escapeHtml(feature.sequence)}</textarea>`;
+    const textarea = `<p class="mb-1"><strong>Joined Sequence:</strong></p><textarea class="form-control sequence-display" rows="3" readonly aria-label="Sequence">${escapeHtml(feature.sequence)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('compoundResults', {
@@ -548,22 +548,22 @@ document.getElementById('addFeatureBtn').addEventListener('click', function() {
     const featureEntry = `<div class="feature-entry p-2 border rounded mb-2">
         <div class="row g-2">
             <div class="col-md-3">
-                <input type="text" class="form-control form-control-sm feat-type" placeholder="Type (e.g., CDS)">
+                <input type="text" class="form-control form-control-sm feat-type" placeholder="Type (e.g., CDS)" aria-label="Type">
             </div>
             <div class="col-md-2">
-                <input type="number" class="form-control form-control-sm feat-start" placeholder="Start">
+                <input type="number" class="form-control form-control-sm feat-start" placeholder="Start" aria-label="Start">
             </div>
             <div class="col-md-2">
-                <input type="number" class="form-control form-control-sm feat-end" placeholder="End">
+                <input type="number" class="form-control form-control-sm feat-end" placeholder="End" aria-label="End">
             </div>
             <div class="col-md-2">
-                <select class="form-select form-select-sm feat-strand">
+                <select class="form-select form-select-sm feat-strand" aria-label="Feat strand">
                     <option value="1">+</option>
                     <option value="-1">-</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <input type="text" class="form-control form-control-sm feat-label" placeholder="Label/Gene">
+                <input type="text" class="form-control form-control-sm feat-label" placeholder="Label/Gene" aria-label="Label/Gene">
             </div>
         </div>
     </div>`;
@@ -651,7 +651,7 @@ function displayAnnotatedSequence(data) {
 
     const summary = tilesHtml +
         `<p class="mb-1"><strong>GenBank Output:</strong></p>` +
-        `<textarea class="form-control" rows="10" readonly>${escapeHtml(data.genbank)}</textarea>`;
+        `<textarea class="form-control" rows="10" readonly aria-label="Feature output">${escapeHtml(data.genbank)}</textarea>`;
 
     if (typeof ResultsCard !== 'undefined') {
         ResultsCard.mount('annotateResults', {

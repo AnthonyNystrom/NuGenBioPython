@@ -118,7 +118,7 @@
                                         <i class="fas fa-file-import me-2"></i> Parse File
                                     </button>
                                     <div class="mt-3">
-                                        <h6 class="text-muted mb-2 small text-uppercase" style="font-size: 11px; letter-spacing: 1px;">Load Sample Files</h6>
+                                        <h6 class="text-muted mb-2 small text-uppercase u-fs11px-letterspacing1px">Load Sample Files</h6>
                                         <div class="row g-2">
                                             <div class="col-6">
                                                 <button type="button" class="btn-app-secondary btn-app-sm w-100" data-action="loadExample" data-action-args="[&quot;fasta&quot;]">
@@ -225,11 +225,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="patternFilter" style="display:none;">
+                                    <div id="patternFilter" class="u-hidden">
                                         <label class="form-label small">ID Pattern (regex)</label>
                                         <input type="text" class="form-control" id="idPattern" placeholder="e.g., ^SP_">
                                     </div>
-                                    <div id="gcFilter" style="display:none;">
+                                    <div id="gcFilter" class="u-hidden">
                                         <div class="row g-2">
                                             <div class="col-6">
                                                 <label class="form-label small">Min GC%</label>
@@ -512,14 +512,14 @@
                     <div class="col-md-6">
                         <div class="card mb-3">
                             {{ card_header("Extracted Features", icon="fa-list") }}
-                            <div class="card-body py-2" id="featureResults" style="max-height: 400px; overflow-y: auto;">
+                            <div class="card-body py-2 u-maxh400px-ovyauto" id="featureResults">
                                 <p class="text-muted text-center">Upload a GenBank/EMBL file to extract features</p>
                             </div>
                         </div>
 
                         <div class="card">
                             {{ card_header("Batch Conversion Results", icon="fa-tasks") }}
-                            <div class="card-body py-2" id="batchResults" style="max-height: 400px; overflow-y: auto;">
+                            <div class="card-body py-2 u-maxh400px-ovyauto" id="batchResults">
                                 <p class="text-muted text-center">Select multiple files to batch convert</p>
                             </div>
                         </div>
@@ -1030,7 +1030,7 @@ function displayConvertedResult(converted, format) {
 
     const tabsHtml = ResultsPanel.tabs([
         { id: 'fmt', title: 'Formatted', content: formattedHtml, active: true },
-        { id: 'raw', title: 'Raw', content: '<textarea class="form-control sequence-display" rows="20" readonly></textarea>' },
+        { id: 'raw', title: 'Raw', content: '<textarea class="form-control sequence-display" rows="20" readonly aria-label="Parsed sequence output"></textarea>' },
     ], { prefix: 'conv' });
     const modal = document.createElement('div');
     modal.className = 'modal fade';

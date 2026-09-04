@@ -8,8 +8,10 @@ from io import BytesIO
 
 from dependencies import np, KMeans, DBSCAN, AgglomerativeClustering, linkage, dendrogram, plt, Cluster
 from utils.plot_helpers import (
-    figure_to_svg_data_url, style_axes, set_title,
+    svg_markup,
+    style_axes, set_title,
     LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
+    subplots as oo_subplots,
 )
 from utils.request_helpers import clamp_int, clamp_float, error_response
 
@@ -57,7 +59,7 @@ def clustering_analyze():
             # horizontal).
             fig_w = max(9, min(22, 7 + math.sqrt(max(n, 1)) * 0.7))
             fig_h = max(5, min(10, 4 + math.log2(max(n, 2)) * 0.5))
-            fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=100)
+            fig, ax = oo_subplots(figsize=(fig_w, fig_h), dpi=100)
 
             dendrogram(
                 linkage_matrix, ax=ax,
@@ -82,7 +84,7 @@ def clustering_analyze():
             ax.set_ylabel('Distance', fontsize=9, color=LABEL_COLOR)
             style_axes(ax)
 
-            dendro_url = figure_to_svg_data_url(fig)
+            dendro_url = svg_markup(fig, title='Clustering dendrogram')
 
             clustering = AgglomerativeClustering(n_clusters=n_clusters)
             labels = clustering.fit_predict(matrix)

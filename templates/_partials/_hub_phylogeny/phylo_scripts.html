@@ -109,10 +109,9 @@ function displayTreeResults(data) {
 
     // Display tree visualization
     const treeVisDiv = document.getElementById('treeVisualization');
-    if (data.tree_image) {
+    if (data.tree_svg || data.tree_image) {
         treeVisDiv.innerHTML = `
-            <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree" style="max-width: 100%; height: auto;">
-            ${FigureExport.controls(data.tree_image, 'phylogenetic_tree')}
+            ${FigureExport.inline(data.tree_svg, 'phylogenetic_tree')}
         `;
     }
 
@@ -517,10 +516,10 @@ function exportTree() {
             if (showOutline) {
                 html += ResultsPanel.tabs([
                     { id: 'fmt', title: 'Formatted', content: outlineHtml, active: true },
-                    { id: 'raw', title: 'Raw', content: '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>' },
+                    { id: 'raw', title: 'Raw', content: '<textarea class="form-control form-control-sm" rows="10" readonly aria-label="Tree output"></textarea>' },
                 ], { prefix: 'tree' });
             } else {
-                html += '<textarea class="form-control form-control-sm" rows="10" readonly></textarea>';
+                html += '<textarea class="form-control form-control-sm" rows="10" readonly aria-label="Tree output"></textarea>';
             }
             html += '<button class="btn-app-secondary btn-app-sm w-100 mt-2" data-action="copyExportedTree"><i class="fas fa-copy"></i> Copy to Clipboard</button>';
             const target = document.getElementById('exportedTree');
@@ -560,8 +559,7 @@ function updateVisualization() {
         if (data.success) {
             const treeVisDiv = document.getElementById('treeVisualization');
             treeVisDiv.innerHTML = `
-                <img src="${data.tree_image}" class="img-fluid" alt="Phylogenetic Tree">
-                ${FigureExport.controls(data.tree_image, 'phylogenetic_tree')}
+                ${FigureExport.inline(data.tree_svg, 'phylogenetic_tree')}
             `;
             showAlert('Visualization updated', 'success');
         } else {

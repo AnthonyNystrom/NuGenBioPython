@@ -44,7 +44,7 @@
                                         <textarea class="form-control form-control-sm sequence-display" id="querySequence" rows="5"
                                                 placeholder="Enter your query sequence (DNA, RNA, or protein)..."></textarea>
                                         <div class="mt-2">
-                                            <input type="file" class="form-control form-control-sm" id="sequenceFile" accept=".fasta,.fa,.fna,.faa,.gb,.gbk,.txt" style="max-width: 350px;">
+                                            <input type="file" class="form-control form-control-sm u-maxw350px" id="sequenceFile" accept=".fasta,.fa,.fna,.faa,.gb,.gbk,.txt">
                                             <small class="text-muted d-block mt-1">Upload FASTA (.fasta, .fa), GenBank (.gb, .gbk), or plain text (.txt) files</small>
                                         </div>
                                     </div>
@@ -157,7 +157,7 @@
                 <div class="card mb-3">
                     <div class="card-header py-2 d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 small"><i class="fas fa-list"></i> BLAST Hits</h6>
-                        <span class="badge bg-warning" id="resultCount" style="display:none;"></span>
+                        <span class="badge bg-warning u-hidden" id="resultCount"></span>
                     </div>
                     <div class="card-body py-2" id="blastResults">
                         <p class="text-muted text-center">

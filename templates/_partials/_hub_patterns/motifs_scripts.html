@@ -85,8 +85,7 @@ function uploadMotifFile() {
 function displayMotifInCreate(motif) {
     const logoDiv = document.getElementById('createLogoView');
     if (motif.logo) {
-        logoDiv.innerHTML = `<img src="${motif.logo}" class="img-fluid" alt="Sequence Logo" style="max-height: 400px;">`
-            + FigureExport.controls(motif.logo, 'sequence_logo');
+        logoDiv.innerHTML = FigureExport.inline(motif.logo, 'sequence_logo', 'Sequence logo');
     } else {
         logoDiv.innerHTML = '<p class="text-muted small">Logo generation failed</p>';
     }
@@ -106,7 +105,7 @@ function displayMotifInInfo(motif) {
     // PWM
     const pwmDiv = document.getElementById('pwmTable');
     if (motif.pwm && motif.pwm.length > 0) {
-        let table = '<div class="table-responsive" style="max-height:300px;overflow-y:auto;"><table class="table table-sm table-striped small mb-0">';
+        let table = '<div class="table-responsive u-maxh300px-ovyauto"><table class="table table-sm table-striped small mb-0">';
         table += '<thead class="table-dark sticky-top"><tr><th>Pos</th><th>A</th><th>C</th><th>G</th><th>T</th></tr></thead><tbody>';
         motif.pwm.forEach(row => {
             table += `<tr><td class="fw-bold">${row.position}</td><td>${row.A.toFixed(3)}</td><td>${row.C.toFixed(3)}</td><td>${row.G.toFixed(3)}</td><td>${row.T.toFixed(3)}</td></tr>`;
@@ -118,7 +117,7 @@ function displayMotifInInfo(motif) {
     // PSSM
     const pssmDiv = document.getElementById('pssmTable');
     if (motif.pssm && motif.pssm.length > 0) {
-        let table = '<div class="table-responsive" style="max-height:300px;overflow-y:auto;"><table class="table table-sm table-striped small mb-0">';
+        let table = '<div class="table-responsive u-maxh300px-ovyauto"><table class="table table-sm table-striped small mb-0">';
         table += '<thead class="table-dark sticky-top"><tr><th>Pos</th><th>A</th><th>C</th><th>G</th><th>T</th></tr></thead><tbody>';
         motif.pssm.forEach(row => {
             table += `<tr><td class="fw-bold">${row.position}</td><td>${row.A.toFixed(2)}</td><td>${row.C.toFixed(2)}</td><td>${row.G.toFixed(2)}</td><td>${row.T.toFixed(2)}</td></tr>`;
@@ -132,7 +131,7 @@ function displayMotifInInfo(motif) {
     // Entropy
     const entropyDiv = document.getElementById('entropyInfo');
     if (motif.relative_entropy && motif.relative_entropy.length > 0) {
-        let table = '<div class="table-responsive" style="max-height:200px;overflow-y:auto;"><table class="table table-sm small mb-0">';
+        let table = '<div class="table-responsive u-maxh200px-ovyauto"><table class="table table-sm small mb-0">';
         table += '<thead class="table-light sticky-top"><tr><th>Position</th><th>Relative Entropy (bits)</th></tr></thead><tbody>';
         motif.relative_entropy.forEach(row => {
             table += `<tr><td>${row.position}</td><td>${row.entropy.toFixed(3)}</td></tr>`;
@@ -280,12 +279,10 @@ function displayComparison(data) {
 
     // Display logos
     if (data.motif1.logo) {
-        logo1Div.innerHTML = `<img src="${data.motif1.logo}" class="img-fluid" alt="Sequence logo, motif 1" style="max-height: 250px;">`
-            + FigureExport.controls(data.motif1.logo, 'sequence_logo_1');
+        logo1Div.innerHTML = FigureExport.inline(data.motif1.logo, 'sequence_logo', 'Sequence logo');
     }
     if (data.motif2.logo) {
-        logo2Div.innerHTML = `<img src="${data.motif2.logo}" class="img-fluid" alt="Sequence logo, motif 2" style="max-height: 250px;">`
-            + FigureExport.controls(data.motif2.logo, 'sequence_logo_2');
+        logo2Div.innerHTML = FigureExport.inline(data.motif2.logo, 'sequence_logo', 'Sequence logo');
     }
 }
 

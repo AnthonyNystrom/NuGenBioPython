@@ -245,7 +245,7 @@ function displayMSA(data) {
         html += `</button></h2>`;
         html += `<div id="collapse${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" data-bs-parent="#msaAccordion">`;
         html += `<div class="accordion-body">`;
-        html += `<pre class="mb-0" style="font-family: monospace; font-size: 14px; line-height: 1.4;">${alignment.alignment}</pre>`;
+        html += `<pre class="mb-0 u-ffmonospace-fs14px-lh14">${alignment.alignment}</pre>`;
         html += `</div></div></div>`;
     });
 
@@ -357,7 +357,7 @@ function displayConservationResults(data) {
     const resultsDiv = document.getElementById('conservationResults');
     let html = '<div class="conservation-display">';
     html += '<h6 class="mb-3">Average Conservation: ' + data.average_conservation + '%</h6>';
-    html += '<div class="border rounded p-3 bg-light"><div style="font-family: monospace; font-size: 11px;">';
+    html += '<div class="border rounded p-3 bg-light u-ffmonospace-fs11px"><div>';
     html += '<strong>Position | Conservation % | Entropy</strong><br>';
     data.conservation_data.forEach(pos => {
         const bar = '█'.repeat(Math.round(pos.conservation / 5));
@@ -495,8 +495,8 @@ document.getElementById('allAlignmentsForm').addEventListener('submit', function
             html += '<div class="card-body p-2">';
             data.alignments.forEach((aln, idx) => {
                 if (idx > 0) html += '<hr class="my-2">';
-                html += '<div><strong style="font-size: 11px;">Alignment ' + (idx+1) + ' (Score: ' + aln.score.toFixed(2) + ')</strong>';
-                html += '<pre class="mb-0 mt-1" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + aln.alignment + '</pre></div>';
+                html += '<div><strong class="u-fs11px">Alignment ' + (idx+1) + ' (Score: ' + aln.score.toFixed(2) + ')</strong>';
+                html += '<pre class="mb-0 mt-1 u-ffmonospace-fs9px-lh13">' + aln.alignment + '</pre></div>';
             });
             html += '</div></div>';
             document.getElementById('allAlignmentsResults').innerHTML = html;
@@ -537,10 +537,10 @@ document.getElementById('identityMatrixForm').addEventListener('submit', functio
             const numSeqs = data.labels.length;
             if (numSeqs <= 4) {
                 // Show full table for 4 or fewer sequences - fits without scrolling
-                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 10px; table-layout: fixed; width: 100%;">';
-                html += '<thead class="table-light"><tr><th style="width: 20%;"></th>';
+                html += '<table class="table table-sm table-bordered mb-0 u-fs10px-tablelayoutfixed-width100">';
+                html += '<thead class="table-light u-width20"><tr><th></th>';
                 data.labels.forEach(label => {
-                    html += '<th class="text-center p-1" style="width: ' + (80/numSeqs) + '%;">' + label + '</th>';
+                    html += '<th class="text-center p-1" data-css="width: ' + (80/numSeqs) + '%;">' + label + '</th>';
                 });
                 html += '</tr></thead><tbody>';
                 data.matrix.forEach((row, i) => {
@@ -554,13 +554,13 @@ document.getElementById('identityMatrixForm').addEventListener('submit', functio
                 html += '</tbody></table>';
             } else {
                 // For more than 4, show a compact badge list view
-                html += '<div style="font-size: 11px;">';
+                html += '<div class="u-fs11px">';
                 html += '<p class="mb-2 text-muted small"><i class="fas fa-info-circle"></i> Pairwise identities (' + numSeqs + ' sequences):</p>';
                 for (let i = 0; i < data.matrix.length; i++) {
                     for (let j = i + 1; j < data.matrix[i].length; j++) {
                         const val = data.matrix[i][j];
                         const color = val >= 80 ? 'success' : val >= 60 ? 'warning' : 'secondary';
-                        html += '<span class="badge bg-' + color + ' me-1 mb-1" style="font-size: 10px;">' + data.labels[i] + '-' + data.labels[j] + ': ' + val.toFixed(0) + '%</span>';
+                        html += '<span class="badge bg-' + color + ' me-1 mb-1 u-fs10px">' + data.labels[i] + '-' + data.labels[j] + ': ' + val.toFixed(0) + '%</span>';
                     }
                 }
                 html += '</div>';
@@ -599,7 +599,7 @@ document.getElementById('coordinatesForm').addEventListener('submit', function(e
             html += '<div class="card-header py-2 bg-light">';
             html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Coordinates</h6>';
             html += '</div>';
-            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="card-body p-2 u-fs11px">';
             html += '<div class="row g-1">';
             html += '<div class="col-6"><strong>Target Start:</strong> ' + data.coordinates.target_start + '</div>';
             html += '<div class="col-6"><strong>Target End:</strong> ' + data.coordinates.target_end + '</div>';
@@ -646,8 +646,8 @@ document.getElementById('codonAwareForm').addEventListener('submit', function(e)
             html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Codon-Aware Results</h6>';
             html += '</div>';
             html += '<div class="card-body p-2">';
-            html += '<pre class="mb-2" style="font-family: monospace; font-size: 9px; line-height: 1.3;">' + data.alignment + '</pre>';
-            html += '<div class="row g-1" style="font-size: 11px;">';
+            html += '<pre class="mb-2 u-ffmonospace-fs9px-lh13">' + data.alignment + '</pre>';
+            html += '<div class="row g-1 u-fs11px">';
             html += '<div class="col-6"><strong>Score:</strong> ' + data.score.toFixed(2) + '</div>';
             html += '<div class="col-6"><strong>Codon Matches:</strong> ' + data.codon_statistics.codon_matches + '</div>';
             html += '<div class="col-6"><strong>Codon Mismatches:</strong> ' + data.codon_statistics.codon_mismatches + '</div>';
@@ -686,7 +686,7 @@ document.getElementById('detailedStatsForm').addEventListener('submit', function
             html += '<div class="card-header py-2 bg-light">';
             html += '<h6 class="mb-0 small text-success"><i class="fas fa-check-circle"></i> Statistics</h6>';
             html += '</div>';
-            html += '<div class="card-body p-2" style="font-size: 11px;">';
+            html += '<div class="card-body p-2 u-fs11px">';
             html += '<div class="row g-1">';
             html += '<div class="col-6"><strong>Score:</strong> ' + stats.score.toFixed(2) + '</div>';
             html += '<div class="col-6"><strong>Length:</strong> ' + stats.alignment_length + '</div>';

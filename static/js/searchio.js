@@ -300,7 +300,7 @@ function displayConvertResults(result) {
     } else {
         document.getElementById('convertResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
             <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
-            <pre class="bg-light p-2 small mt-1" style="max-height:300px;overflow-y:auto;">${escapeHtml(result.content_preview)}</pre>
+            <pre class="bg-light p-2 small mt-1 u-maxh300px-ovyauto">${escapeHtml(result.content_preview)}</pre>
         </div></div>`;
     }
 }
@@ -455,7 +455,7 @@ function displayWriteResults(result) {
     } else {
         document.getElementById('writeResults').innerHTML = `<div class="card mb-2"><div class="card-body p-2 small">
             <p class="mb-1"><strong>Queries:</strong> ${result.count} · <strong>Size:</strong> ${result.content_size} bytes</p>
-            <pre class="bg-light p-2 small mt-1" style="max-height:400px;overflow-y:auto;">${escapeHtml(result.content)}</pre>
+            <pre class="bg-light p-2 small mt-1 u-maxh400px-ovyauto">${escapeHtml(result.content)}</pre>
         </div></div>`;
     }
 }

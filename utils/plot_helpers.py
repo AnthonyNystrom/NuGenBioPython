@@ -9,11 +9,13 @@ All diagram-producing routes should go through these helpers so that:
 """
 import base64
 import math
+import re
 from io import StringIO, BytesIO
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
 import matplotlib.text as mtext
 import matplotlib.patches as mpatches
@@ -237,6 +239,29 @@ def _theme_facecolor(theme):
     return DARK_BG if theme == 'dark' else 'white'
 
 
+
+def subplots(*args, figsize=None, dpi=100, **kwargs):
+    """Create a Figure and its axes WITHOUT touching pyplot's global registry.
+
+    plt.subplots() registers every figure in a process-global dict that only
+    plt.close() removes. That had two consequences:
+
+      * a render that raised between plt.subplots() and serialization leaked
+        the figure, so app.py needed a teardown_request calling
+        plt.close('all') to reclaim them;
+      * that teardown is itself unsafe under threads — it closes figures
+        belonging to other in-flight requests, not just the leaked one.
+
+    Constructing Figure() directly means there is no registry to leak into and
+    nothing global to clean up: the figure is garbage-collected with the
+    request that made it. Signature mirrors plt.subplots so call sites are a
+    straight swap.
+    """
+    fig = Figure(figsize=figsize, dpi=dpi)
+    axes = fig.subplots(*args, **kwargs)
+    return fig, axes
+
+
 def resolve_color(c, default='#2563eb'):
     if not c:
         return default
@@ -246,6 +271,93 @@ def resolve_color(c, default='#2563eb'):
     return PALETTE.get(c.lower(), default)
 
 
+
+# ---------------------------------------------------------------------------
+# Inline SVG delivery
+# ---------------------------------------------------------------------------
+# Figures shipped as `<img src="data:image/svg+xml;base64,...">` are opaque:
+# no hover, no zoom, no selectable text, and CSS cannot reach inside them.
+# Injecting the SVG into the page instead makes all of that possible — but
+# matplotlib emits ~30 `style="..."` attributes per figure plus a `<style>`
+# block, and this app's CSP has no 'unsafe-inline' in style-src. Inlined
+# as-is, every one of those is refused and the figure renders unstyled
+# (measured: 30 violations, computed stroke "none").
+#
+# The fix is to rewrite them as SVG *presentation attributes* — fill=,
+# stroke=, stroke-width=, stroke-linecap=, stroke-linejoin= — which are plain
+# XML attributes, not CSS, and so are outside CSP entirely. They also lose to
+# CSS in specificity, which is exactly what lets a stylesheet restyle a
+# figure after the fact.
+
+_SVG_STYLE_ATTR = re.compile(r'\sstyle="([^"]*)"')
+_SVG_STYLE_BLOCK = re.compile(r'<style[^>]*>.*?</style>', re.S)
+_SVG_XML_PROLOG = re.compile(r'^.*?(?=<svg\b)', re.S)
+
+# Every CSS property matplotlib puts in a style attribute has an identical
+# SVG presentation attribute. Anything outside this set is dropped rather
+# than silently left as an attribute the renderer would ignore.
+_PRESENTATION_ATTRS = {
+    'fill', 'fill-opacity', 'fill-rule',
+    'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+    'stroke-opacity', 'stroke-dasharray', 'stroke-dashoffset',
+    'opacity', 'font-family', 'font-size', 'font-weight', 'font-style',
+    'text-anchor', 'dominant-baseline', 'color',
+}
+
+
+def _style_to_presentation(match):
+    out = []
+    for decl in match.group(1).split(';'):
+        if ':' not in decl:
+            continue
+        prop, value = decl.split(':', 1)
+        prop = prop.strip().lower()
+        value = value.strip().replace('"', '&quot;')
+        if prop in _PRESENTATION_ATTRS and value:
+            out.append(f'{prop}="{value}"')
+    return (' ' + ' '.join(out)) if out else ''
+
+
+def svg_markup(fig, pad_inches=0.2, theme=None, transparent=False,
+               title=None):
+    """Serialize a Figure to SVG markup ready to inject into the page.
+
+    Returns a string starting at `<svg`, with style attributes converted to
+    presentation attributes and matplotlib's `<style>` block removed (its two
+    rules live in app.css instead, scoped to .figure-svg).
+    """
+    theme = resolve_theme(theme)
+    if theme == 'dark':
+        apply_dark_theme(fig)
+    buf = StringIO()
+    # svg.fonttype='none' emits real <text> elements instead of tracing every
+    # glyph as a <path>. That is the whole point of inlining: the labels
+    # become selectable, searchable and styleable rather than vector outlines.
+    # It also shrinks the markup. Applied only here — figure_to_svg_data_url()
+    # keeps the default so downloaded/exported files stay self-contained and
+    # render identically anywhere, without depending on the viewer's fonts.
+    with matplotlib.rc_context({'svg.fonttype': 'none'}):
+        if transparent:
+            fig.savefig(buf, format='svg', bbox_inches='tight',
+                        transparent=True, pad_inches=pad_inches)
+        else:
+            fig.savefig(buf, format='svg', bbox_inches='tight',
+                        facecolor=_theme_facecolor(theme),
+                        pad_inches=pad_inches)
+    svg = buf.getvalue()
+
+    svg = _SVG_XML_PROLOG.sub('', svg, count=1)   # drop <?xml ...?> + DOCTYPE
+    svg = _SVG_STYLE_BLOCK.sub('', svg)
+    svg = _SVG_STYLE_ATTR.sub(_style_to_presentation, svg)
+
+    # Mark it so CSS can target inline figures, and give it an accessible name.
+    label = (title or 'Figure').replace('"', '&quot;')
+    svg = svg.replace(
+        '<svg ',
+        f'<svg class="figure-svg" role="img" aria-label="{label}" ',
+        1)
+    return svg
+
 def figure_to_svg_data_url(fig, pad_inches=0.2, theme=None, transparent=False):
     """Serialize a matplotlib Figure to an svg+xml base64 data URL.
 
@@ -253,7 +365,6 @@ def figure_to_svg_data_url(fig, pad_inches=0.2, theme=None, transparent=False):
     it (see resolve_theme). Pass transparent=True for figures that should sit
     directly on the card background rather than carrying their own ground —
     the chrome is still themed, only the backdrop is dropped. Callers should
-    not call plt.close() themselves — this helper does.
     """
     theme = resolve_theme(theme)
     if theme == 'dark':
@@ -265,7 +376,6 @@ def figure_to_svg_data_url(fig, pad_inches=0.2, theme=None, transparent=False):
     else:
         fig.savefig(buf, format='svg', bbox_inches='tight',
                     facecolor=_theme_facecolor(theme), pad_inches=pad_inches)
-    plt.close(fig)
     svg = buf.getvalue().encode('utf-8')
     b64 = base64.b64encode(svg).decode()
     return f'data:image/svg+xml;base64,{b64}'
@@ -286,7 +396,6 @@ def figure_to_png_data_url(fig, dpi=150, pad_inches=0.2, theme=None,
         fig.savefig(buf, format='png', bbox_inches='tight',
                     facecolor=_theme_facecolor(theme), dpi=dpi,
                     pad_inches=pad_inches)
-    plt.close(fig)
     buf.seek(0)
     b64 = base64.b64encode(buf.getvalue()).decode()
     return f'data:image/png;base64,{b64}'

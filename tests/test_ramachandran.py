@@ -123,8 +123,7 @@ def test_render_produces_svg():
         {'phi': -63, 'psi': -43, 'resname': 'ALA', 'residue': 'ALA1'},
         {'phi': 120, 'psi': 120, 'resname': 'ALA', 'residue': 'ALA2'},
     ])
-    assert render_ramachandran(annotated).startswith(
-        "data:image/svg+xml;base64,")
+    assert render_ramachandran(annotated).lstrip().startswith("<svg")
 
 
 def test_endpoint_returns_plot_and_reachable_outliers(client, repo_root):
@@ -139,7 +138,7 @@ def test_endpoint_returns_plot_and_reachable_outliers(client, repo_root):
     }, content_type='multipart/form-data')
     data = resp.get_json()
     assert data['success'] is True
-    assert data['plot'].startswith("data:image/svg+xml;base64,")
+    assert data['plot'].lstrip().startswith("<svg")
     c = data['classification']
     assert c['favored'] + c['allowed'] + c['outliers'] == data['total_residues']
     assert 'outlier_residues' in data

@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+.pytest_cache/
+tests/formatters/node_modules/
+tests/visual/baseline/
+tests/visual/current/
+tests/visual/diff/
+uploads/*
+!uploads/.gitkeep
+docs/screenshots/
+*.md
+!README.md
+.env
+.venv/
+venv/

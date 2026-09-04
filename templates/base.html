@@ -27,7 +27,7 @@
     <script defer src="{{ url_for('static', filename='js/topbar_search.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/examples_complex.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/service_status.js') }}"></script>
-    <style>
+    <style nonce="{{ csp_nonce }}">
         /* Preload-flash prevention only — all other styling lives in
            tokens.css + components.css + shell.css. */
         .preload *,

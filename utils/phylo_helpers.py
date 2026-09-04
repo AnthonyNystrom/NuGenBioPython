@@ -5,11 +5,11 @@ from io import StringIO, BytesIO
 import base64
 from Bio import Phylo, AlignIO
 from Bio.Phylo.TreeConstruction import DistanceCalculator, DistanceTreeConstructor
-import matplotlib.pyplot as plt
 
 from utils.plot_helpers import (
-    figure_to_svg_data_url, style_axes, set_title,
+    figure_to_svg_data_url, svg_markup, style_axes, set_title,
     TITLE_COLOR, LABEL_COLOR, MUTED_COLOR, AXIS_COLOR,
+    subplots as oo_subplots,
 )
 
 
@@ -65,7 +65,7 @@ def visualize_tree(tree, show_confidence=False, branch_labels=None,
     owns_figure = axes is None
     if axes is None:
         w, h = figsize or _tree_figure_size(tree)
-        fig, axes = plt.subplots(figsize=(w, h), dpi=100)
+        fig, axes = oo_subplots(figsize=(w, h), dpi=100)
 
     draw_params = {
         'axes': axes,
@@ -99,6 +99,16 @@ def visualize_tree(tree, show_confidence=False, branch_labels=None,
             txt.set_fontsize(10)
 
     return axes.get_figure()
+
+
+def tree_to_inline_svg(tree, **kwargs):
+    """Render a tree as SVG markup for injection into the page.
+
+    Unlike tree_to_image_base64(), the result is live DOM: the taxon labels
+    are selectable text and CSS can restyle the figure.
+    """
+    return svg_markup(visualize_tree(tree, **kwargs),
+                      title='Phylogenetic tree')
 
 
 def tree_to_image_base64(tree, **kwargs):

@@ -673,8 +673,7 @@ function displayRamaResults(data) {
     if (data.plot) {
         summary +=
             '<div class="text-center mb-3">' +
-            `<img src="${data.plot}" class="img-fluid" alt="Ramachandran plot" style="max-width:100%">` +
-            FigureExport.controls(data.plot, 'ramachandran') +
+            FigureExport.inline(data.plot, 'ramachandran', 'Ramachandran plot') +
             '</div>';
     }
     if (data.outlier_residues && data.outlier_residues.length) {

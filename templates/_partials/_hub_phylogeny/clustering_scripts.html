@@ -381,8 +381,8 @@ function displayClusterAssignments(results, matrix, sampleNames = []) {
                 <tr>
                     <td><strong>PC${index + 1}</strong></td>
                     <td>
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: ${variance}%">
+                        <div class="progress u-height20px">
+                            <div class="progress-bar bg-info" role="progressbar" data-css="width: ${variance}%">
                                 ${variance.toFixed(2)}%
                             </div>
                         </div>
@@ -488,7 +488,7 @@ function displayClusterVisualization(results, method, sampleNames = []) {
         visDiv.innerHTML = `
             <div class="text-center">
                 <h6 class="text-info mb-3">Hierarchical Clustering Dendrogram</h6>
-                <img src="${results.dendrogram}" class="img-fluid rounded" alt="Dendrogram" style="max-height: 400px;">
+                ${FigureExport.inline(results.dendrogram, 'dendrogram', 'Dendrogram')}
             </div>
         `;
     } else {
@@ -536,19 +536,19 @@ function displayClusterVisualization(results, method, sampleNames = []) {
             
             html += `
                 <div class="col-lg-4 col-md-6">
-                    <div class="cluster-card border-0 h-100" style="background: ${bgColor}; border-radius: 16px; overflow: visible; position: relative;">
-                        <div class="p-3" style="background: ${headerBg}; color: white; border-radius: 16px 16px 0 0;">
+                    <div class="cluster-card border-0 h-100" data-css="background: ${bgColor}; border-radius: 16px; overflow: visible; position: relative;">
+                        <div class="p-3" data-css="background: ${headerBg}; color: white; border-radius: 16px 16px 0 0;">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0" style="color: white; font-weight: 600;">${clusterName}</h5>
-                                <span class="badge bg-white" style="color: ${textColor}; font-size: 14px; padding: 6px 12px;">${samples.length}</span>
+                                <h5 class="mb-0 u-colorwhite-fontweight600">${clusterName}</h5>
+                                <span class="badge bg-white" data-css="color: ${textColor}; font-size: 14px; padding: 6px 12px;">${samples.length}</span>
                             </div>
                         </div>
                         <div class="p-3">
-                            <div style="max-height: 200px; overflow-y: auto;">
+                            <div class="u-maxh200px-ovyauto">
                                 ${samples.map((s, i) => `
-                                    <div class="d-flex align-items-center py-1 ${i > 0 ? 'border-top' : ''}" style="border-color: rgba(0,0,0,0.08) !important;">
-                                        <span class="me-2" style="font-size: 11px; min-width: 20px; color: #64748b;">${s.index}</span>
-                                        <span style="font-size: 13px; font-weight: 500; color: #1e293b;">${s.name}</span>
+                                    <div class="d-flex align-items-center py-1 ${i > 0 ? 'border-top' : ''} u-bordercolorrgba000008">
+                                        <span class="me-2 u-color64748b-fs11px-minwidth20px">${s.index}</span>
+                                        <span class="u-color1e293b-fs13px-fontweight500">${s.name}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -565,7 +565,7 @@ function displayClusterVisualization(results, method, sampleNames = []) {
         const noiseCount = results.labels.filter(l => l === -1).length;
         
         html += `
-            <div class="mt-4 mb-3 p-4 bg-light rounded" style="box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div class="mt-4 mb-3 p-4 bg-light rounded u-boxshadow02px8pxrgb">
                 <div class="row text-center g-3">
                     <div class="col-md-4">
                         <div class="stat-mini p-3 bg-white rounded">
@@ -593,39 +593,6 @@ function displayClusterVisualization(results, method, sampleNames = []) {
         
         // Add custom styles for this visualization
         html += `
-            <style>
-                .cluster-visualization {
-                    padding-bottom: 20px;
-                }
-                .cluster-card {
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    margin-bottom: 10px;
-                }
-                .cluster-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-                    z-index: 10;
-                }
-                .stat-mini {
-                    transition: transform 0.2s ease;
-                }
-                .stat-mini:hover {
-                    transform: scale(1.05);
-                }
-                .stat-value-mini {
-                    font-size: 24px;
-                    font-weight: 700;
-                    margin-bottom: 4px;
-                }
-                .stat-label-mini {
-                    font-size: 11px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    color: var(--secondary-600);
-                    font-weight: 600;
-                }
-            </style>
         `;
         
         visDiv.innerHTML = html;

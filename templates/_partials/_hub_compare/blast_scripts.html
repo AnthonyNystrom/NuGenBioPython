@@ -40,35 +40,59 @@ document.getElementById('blastForm').addEventListener('submit', function(e) {
         ResultsCard.showLoading('blastResults', { title: 'Running BLAST — this usually takes 30–90 seconds…' });
     }
 
-    fetch('/api/blast/search', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading('blastBtn', '<i class="fas fa-rocket me-2"></i> Run BLAST Search');
-        if (data.success) {
-            currentResults = data.results;
-            displayResults(data);
-            displayStatistics(data.statistics);
-            // Switch to results tab
-            document.getElementById('results-tab').click();
-        } else {
-            var friendly = friendlyError(data.error, 'blast');
-            if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
-                ResultsCard.showError('blastResults', { title: 'BLAST failed', message: friendly });
-            }
-            showAlert(friendly, 'danger');
-        }
-    })
-    .catch(error => {
-        hideLoading('blastBtn', '<i class="fas fa-rocket me-2"></i> Run BLAST Search');
-        var friendly = friendlyError(error, 'blast');
+    // Submit and poll rather than holding one request open. A BLAST against
+    // NCBI routinely runs 30-180s; a single blocking request is at the mercy
+    // of every proxy and browser timeout in between, and the user gets
+    // nothing if any of them gives up first.
+    const RESTORE = '<i class="fas fa-rocket me-2"></i> Run BLAST Search';
+
+    function blastFailed(message) {
+        hideLoading('blastBtn', RESTORE);
+        const friendly = friendlyError(message, 'blast');
         if (typeof ResultsCard !== 'undefined' && ResultsCard.showError) {
-            ResultsCard.showError('blastResults', { title: 'BLAST request failed', message: friendly });
+            ResultsCard.showError('blastResults',
+                { title: 'BLAST failed', message: friendly });
         }
         showAlert(friendly, 'danger');
-    });
+    }
+
+    function blastSucceeded(data) {
+        hideLoading('blastBtn', RESTORE);
+        currentResults = data.results;
+        displayResults(data);
+        displayStatistics(data.statistics);
+        document.getElementById('results-tab').click();
+    }
+
+    function pollBlastJob(jobId, startedAt) {
+        // Poll every 2s. The server keeps jobs for an hour; give up in the
+        // client after 10 minutes so a wedged job cannot spin forever.
+        const MAX_WAIT_MS = 10 * 60 * 1000;
+        if (Date.now() - startedAt > MAX_WAIT_MS) {
+            blastFailed('BLAST did not finish within 10 minutes.');
+            return;
+        }
+        fetchJSON('/api/blast/job/' + encodeURIComponent(jobId))
+            .then(function (job) {
+                if (job.status === 'done') { blastSucceeded(job); return; }
+                if (job.status === 'error') { blastFailed(job.error); return; }
+                const secs = Math.round((Date.now() - startedAt) / 1000);
+                if (typeof ResultsCard !== 'undefined' && ResultsCard.showLoading) {
+                    ResultsCard.showLoading('blastResults', {
+                        title: 'Running BLAST at NCBI — ' + secs + 's elapsed…'
+                    });
+                }
+                setTimeout(function () { pollBlastJob(jobId, startedAt); }, 2000);
+            })
+            .catch(function (err) { blastFailed(err && err.message); });
+    }
+
+    fetchJSON('/api/blast/submit', { method: 'POST', body: formData })
+        .then(function (data) {
+            if (!data.success) { blastFailed(data.error); return; }
+            pollBlastJob(data.job_id, Date.now());
+        })
+        .catch(function (err) { blastFailed(err && err.message); });
 });
 
 function displayResults(data) {

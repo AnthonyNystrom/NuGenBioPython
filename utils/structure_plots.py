@@ -94,15 +94,15 @@ def render_ramachandran(annotated, title='Ramachandran plot'):
     *why* a residue was classified as it was, rather than having to trust a
     bare count.
     """
-    import matplotlib.pyplot as plt
     from matplotlib.patches import Ellipse
 
     from utils.plot_helpers import (
-        PALETTE, MUTED_COLOR, GRID_COLOR, figure_to_svg_data_url,
-        set_title, style_axes,
+    svg_markup,
+        subplots as oo_subplots,
+        PALETTE, MUTED_COLOR, GRID_COLOR, set_title, style_axes,
     )
 
-    fig, ax = plt.subplots(figsize=(6.4, 6.0))
+    fig, ax = oo_subplots(figsize=(6.4, 6.0))
 
     # Basin contours: allowed first (lighter), then favored on top.
     for _name, phi_c, psi_c, favored, allowed in _BASINS:
@@ -168,4 +168,4 @@ def render_ramachandran(annotated, title='Ramachandran plot'):
                     borderpad=0.6)
     leg.get_frame().set_edgecolor(GRID_COLOR)
 
-    return figure_to_svg_data_url(fig)
+    return svg_markup(fig, title='Ramachandran plot')

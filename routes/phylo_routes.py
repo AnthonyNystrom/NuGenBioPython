@@ -8,6 +8,7 @@ import os
 from werkzeug.utils import secure_filename
 
 from utils.phylo_helpers import (
+    tree_to_inline_svg,
     parse_tree_from_string, parse_tree_from_file, tree_to_string,
     tree_to_image_base64, get_tree_info, build_tree_from_alignment,
     calculate_distance_matrix, get_all_terminals, get_all_clades,
@@ -50,10 +51,12 @@ def parse_tree():
 
         # Create tree visualization
         tree_image = tree_to_image_base64(tree, show_confidence=show_confidence)
+        tree_svg = tree_to_inline_svg(tree, show_confidence=show_confidence)
 
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             **tree_info
         })
     except Exception as e:
@@ -90,6 +93,7 @@ def build_tree():
 
         # Create visualization
         tree_image = tree_to_image_base64(tree)
+        tree_svg = tree_to_inline_svg(tree)
 
         # Format distance matrix
         dm_names = distance_matrix.names
@@ -99,6 +103,7 @@ def build_tree():
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             'distance_matrix': {
                 'names': dm_names,
                 'matrix': dm_matrix
@@ -263,10 +268,12 @@ def prune():
         # Get tree info and visualization
         tree_info = get_tree_info(pruned_tree)
         tree_image = tree_to_image_base64(pruned_tree)
+        tree_svg = tree_to_inline_svg(pruned_tree)
 
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             **tree_info
         })
     except Exception as e:
@@ -298,10 +305,12 @@ def collapse():
         # Get tree info and visualization
         tree_info = get_tree_info(collapsed_tree)
         tree_image = tree_to_image_base64(collapsed_tree)
+        tree_svg = tree_to_inline_svg(collapsed_tree)
 
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             **tree_info
         })
     except Exception as e:
@@ -328,10 +337,12 @@ def ladderize():
         # Get tree info and visualization
         tree_info = get_tree_info(ladderized_tree)
         tree_image = tree_to_image_base64(ladderized_tree)
+        tree_svg = tree_to_inline_svg(ladderized_tree)
 
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             **tree_info
         })
     except Exception as e:
@@ -359,10 +370,12 @@ def reroot():
         # Get tree info and visualization
         tree_info = get_tree_info(rerooted_tree)
         tree_image = tree_to_image_base64(rerooted_tree)
+        tree_svg = tree_to_inline_svg(rerooted_tree)
 
         return jsonify({
             'success': True,
             'tree_image': tree_image,
+            'tree_svg': tree_svg,
             **tree_info
         })
     except Exception as e:
@@ -434,6 +447,7 @@ def visualize():
 
         tree = parse_tree_from_string(tree_string, tree_format)
         tree_image = tree_to_image_base64(tree, show_confidence=show_confidence)
+        tree_svg = tree_to_inline_svg(tree, show_confidence=show_confidence)
 
         return jsonify({
             'success': True,
